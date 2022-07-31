@@ -1,0 +1,5 @@
+{
+  "duplicate-file": "The uploaded file information has duplicated key and cannot be saved",
+  "file-type-not allowed": "File type not allowed",
+  "problem-generating-filename": "Problem generating filename. Try again later."
+}

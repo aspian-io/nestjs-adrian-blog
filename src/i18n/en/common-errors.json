@@ -1,0 +1,22 @@
+{
+  "not-found": "{prop} not found",
+  "bad-request": "Something went wrong",
+  "class-validator": {
+    "is-uuid": "Field value must be a UUID",
+    "is-string": "Field value must be a string",
+    "is-number": "Field value must be a number",
+    "is-not-empty": "Field should not be empty",
+    "is-email": "Field value must a correct email address",
+    "min-length": "Field value needs to be at least {constraints.0} characters",
+    "max-length": "Field value needs to be less than {constraints.0} characters",
+    "weak-password": "Password must contain uppercase characters, lowercase characters and numbers or symbols",
+    "is-phone-number": "Field value must a correct phone number",
+    "is-mobile-phone": "Field value must be a correct mobile phone number",
+    "is-postal-code": "Field value must be a correct postal code",
+    "is-date": "Field value must be a correct date",
+    "is-in": "Field value must be an item from {constraints.0}",
+    "is-array": "Field value must be an array",
+    "array-min-length": "Array min length needs to be at least {constraints.0} element",
+    "is-boolean": "Field value must be a boolean"
+  }
+}

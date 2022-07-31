@@ -1,0 +1,9 @@
+{
+  "email-in-use": "Email is already in use",
+  "incorrect-credentials": "Incorrect credentials",
+  "duplicate-info": "User's data with duplicate language is not allowed",
+  "mobile-phone-in-use": "Mobile phone is already in use",
+  "meta-id": "User's meta information Id must be provided in case metadata needs to be changed",
+  "user-suspended": "The user has been suspended",
+  "only-admin": "The only admin claim cannot be removed from the user. It is mandatory that one admin user to be existed for the system to remain functional."
+}

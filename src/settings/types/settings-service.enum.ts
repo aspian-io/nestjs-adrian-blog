@@ -1,0 +1,11 @@
+export enum SettingsServiceEnum {
+  ACTIVITIES = "ACTIVITIES",
+  LANGS = "LANGS",
+  FILES = "FILES",
+  AUTH = "AUTH",
+  POSTS = "POSTS",
+  POST_COMMENTS = "POST_COMMENTS",
+  TAXONOMIES = "TAXONOMIES",
+  SMS = "SMS",
+  EMAIL = "EMAIL"
+}
