@@ -17,6 +17,14 @@ export class UserBlogsListDto {
   @IsOptional()
   "searchBy.content"?: string;
 
+  @Transform( ( { value } ) => QueryStringUtil.trim( value ) )
+  @IsOptional()
+  "filterBy.category"?: string;
+
+  @Transform( ( { value } ) => QueryStringUtil.trim( value ) )
+  @IsOptional()
+  "filterBy.tag"?: string;
+
   @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
   @IsOptional()
   "orderBy.viewCount"?: OrderType;

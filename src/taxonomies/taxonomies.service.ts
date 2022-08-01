@@ -12,12 +12,15 @@ import { Not, Repository } from 'typeorm';
 import { CreateTaxonomyDto } from './dto/create-taxonomy.dto';
 import { TaxonomiesListQueryDto } from './dto/taxonomy-list-query.dto';
 import { UpdateTaxonomyDto } from './dto/update-taxonomy.dto';
+import { TaxonomySlugsHistory } from './entities/taxonomy-slug.entity';
 import { Taxonomy, TaxonomyTypeEnum } from './entities/taxonomy.entity';
+import { ITaxonomyReturnFindBySlug } from './types/service.type';
 
 @Injectable()
 export class TaxonomiesService {
   constructor (
     @InjectRepository( Taxonomy ) private readonly taxonomyRepository: Repository<Taxonomy>,
+    @InjectRepository( TaxonomySlugsHistory ) private readonly taxonomySlugsHistoryRepository: Repository<TaxonomySlugsHistory>,
     @Inject( CACHE_MANAGER ) private cacheManager: Cache,
   ) { }
 
@@ -56,6 +59,10 @@ export class TaxonomiesService {
 
     // Get the result from database
     const [ items, totalItems ] = await this.taxonomyRepository.findAndCount( {
+      relations: {
+        parent: true,
+        children: true
+      },
       where: {
         type,
         term: query[ 'searchBy.term' ],
@@ -83,12 +90,49 @@ export class TaxonomiesService {
       relations: {
         parent: true,
         children: true,
+        featuredImage: true,
+        slugsHistory: true
       },
       withDeleted
     } );
 
     if ( !taxonomy ) throw new NotFoundLocalizedException( i18n, TaxonomiesInfoLocale.TERM_TAXONOMY );
     return taxonomy;
+  }
+
+  // Find a taxonomy by slug
+  async findBySlug ( slug: string, i18n: I18nContext, type?: TaxonomyTypeEnum ): Promise<ITaxonomyReturnFindBySlug> {
+    const taxonomy = await this.taxonomyRepository.findOne( {
+      relations: {
+        children: true,
+        featuredImage: true,
+        parent: true,
+        slugsHistory: true
+      },
+      where: {
+        slug,
+        type
+      }
+    } );
+    if ( !taxonomy ) {
+      const taxonomyWithOldSlug = await this.taxonomyRepository.findOne( {
+        relations: {
+          children: true,
+          featuredImage: true,
+          parent: true,
+          slugsHistory: true
+        },
+        where: {
+          slugsHistory: { slug },
+          type
+        }
+      } );
+      if ( !taxonomyWithOldSlug ) throw new NotFoundLocalizedException( i18n, TaxonomiesInfoLocale.TERM_TAXONOMY );
+
+      return { taxonomy: taxonomyWithOldSlug, redirect: { status: 301 } };
+    }
+
+    return { taxonomy };
   }
 
   // Update a taxonomy
@@ -142,6 +186,14 @@ export class TaxonomiesService {
     await this.cacheManager.reset();
 
     return result;
+  }
+
+  // Delete a slug history
+  async removeOldSlug ( slugId: string, i18n: I18nContext ) {
+    const slug = await this.taxonomySlugsHistoryRepository.findOne( { where: { id: slugId } } );
+    if ( !slug ) throw new NotFoundLocalizedException( i18n, TaxonomiesInfoLocale.TERM_TAXONOMY_OLD_SLUG );
+
+    return this.taxonomySlugsHistoryRepository.remove( slug );
   }
 
   // Soft remove a taxonomy

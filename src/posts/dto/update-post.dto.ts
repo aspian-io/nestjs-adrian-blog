@@ -67,6 +67,10 @@ export class UpdatePostDto {
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   slug: string;
 
+  @IsBoolean( { message: CommonErrorsLocale.VALIDATOR_IS_BOOLEAN } )
+  @IsOptional()
+  storeOldSlugToRedirect?: boolean = true;
+
   @IsUUID( 'all', { message: CommonErrorsLocale.VALIDATOR_IS_UUID } )
   @IsOptional()
   featuredImageId?: string;

@@ -12,12 +12,14 @@ import { PermissionsGuard } from './guards/require-permissions.guard';
 import { Claim } from './entities/claim.entity';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { UppyJwtStrategy } from './strategies/uppy.strategy';
+import { PostsModule } from 'src/posts/posts.module';
 
 @Module( {
   imports: [
     TypeOrmModule.forFeature( [ User, Claim ] ),
     PassportModule,
-    JwtModule.register( {} )
+    JwtModule.register( {} ),
+    PostsModule
   ],
   controllers: [ UsersController ],
   providers: [

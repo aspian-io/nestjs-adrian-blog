@@ -2,7 +2,8 @@ import { BaseEntity } from "src/common/entities/base.entity";
 import { File } from "src/files/entities/file.entity";
 import { Taxonomy } from "src/taxonomies/entities/taxonomy.entity";
 import { User } from "src/users/entities/user.entity";
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne } from "typeorm";
+import { Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne } from "typeorm";
+import { PostSlugsHistory } from "./post-slug.entity";
 
 export enum PostVisibilityEnum {
   PUBLIC = "PUBLIC",
@@ -44,6 +45,7 @@ export class Post extends BaseEntity {
   content?: string;
 
   @Column()
+  @Index('post-slug-idx')
   slug: string;
 
   @ManyToOne( () => File )
@@ -103,4 +105,7 @@ export class Post extends BaseEntity {
 
   @Column( { default: 0 } )
   bookmarksNum: number;
+
+  @OneToMany( () => PostSlugsHistory, ( slug ) => slug.post, { cascade: true } )
+  slugsHistory: PostSlugsHistory[];
 }

@@ -22,12 +22,16 @@ import { IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
 import { AdminUpdateUserDto, AdminCreateUserDto, UpdateUserDto, UserLoginDto, UsersListQueryDto } from './dto';
 import { LoginRegisterDto, UserDto } from './dto';
 import { UpdateUserClaimsDto } from './dto/update-claims.dto';
+import { PostsService } from 'src/posts/posts.service';
+import { PostListDto } from 'src/posts/dto/user/post-list.dto';
+import { BookmarksListQueryDto } from 'src/posts/dto/user/bookmarks-list-query.dto';
 
 @Controller()
 export class UsersController {
   private readonly defaultLangLocaleName: string;
   constructor (
     private readonly usersService: UsersService,
+    private readonly postsService: PostsService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService
   ) {
@@ -140,6 +144,14 @@ export class UsersController {
     @Metadata() metadata: IMetadataDecorator
   ): Promise<User> {
     return this.usersService.update( i18n, user.userId, body, metadata );
+  }
+
+  // Find all bookmarks
+  @Get( 'users/profile/bookmarks' )
+  @UseGuards( JwtAuthGuard )
+  @Serialize( PostListDto )
+  findAllBookmarks ( @Query() query: BookmarksListQueryDto, @CurrentUser() currentUser: IJwtStrategyUser ) {
+    return this.postsService.findAllBookmarks( query, currentUser.userId );
   }
 
   /************************ */

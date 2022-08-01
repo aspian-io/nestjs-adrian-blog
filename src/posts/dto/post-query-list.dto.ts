@@ -22,6 +22,22 @@ export class PostsQueryListDto {
   @IsOptional()
   "searchBy.slug"?: string;
 
+  @Transform( ( { value } ) => QueryStringUtil.trim( value ) )
+  @IsOptional()
+  "filterBy.category"?: string;
+
+  @Transform( ( { value } ) => QueryStringUtil.trim( value ) )
+  @IsOptional()
+  "filterBy.tag"?: string;
+
+  @Transform( ( { value } ) => QueryStringUtil.trim( value ) )
+  @IsOptional()
+  "filterBy.categorySlug"?: string;
+
+  @Transform( ( { value } ) => QueryStringUtil.trim( value ) )
+  @IsOptional()
+  "filterBy.tagSlug"?: string;
+
   @Transform( ( { value } ) => QueryStringUtil.toNumber( value ) )
   @IsOptional()
   "filterBy.likesNumGte"?: number;

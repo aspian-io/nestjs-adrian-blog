@@ -54,6 +54,24 @@ export class User extends BaseMinimalEntity {
   postalCode: string;
 
   @Column( { nullable: true } )
+  website?: string;
+
+  @Column( { nullable: true } )
+  facebook?: string;
+
+  @Column( { nullable: true } )
+  twitter?: string;
+
+  @Column( { nullable: true } )
+  instagram?: string;
+
+  @Column( { nullable: true } )
+  linkedIn?: string;
+
+  @Column( { nullable: true } )
+  pinterest?: string;
+
+  @Column( { nullable: true } )
   suspend: Date | null;
 
   @ManyToMany( () => Claim, { cascade: true } )
@@ -62,7 +80,7 @@ export class User extends BaseMinimalEntity {
 
   @ManyToMany( () => Post, ( post ) => post.bookmarks, { cascade: true } )
   @JoinTable( {
-    name: 'users_posts_bookmarks'
+    name: 'users_posts_bookmarks',
   } )
   bookmarks: Post[];
 }

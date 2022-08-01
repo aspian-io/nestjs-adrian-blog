@@ -7,7 +7,7 @@ export class FilterPaginationUtil {
    * @param page - the page number which has been received from querystring
    * @returns An object of the type {@link ISkipTakeGenerator}
    */
-  static takeSkipGenerator ( limit: number, page: number ): ISkipTakeGenerator {
+  static takeSkipGenerator ( limit: number = 10, page: number = 1 ): ISkipTakeGenerator {
     return {
       skip: limit * ( page - 1 ),
       take: limit

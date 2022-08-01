@@ -72,5 +72,35 @@ export class AdminCreateUserDto {
   @MinLength( 5, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
   @IsOptional()
   bio: string;
+
+  @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
+  @MinLength( 5, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
+  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  website?: string;
+
+  @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
+  @MinLength( 2, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
+  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  facebook?: string;
+
+  @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
+  @MinLength( 2, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
+  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  twitter?: string;
+
+  @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
+  @MinLength( 2, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
+  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  instagram?: string;
+
+  @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
+  @MinLength( 2, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
+  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  linkedIn?: string;
+
+  @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
+  @MinLength( 2, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
+  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  pinterest?: string;
 }
 

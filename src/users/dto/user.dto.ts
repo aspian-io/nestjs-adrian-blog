@@ -1,4 +1,5 @@
-import { Expose } from "class-transformer";
+import { Expose, Type } from "class-transformer";
+import { PostDto } from "src/posts/dto/user/post.dto";
 import { GenderEnum } from "../entities/user.entity";
 
 export class UserDto {
@@ -46,4 +47,11 @@ export class UserDto {
 
   @Expose()
   postalCode: string;
+
+  @Expose()
+  @Type(() => PostDto)
+  bookmarks: PostDto[]
+
+  @Expose()
+  bookmarksNum: number;
 }

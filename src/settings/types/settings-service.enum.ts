@@ -4,7 +4,7 @@ export enum SettingsServiceEnum {
   FILES = "FILES",
   AUTH = "AUTH",
   POSTS = "POSTS",
-  POST_COMMENTS = "POST_COMMENTS",
+  COMMENTS = "COMMENTS",
   TAXONOMIES = "TAXONOMIES",
   SMS = "SMS",
   EMAIL = "EMAIL"

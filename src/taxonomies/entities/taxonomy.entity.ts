@@ -1,6 +1,7 @@
 import { BaseMinimalEntity } from "src/common/entities/base-minimal.entity";
 import { File } from "src/files/entities/file.entity";
-import { Column, Entity, ManyToOne, OneToMany } from "typeorm";
+import { Column, Entity, Index, ManyToOne, OneToMany } from "typeorm";
+import { TaxonomySlugsHistory } from "./taxonomy-slug.entity";
 
 export enum TaxonomyTypeEnum {
   MENU = "MENU",
@@ -33,8 +34,12 @@ export class Taxonomy extends BaseMinimalEntity {
   term: string;
 
   @Column()
+  @Index( 'taxonomy-slug-idx' )
   slug: string;
 
   @ManyToOne( () => File )
   featuredImage?: File;
+
+  @OneToMany( () => TaxonomySlugsHistory, ( slug ) => slug.taxonomy, { cascade: true } )
+  slugsHistory: TaxonomySlugsHistory[];
 }

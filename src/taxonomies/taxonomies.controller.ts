@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Res } from '@nestjs/common';
 import { TaxonomiesService } from './taxonomies.service';
 import { CreateTaxonomyDto } from './dto/create-taxonomy.dto';
 import { UpdateTaxonomyDto } from './dto/update-taxonomy.dto';
@@ -11,10 +11,63 @@ import { RequirePermission } from 'src/users/decorators/require-permission.decor
 import { PermissionsEnum } from 'src/common/security/permissions.enum';
 import { TaxonomiesListQueryDto } from './dto/taxonomy-list-query.dto';
 import { IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
+import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { TaxonomyDto } from './dto/taxonomy.dto';
+import { Response } from 'express';
 
 @Controller()
 export class TaxonomiesController {
   constructor ( private readonly taxonomiesService: TaxonomiesService ) { }
+
+  /********************** User Region ***************************/
+
+  @Get( 'taxonomies/menu-items/:slug' )
+  @Serialize( TaxonomyDto )
+  async menuItemDetails (
+    @Res( { passthrough: true } ) res: Response,
+    @Param( 'slug' ) slug: string,
+    @I18n() i18n: I18nContext
+  ) {
+    const result = await this.taxonomiesService.findBySlug( slug, i18n, TaxonomyTypeEnum.MENU_ITEM );
+    if ( result?.redirect?.status === 301 ) {
+      res.status( 301 );
+      return result.taxonomy;
+    }
+    return result.taxonomy;
+  }
+
+  @Get( 'taxonomies/categories/:slug' )
+  @Serialize( TaxonomyDto )
+  async categoriesDetails (
+    @Res( { passthrough: true } ) res: Response,
+    @Param( 'slug' ) slug: string,
+    @I18n() i18n: I18nContext
+  ) {
+    const result = await this.taxonomiesService.findBySlug( slug, i18n, TaxonomyTypeEnum.CATEGORY );
+    if ( result?.redirect?.status === 301 ) {
+      res.status( 301 );
+      return result.taxonomy;
+    }
+    return result.taxonomy;
+  }
+
+  @Get( 'taxonomies/tags/:slug' )
+  @Serialize( TaxonomyDto )
+  async tagsDetails (
+    @Res( { passthrough: true } ) res: Response,
+    @Param( 'slug' ) slug: string,
+    @I18n() i18n: I18nContext
+  ) {
+    const result = await this.taxonomiesService.findBySlug( slug, i18n, TaxonomyTypeEnum.TAG );
+    if ( result?.redirect?.status === 301 ) {
+      res.status( 301 );
+      return result.taxonomy;
+    }
+    return result.taxonomy;
+  }
+
+
+  /********************** Admin Region ***************************/
 
   @Post( 'admin/taxonomies' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )

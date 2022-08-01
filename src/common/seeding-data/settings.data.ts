@@ -70,19 +70,19 @@ export const settingsData = ( configService: ConfigService ) => [
   {
     key: SettingsKeyEnum.COMMENT_IS_APPROVED,
     value: "true",
-    service: SettingsServiceEnum.POST_COMMENTS,
+    service: SettingsServiceEnum.COMMENTS,
     userAgent: "SYSTEM"
   },
   {
     key: SettingsKeyEnum.COMMENT_FORBIDDEN_EXPRESSIONS,
     value: "forbidden_1,forbidden_2,forbidden_3,forbidden_4",
-    service: SettingsServiceEnum.POST_COMMENTS,
+    service: SettingsServiceEnum.COMMENTS,
     userAgent: "SYSTEM"
   },
   {
     key: SettingsKeyEnum.COMMENT_FORBIDDEN_SUSPEND,
     value: "true",
-    service: SettingsServiceEnum.POST_COMMENTS,
+    service: SettingsServiceEnum.COMMENTS,
     userAgent: "SYSTEM"
   },
   {

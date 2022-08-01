@@ -30,4 +30,9 @@ export enum PermissionsEnum {
   POST_CREATE = "post_w",
   POST_EDIT = "post_w+",
   POST_DELETE = "post_d",
+  // COMMENTS
+  COMMENT_READ = "comment_r",
+  COMMENT_CREATE = "comment_w",
+  COMMENT_EDIT = "comment_w+",
+  COMMENT_DELETE = "comment_d",
 }
