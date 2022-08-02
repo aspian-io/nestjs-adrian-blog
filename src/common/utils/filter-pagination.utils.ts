@@ -21,7 +21,7 @@ export class FilterPaginationUtil {
    * @param totalItems - Number of all items
    * @param limit - Number of items per page
    * @param page - Number of page
-   * @returns An object of the type {@link IFilterPaginate<T>}
+   * @returns An object of the type {@link IListResultGenerator<T>}
    */
   static resultGenerator<T> ( items: T[], totalItems: number, limit: number, page: number ): IListResultGenerator<T> {
     return {

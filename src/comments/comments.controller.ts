@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { I18n, I18nContext } from 'nestjs-i18n';
 import { IMetadataDecorator, Metadata } from 'src/common/decorators/metadata.decorator';
+import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { PermissionsEnum } from 'src/common/security/permissions.enum';
 import { RequirePermission } from 'src/users/decorators/require-permission.decorator';
 import { JwtAuthGuard } from 'src/users/guards/jwt.guard';
@@ -10,14 +11,19 @@ import { CommentQueryListDto } from './dto/comment-query-list.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { UserCommentQueryListDto } from './dto/user/user-comment-query-list.dto';
+import { UserCommentsListDto } from './dto/user/user-comments-list.dto';
+import { UserCommentsDto } from './dto/user/user-comments.dto';
 import { Comment } from './entities/comment.entity';
 
 @Controller()
 export class CommentsController {
   constructor ( private readonly commentsService: CommentsService ) { }
 
+  /**************************** USER REGION ***********************************/
+
   @UseGuards( JwtAuthGuard )
   @Post( 'comments' )
+  @Serialize( UserCommentsDto )
   create (
     @Body() createCommentDto: CreateCommentDto,
     @I18n() i18n: I18nContext,
@@ -27,20 +33,25 @@ export class CommentsController {
 
   @UseGuards( JwtAuthGuard )
   @Post( 'comments/:id/like' )
-  like ( @Param( 'id' ) id: string, i18n: I18nContext, metadata: IMetadataDecorator ): Promise<Comment> {
+  @Serialize( UserCommentsDto )
+  like ( @Param( 'id' ) id: string, i18n: I18nContext, @Metadata() metadata: IMetadataDecorator ): Promise<Comment> {
     return this.commentsService.like( id, i18n, metadata );
   }
 
   @UseGuards( JwtAuthGuard )
   @Post( 'comments/:id/dislike' )
-  dislike ( @Param( 'id' ) id: string, i18n: I18nContext, metadata: IMetadataDecorator ): Promise<Comment> {
+  @Serialize( UserCommentsDto )
+  dislike ( @Param( 'id' ) id: string, i18n: I18nContext, @Metadata() metadata: IMetadataDecorator ): Promise<Comment> {
     return this.commentsService.dislike( id, i18n, metadata );
   }
 
   @Get( 'comments/:postId' )
+  @Serialize( UserCommentsListDto )
   findAll ( @Param( 'postId' ) postId: string, @Body() query: UserCommentQueryListDto ) {
     return this.commentsService.findAll( query, postId );
   }
+
+  /**************************** ADMIN REGION ***********************************/
 
   @Get( 'admin/comments' )
   adminFindAll ( @Body() query: CommentQueryListDto ) {
@@ -81,7 +92,7 @@ export class CommentsController {
 
   @UseGuards( JwtAuthGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )
-  @Delete( ':id' )
+  @Delete( 'admin/comments/permanent-delete/:id' )
   adminRemove ( @Param( 'id' ) id: string, @I18n() i18n: I18nContext ) {
     return this.commentsService.remove( id, i18n );
   }

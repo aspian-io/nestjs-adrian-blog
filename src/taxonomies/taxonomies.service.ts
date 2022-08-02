@@ -61,7 +61,6 @@ export class TaxonomiesService {
     const [ items, totalItems ] = await this.taxonomyRepository.findAndCount( {
       relations: {
         parent: true,
-        children: true
       },
       where: {
         type,
@@ -89,7 +88,6 @@ export class TaxonomiesService {
       where: { id },
       relations: {
         parent: true,
-        children: true,
         featuredImage: true,
         slugsHistory: true
       },
@@ -104,7 +102,6 @@ export class TaxonomiesService {
   async findBySlug ( slug: string, i18n: I18nContext, type?: TaxonomyTypeEnum ): Promise<ITaxonomyReturnFindBySlug> {
     const taxonomy = await this.taxonomyRepository.findOne( {
       relations: {
-        children: true,
         featuredImage: true,
         parent: true,
         slugsHistory: true
@@ -117,7 +114,6 @@ export class TaxonomiesService {
     if ( !taxonomy ) {
       const taxonomyWithOldSlug = await this.taxonomyRepository.findOne( {
         relations: {
-          children: true,
           featuredImage: true,
           parent: true,
           slugsHistory: true

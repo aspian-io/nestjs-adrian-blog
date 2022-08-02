@@ -127,12 +127,12 @@ export class CommentsService {
 
     // Get the result from database
     const [ items, totalItems ] = await this.commentRepository.findAndCount( {
+      loadRelationIds: {
+        relations: [ 'parent', 'post' ]
+      },
       relations: {
-        parent: true,
-        replies: true,
         createdBy: true,
-        updatedBy: true,
-        post: true
+        updatedBy: true
       },
       where,
       order: {
@@ -160,9 +160,9 @@ export class CommentsService {
       relations: {
         createdBy: true,
         updatedBy: true,
-        parent: true,
-        replies: true,
-        post: true
+      },
+      loadRelationIds: {
+        relations: [ 'parent', 'post' ]
       },
       withDeleted
     } );

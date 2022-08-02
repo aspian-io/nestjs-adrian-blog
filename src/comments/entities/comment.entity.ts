@@ -1,10 +1,11 @@
+import { BaseMinimalEntity } from "src/common/entities/base-minimal.entity";
 import { BaseEntity } from "src/common/entities/base.entity";
 import { Post } from "src/posts/entities/post.entity";
 import { User } from "src/users/entities/user.entity";
 import { Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany } from "typeorm";
 
 @Entity()
-export class Comment extends BaseEntity {
+export class Comment extends BaseMinimalEntity {
   @Column()
   title: string;
 
@@ -34,12 +35,15 @@ export class Comment extends BaseEntity {
   @Column()
   isReplyAllowed: boolean;
 
-  @ManyToOne( () => Comment, ( comment ) => comment.replies )
+  @ManyToOne( () => Comment )
   parent?: Comment;
-
-  @OneToMany( () => Comment, ( reply ) => reply.parent )
-  replies?: Comment[];
 
   @ManyToOne( () => Post )
   post: Post;
+
+  @ManyToOne( () => User )
+  createdBy: User;
+
+  @ManyToOne( () => User )
+  updatedBy?: User;
 }

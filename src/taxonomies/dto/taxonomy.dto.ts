@@ -13,10 +13,6 @@ export class TaxonomyDto {
   parent?: TaxonomyDto;
 
   @Expose()
-  @Type( () => TaxonomyDto )
-  children?: TaxonomyDto[];
-
-  @Expose()
   term: string;
 
   @Expose()

@@ -21,11 +21,8 @@ export class Taxonomy extends BaseMinimalEntity {
   @Column( { default: 0 } )
   order?: number;
 
-  @ManyToOne( () => Taxonomy, ( taxonomy ) => taxonomy.children )
+  @ManyToOne( () => Taxonomy )
   parent?: Taxonomy;
-
-  @OneToMany( () => Taxonomy, ( taxonomy ) => taxonomy.parent )
-  children?: Taxonomy[];
 
   @Column( { nullable: true } )
   description?: string;
