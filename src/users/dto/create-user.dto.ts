@@ -1,11 +1,13 @@
-import { IsDate, IsEmail, IsIn, IsMobilePhone, IsOptional, IsPhoneNumber, IsPostalCode, IsString, Matches, MaxLength, MinLength, ValidateNested } from "class-validator";
+import { Type } from "class-transformer";
+import { IsDate, IsEmail, IsIn, IsMobilePhone, IsNotEmpty, IsOptional, IsPhoneNumber, IsPostalCode, IsString, Matches, MaxLength, MinLength } from "class-validator";
 import { i18nValidationMessage } from "nestjs-i18n";
 import { CommonErrorsLocale } from "src/i18n/locale-keys/common/errors.locale";
 import { GenderEnum } from "src/users/entities/user.entity";
 
-export class AdminCreateUserDto {
+export class CreateUserDto {
 
   @IsEmail( {}, { message: CommonErrorsLocale.VALIDATOR_IS_EMAIL } )
+  @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   email: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
@@ -15,6 +17,7 @@ export class AdminCreateUserDto {
   password: string;
 
   @IsDate( { message: CommonErrorsLocale.VALIDATOR_IS_DATE } )
+  @Type( () => Date )
   @IsOptional()
   birthDate: Date;
 
@@ -50,7 +53,7 @@ export class AdminCreateUserDto {
   @IsOptional()
   phone: string;
 
-  @IsMobilePhone( null, { message: CommonErrorsLocale.VALIDATOR_IS_MOBILE_PHONE } )
+  @IsMobilePhone( null, null, { message: CommonErrorsLocale.VALIDATOR_IS_MOBILE_PHONE } )
   @IsOptional()
   mobilePhone: string;
 
@@ -76,31 +79,37 @@ export class AdminCreateUserDto {
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @MinLength( 5, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
   @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @IsOptional()
   website?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @MinLength( 2, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
   @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @IsOptional()
   facebook?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @MinLength( 2, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
   @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @IsOptional()
   twitter?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @MinLength( 2, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
   @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @IsOptional()
   instagram?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @MinLength( 2, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
   @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @IsOptional()
   linkedIn?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @MinLength( 2, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
   @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @IsOptional()
   pinterest?: string;
 }
 

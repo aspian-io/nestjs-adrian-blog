@@ -1,6 +1,6 @@
 import { BaseMinimalEntity } from "src/common/entities/base-minimal.entity";
 import { Post } from "src/posts/entities/post.entity";
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { AfterLoad, Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Claim } from "./claim.entity";
 
 export enum GenderEnum {
@@ -9,12 +9,37 @@ export enum GenderEnum {
   OTHER = "other"
 }
 
+export enum AvatarSourceEnum {
+  STORAGE = "STORAGE",
+  OAUTH2 = "OAUTH2"
+}
+
 @Entity()
 export class User extends BaseMinimalEntity {
-  @Column( { unique: true } )
+  @Column( { default: false } )
+  isActivated: boolean;
+
+  @Column( { nullable: true } )
+  @Index( 'user-email-idx', { unique: true } )
   email: string;
 
-  @Column()
+  @Column( { default: false } )
+  emailVerified: boolean;
+
+  @Column( { nullable: true } )
+  emailVerificationToken?: number;
+
+  @Column( { default: () => 'CURRENT_TIMESTAMP(6)' } )
+  emailVerificationTokenExpiresAt?: Date;
+
+  isEmailVerificationTokenExpired: boolean;
+
+  @AfterLoad()
+  private getEmailVerificationTokenExpired () {
+    this.isEmailVerificationTokenExpired = this.emailVerificationTokenExpiresAt.getTime() < Date.now();
+  }
+
+  @Column( { nullable: true } )
   password: string;
 
   @Column()
@@ -47,8 +72,25 @@ export class User extends BaseMinimalEntity {
   @Column( { nullable: true } )
   phone: string;
 
-  @Column( { unique: true, nullable: true } )
+  @Column( { nullable: true } )
+  @Index( 'user-mobile-idx', { unique: true } )
   mobilePhone: string;
+
+  @Column( { nullable: true } )
+  mobilePhoneVerificationToken?: number;
+
+  @Column( { default: () => 'CURRENT_TIMESTAMP(6)' } )
+  mobilePhoneVerificationTokenExpiresAt?: Date;
+
+  isMobilePhoneVerificationTokenExpired: boolean;
+
+  @AfterLoad()
+  private getMobilePhoneVerificationTokenExpired () {
+    this.isMobilePhoneVerificationTokenExpired = this.mobilePhoneVerificationTokenExpiresAt.getTime() < Date.now();
+  }
+
+  @Column( { default: false } )
+  mobilePhoneVerified: boolean;
 
   @Column( { nullable: true } )
   postalCode: string;
@@ -73,6 +115,12 @@ export class User extends BaseMinimalEntity {
 
   @Column( { nullable: true } )
   suspend: Date | null;
+
+  @Column( { nullable: true } )
+  avatar?: string;
+
+  @Column( { enum: AvatarSourceEnum, default: AvatarSourceEnum.STORAGE } )
+  avatarSource: AvatarSourceEnum;
 
   @ManyToMany( () => Claim, { cascade: true } )
   @JoinTable( { name: "users_claims" } )

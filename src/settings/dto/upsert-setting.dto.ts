@@ -1,0 +1,20 @@
+import { IsIn, IsNotEmpty, IsOptional, IsUUID } from "class-validator";
+import { i18nValidationMessage } from "nestjs-i18n";
+import { CommonErrorsLocale } from "src/i18n/locale-keys/common/errors.locale";
+import { SettingsKeyEnum } from "../types/settings-key.enum";
+import { SettingsServiceEnum } from "../types/settings-service.enum";
+
+export class UpsertSettingDto {
+  @IsUUID( "all", { message: CommonErrorsLocale.VALIDATOR_IS_UUID } )
+  @IsOptional()
+  id?: string;
+
+  @IsIn( Object.values( SettingsKeyEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN ) } )
+  key: SettingsKeyEnum;
+
+  @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
+  value: string;
+
+  @IsIn( Object.values( SettingsServiceEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN ) } )
+  service: SettingsServiceEnum;
+}

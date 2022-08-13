@@ -1,0 +1,7 @@
+{
+  "already-subscribed": "The email address has been already subscribed",
+  "already-approved": "Your subscription has been already approved",
+  "token-expired": "The token is either incorrect or has been expired",
+  "duplicate-campaign-name": "Duplicate campaign name is not allowed",
+  "sending-type-interval": "Sending interval must be specified"
+}

@@ -22,6 +22,9 @@ export class UserDto {
   email: string;
 
   @Expose()
+  emailVerified: boolean;
+
+  @Expose()
   birthDate: Date;
 
   @Expose()
@@ -46,11 +49,17 @@ export class UserDto {
   mobilePhone: string;
 
   @Expose()
+  mobilePhoneVerified: boolean;
+
+  @Expose()
   postalCode: string;
 
   @Expose()
-  @Type(() => PostDto)
-  bookmarks: PostDto[]
+  avatar?: string;
+
+  @Expose()
+  @Type( () => PostDto )
+  bookmarks: PostDto[];
 
   @Expose()
   bookmarksNum: number;

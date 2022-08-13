@@ -1,6 +1,9 @@
 {
   "not-found": "{prop} not found",
   "bad-request": "Something went wrong",
+  "terms": {
+    "service": "service"
+  },
   "class-validator": {
     "is-uuid": "Field value must be a UUID",
     "is-string": "Field value must be a string",
@@ -9,6 +12,8 @@
     "is-email": "Field value must a correct email address",
     "min-length": "Field value needs to be at least {constraints.0} characters",
     "max-length": "Field value needs to be less than {constraints.0} characters",
+    "min": "Minimum allowed number is {constraints.0}",
+    "max": "Maximum allowed number is {constraints.0}",
     "weak-password": "Password must contain uppercase characters, lowercase characters and numbers or symbols",
     "is-phone-number": "Field value must a correct phone number",
     "is-mobile-phone": "Field value must be a correct mobile phone number",

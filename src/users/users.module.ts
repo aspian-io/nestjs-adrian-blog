@@ -19,7 +19,7 @@ import { PostsModule } from 'src/posts/posts.module';
     TypeOrmModule.forFeature( [ User, Claim ] ),
     PassportModule,
     JwtModule.register( {} ),
-    PostsModule
+    PostsModule,
   ],
   controllers: [ UsersController ],
   providers: [
@@ -32,6 +32,6 @@ import { PostsModule } from 'src/posts/posts.module';
     RtAuthGuard,
     PermissionsGuard
   ],
-  exports: [ TypeOrmModule ]
+  exports: [ TypeOrmModule, UsersService ]
 } )
 export class UsersModule { }

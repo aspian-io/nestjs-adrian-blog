@@ -35,4 +35,14 @@ export enum PermissionsEnum {
   COMMENT_CREATE = "comment_w",
   COMMENT_EDIT = "comment_w+",
   COMMENT_DELETE = "comment_d",
+  // Emails
+  EMAIL_SEND = "mail_send",
+  // Newsletter
+  NEWSLETTER_READ = "newsletter_r",
+  NEWSLETTER_CREATE = "newsletter_w",
+  NEWSLETTER_EDIT = "newsletter_w+",
+  NEWSLETTER_DELETE = "newsletter_d",
+  // SMS
+  SMS_READ = "sms_r",
+  SMS_CREATE = "sms_w",
 }

@@ -45,7 +45,7 @@ export class Post extends BaseEntity {
   content?: string;
 
   @Column()
-  @Index('post-slug-idx')
+  @Index( 'post-slug-idx' )
   slug: string;
 
   @ManyToOne( () => File )
@@ -85,22 +85,22 @@ export class Post extends BaseEntity {
   @JoinColumn()
   parent: Post;
 
-  @ManyToMany( () => Taxonomy )
+  @ManyToMany( () => Taxonomy, { onDelete: 'CASCADE' } )
   @JoinTable( { name: 'posts_taxonomies' } )
   taxonomies: Taxonomy[];
 
-  @ManyToMany( () => File )
+  @ManyToMany( () => File, { onDelete: 'CASCADE' } )
   @JoinTable( { name: 'posts_files' } )
   attachments: File[];
 
-  @ManyToMany( () => User )
+  @ManyToMany( () => User, { onDelete: 'CASCADE' } )
   @JoinTable( { name: 'posts_likes' } )
   likes: User[];
 
   @Column( { default: 0 } )
   likesNum: number;
 
-  @ManyToMany( () => User, ( user ) => user.bookmarks )
+  @ManyToMany( () => User, ( user ) => user.bookmarks, { onDelete: 'CASCADE' } )
   bookmarks: User[];
 
   @Column( { default: 0 } )

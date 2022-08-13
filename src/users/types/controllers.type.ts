@@ -1,7 +1,7 @@
 import { User } from "../entities/user.entity";
 
 // Login User Result
-export interface IControllerUserLoginResult extends User {
+export interface IControllerUserLoginResult extends Partial<User> {
   accessToken: string;
 }
 

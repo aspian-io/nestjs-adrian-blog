@@ -1,5 +1,5 @@
 import { InjectQueue } from '@nestjs/bull';
-import { BadRequestException, CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, CACHE_MANAGER, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bull';
 import { Cache } from 'cache-manager';
@@ -212,7 +212,7 @@ export class PostsService {
   }
 
   // Find a post
-  async findOne ( id: string, i18n: I18nContext, withDeleted: boolean = false ): Promise<Post> {
+  async findOne ( id: string, i18n?: I18nContext, withDeleted: boolean = false ): Promise<Post> {
     const post = await this.postRepository.findOne( {
       relations: {
         featuredImage: true,
@@ -231,8 +231,8 @@ export class PostsService {
       },
       withDeleted
     } );
-
-    if ( !post ) throw new NotFoundLocalizedException( i18n, PostsInfoLocale.TERM_POST );
+    if ( !post && i18n ) throw new NotFoundLocalizedException( i18n, PostsInfoLocale.TERM_POST );
+    if ( !post && !i18n ) throw new NotFoundException();
 
     return post;
   }

@@ -1,1 +1,3 @@
-{}
+{
+  "id-key-not-match": "The setting's id and key does not match"
+}

@@ -1,4 +1,5 @@
 import { Expose, Transform, Type } from "class-transformer";
+import { AvatarSourceEnum } from "src/users/entities/user.entity";
 
 export class UserCommentsDto {
   @Expose()
@@ -11,6 +12,14 @@ export class UserCommentsDto {
   @Expose()
   @Transform( ( { obj } ) => obj.createdBy.lastName )
   lastName: string;
+
+  @Expose()
+  @Transform( ( { obj } ) => obj.createdBy?.avatar )
+  avatar?: string;
+
+  @Expose()
+  @Transform( ( { obj } ) => obj.createdBy.avatarSource )
+  avatarSource: AvatarSourceEnum;
 
   @Expose()
   title: string;

@@ -11,6 +11,9 @@ import { Claim } from "./users/entities/claim.entity";
 import { claimData } from "./common/seeding-data/user-claims.data";
 import { PermissionsEnum } from "./common/security/permissions.enum";
 import { File } from "./files/entities/file.entity";
+import { Taxonomy } from "./taxonomies/entities/taxonomy.entity";
+import { Post } from "./posts/entities/post.entity";
+import { Comment } from "./comments/entities/comment.entity";
 
 @Injectable()
 export class AppSeederService {
@@ -19,6 +22,9 @@ export class AppSeederService {
     @InjectRepository( User ) private userRepository: Repository<User>,
     @InjectRepository( Claim ) private claimRepository: Repository<Claim>,
     @InjectRepository( File ) private fileRepository: Repository<File>,
+    @InjectRepository( Taxonomy ) private taxonomyRepository: Repository<Taxonomy>,
+    @InjectRepository( Post ) private postRepository: Repository<Post>,
+    @InjectRepository( Comment ) private commentRepository: Repository<Comment>,
     private configService: ConfigService
   ) { }
 
@@ -48,14 +54,18 @@ export class AppSeederService {
 
   async deleteMany () {
     try {
+      // Posts
+      await this.postRepository.delete( {} );
+      // Taxonomies
+      await this.taxonomyRepository.delete( {} );
       // Files
       await this.fileRepository.delete( {} );
       // Claims
       await this.claimRepository.delete( {} );
-      // User
-      await this.userRepository.delete( {} );
       // Settings
       await this.settingsRepository.delete( {} );
+      // User
+      await this.userRepository.delete( {} );
 
       console.log( chalk.bold.red( "Data destroyed successfully!" ) );
       process.exit();

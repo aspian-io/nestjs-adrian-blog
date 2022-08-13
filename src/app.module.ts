@@ -11,7 +11,7 @@ import { I18nModule } from 'nestjs-i18n';
 import * as path from 'path';
 import * as redisStore from 'cache-manager-redis-store';
 import type { ClientOpts } from 'redis';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { BullModule } from '@nestjs/bull';
 import { EnvEnum } from './env.enum';
 import { EmailsModule } from './emails/emails.module';
@@ -23,9 +23,45 @@ import { SmsModule } from './sms/sms.module';
 import { CommentsModule } from './comments/comments.module';
 import * as nodemailer from 'nodemailer';
 import { RedisDbEnum } from './common/redis/redis-db.enum';
+import { NewsletterModule } from './newsletter/newsletter.module';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
+import { ThrottlerBehindProxyGuard } from './common/guards/throttler-behind-proxy.guard';
+import { S3Module } from 'nestjs-s3';
 
 @Module( {
   imports: [
+    // GoogleRecaptchaModule.forRootAsync( {
+    //   imports: [ ConfigModule ],
+    //   useFactory: ( configService: ConfigService ) => ( {
+    //     secretKey: configService.getOrThrow( EnvEnum.GOOGLE_RECAPTCHA_SECRET_KEY ),
+    //     response: ( req: IncomingMessage ) => ( req.headers.recaptcha || '' ).toString(),
+    //     skipIf: process.env.NODE_ENV !== 'production',
+    //     //actions: [ 'register', 'login', 'subscribe' ],
+    //     score: 0.5,
+    //   } ),
+    //   inject: [ ConfigService ],
+    // } ),
+    ThrottlerModule.forRootAsync( {
+      imports: [ ConfigModule ],
+      inject: [ ConfigService ],
+      useFactory: ( configService: ConfigService ) => ( {
+        ttl: +configService.getOrThrow( EnvEnum.THROTTLE_TTL ),
+        limit: configService.getOrThrow( EnvEnum.NODE_ENV ) === "production"
+          ? +configService.getOrThrow( EnvEnum.THROTTLE_LIMIT )
+          : undefined,
+        storage: new ThrottlerStorageRedisService( {
+          db: RedisDbEnum.THROTTLER,
+          host: configService.getOrThrow( EnvEnum.REDIS_HOST ),
+          port: +configService.getOrThrow( EnvEnum.REDIS_PORT ),
+          password: configService.getOrThrow( EnvEnum.REDIS_PASSWORD )
+        } ),
+        ignoreUserAgents: [
+          new RegExp( 'googlebot', 'gi' ),
+          new RegExp( 'bingbot', 'gi' ),
+        ]
+      } ),
+    } ),
     ConfigModule.forRoot( {
       isGlobal: true,
       cache: true,
@@ -82,6 +118,19 @@ import { RedisDbEnum } from './common/redis/redis-db.enum';
         //logging: true
       } )
     } ),
+    S3Module.forRootAsync( {
+      imports: [ ConfigModule ],
+      inject: [ ConfigService ],
+      useFactory: ( configService: ConfigService ) => ( {
+        config: {
+          accessKeyId: configService.getOrThrow( EnvEnum.S3_ACCESS_KEY ),
+          secretAccessKey: configService.getOrThrow( EnvEnum.S3_SECRET_KEY ),
+          endpoint: configService.getOrThrow( EnvEnum.S3_ENDPOINT ),
+          s3ForcePathStyle: configService.getOrThrow( EnvEnum.S3_FORTH_PATH_STYLE ) === 'true', // needed with minio?
+          signatureVersion: 'v4'
+        }
+      } )
+    } ),
     MailerModule.forRootAsync( {
       imports: [ ConfigModule ],
       inject: [ ConfigService ],
@@ -101,7 +150,7 @@ import { RedisDbEnum } from './common/redis/redis-db.enum';
         },
         preview: true,
         template: {
-          dir: path.join( __dirname, './emails/templates/' ),
+          //dir: path.join( __dirname, './emails/templates/' ),
           adapter: new HandlebarsAdapter(),
           options: {
             strict: true,
@@ -117,12 +166,21 @@ import { RedisDbEnum } from './common/redis/redis-db.enum';
     TaxonomiesModule,
     SmsModule,
     CommentsModule,
+    NewsletterModule,
   ],
   controllers: [ AppController ],
-  providers: [ AppService, AppSeederService, {
-    provide: APP_INTERCEPTOR,
-    useClass: CacheInterceptor,
-  } ],
+  providers: [
+    AppService,
+    AppSeederService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CacheInterceptor,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerBehindProxyGuard,
+    }
+  ],
 } )
 
 export class AppModule { }

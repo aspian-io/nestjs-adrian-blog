@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Res, UseGuards, HttpCode, HttpStatus, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Res, UseGuards, HttpCode, HttpStatus, Query, UseInterceptors, UploadedFile, MaxFileSizeValidator, FileTypeValidator, ParseFilePipe } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { IMetadataDecorator, Metadata } from 'src/common/decorators/metadata.decorator';
@@ -19,38 +19,53 @@ import { I18n, I18nContext } from 'nestjs-i18n';
 import { Claim } from './entities/claim.entity';
 import { EnvEnum } from 'src/env.enum';
 import { IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
-import { AdminUpdateUserDto, AdminCreateUserDto, UpdateUserDto, UserLoginDto, UsersListQueryDto } from './dto';
+import { AdminUpdateUserDto, CreateUserDto, UpdateUserDto, UserLoginDto, UsersListQueryDto, UsersVerificationTokenDto } from './dto';
 import { LoginRegisterDto, UserDto } from './dto';
 import { UpdateUserClaimsDto } from './dto/update-claims.dto';
 import { PostsService } from 'src/posts/posts.service';
 import { PostListDto } from 'src/posts/dto/user/post-list.dto';
 import { BookmarksListQueryDto } from 'src/posts/dto/user/bookmarks-list-query.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Express } from 'express';
+import { UsersAvatarGuard } from './guards/users-avatar.guard';
+import { UserEmailDto } from './dto/user-email.dto';
+import { UserResetPasswordByEmailDto } from './dto/reset-password-by-email.dto';
+import { UserMobilePhoneDto } from './dto/user-mobile-phone.dto';
+import { UserResetPasswordByMobileDto } from './dto/reset-password-by-mobile.dto';
+import { UserChangePasswordDto } from './dto/change-password.dto';
+import { UserLoginByMobilePhoneDto } from './dto/login-by-mobile.dto';
+import { UserActivateEmailRegistrationDto } from './dto/activate-email-registration.dto';
+import { UserRegisterByMobileDto } from './dto/register-by-mobile.dto';
+import { UserActivateMobileRegistrationDto } from './dto/activate-mobile-registration.dto';
 
 @Controller()
 export class UsersController {
-  private readonly defaultLangLocaleName: string;
   constructor (
     private readonly usersService: UsersService,
     private readonly postsService: PostsService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService
-  ) {
-    this.defaultLangLocaleName = configService.getOrThrow( EnvEnum.I18N_DEFAULT_LANG );
-  }
+  ) { }
 
   /************************ */
   /* Users Controllers Area */
   /************************ */
 
-  // Login
-  @Post( 'users/login' )
+  // Get Login Methods
+  @Get( 'users/login-methods' )
+  getLoginMethods () {
+    return this.usersService.getLoginMethods();
+  }
+
+  // Login by Email
+  @Post( 'users/login-by-email' )
   @HttpCode( HttpStatus.OK )
   @Serialize( LoginRegisterDto )
-  async login (
+  async loginByEmail (
     @I18n() i18n: I18nContext,
     @Body() userLoginDto: UserLoginDto,
     @Res( { passthrough: true } ) res: Response ): Promise<IControllerUserLoginResult> {
-    const user = await this.usersService.loginLocal( i18n, userLoginDto );
+    const user = await this.usersService.loginByEmail( i18n, userLoginDto );
     const decodedRt = this.jwtService.decode( user.refreshToken );
 
     res.cookie(
@@ -67,15 +82,93 @@ export class UsersController {
     return { ...user, accessToken: user.accessToken };
   }
 
-  // Register
-  @Post( 'users/register' )
+  // Login by Mobile Phone Request
+  @Post( 'users/login-by-mobile-phone/request' )
+  @HttpCode( HttpStatus.OK )
   @Serialize( LoginRegisterDto )
-  async register (
+  async loginByMobilePhoneRequest (
     @I18n() i18n: I18nContext,
-    @Body() createUserDto: AdminCreateUserDto,
-    @Metadata() metadata: IMetadataDecorator,
+    @Body() mobilePhoneDto: UserMobilePhoneDto ): Promise<User> {
+    return this.usersService.loginByMobilePhoneReq( i18n, mobilePhoneDto );
+  }
+
+  // Login by Mobile Phone
+  @Post( 'users/login-by-mobile-phone' )
+  @HttpCode( HttpStatus.OK )
+  @Serialize( LoginRegisterDto )
+  async loginByMobilePhone (
+    @Body() loginByMobilePhoneDto: UserLoginByMobilePhoneDto,
+    @I18n() i18n: I18nContext,
+    @Res( { passthrough: true } ) res: Response ): Promise<IControllerUserLoginResult> {
+    const user = await this.usersService.loginByMobilePhone( loginByMobilePhoneDto, i18n );
+    const decodedRt = this.jwtService.decode( user.refreshToken );
+
+    res.cookie(
+      Tokens.REFRESH_TOKEN,
+      user.refreshToken,
+      {
+        signed: true,
+        httpOnly: true,
+        sameSite: true,
+        secure: this.configService.getOrThrow( EnvEnum.NODE_ENV ) === 'production',
+        expires: new Date( parseInt( decodedRt[ 'exp' ] ) * 1000 )
+      } );
+
+    return { ...user, accessToken: user.accessToken };
+  }
+
+  // Register by email
+  @Post( 'users/register-by-email' )
+  @Serialize( LoginRegisterDto )
+  async registerByEmail (
+    @I18n() i18n: I18nContext,
+    @Body() createUserDto: CreateUserDto,
+    @Metadata() metadata: IMetadataDecorator ): Promise<User> {
+    return this.usersService.registerByEmail( i18n, createUserDto, metadata );
+  }
+
+  // Activate email registration
+  @Post( 'users/activate-email-registration' )
+  @Serialize( LoginRegisterDto )
+  async activateEmailRegistration (
+    @I18n() i18n: I18nContext,
+    @Body() dto: UserActivateEmailRegistrationDto,
     @Res( { passthrough: true } ) res: Response ): Promise<IControllerUserRegisterResult> {
-    const user = await this.usersService.registerLocal( i18n, createUserDto, metadata );
+    const user = await this.usersService.activateEmailRegistration( dto, i18n );
+    const decodedRt = this.jwtService.decode( user.refreshToken );
+
+    res.cookie(
+      Tokens.REFRESH_TOKEN,
+      user.refreshToken,
+      {
+        signed: true,
+        httpOnly: true,
+        sameSite: true,
+        secure: this.configService.getOrThrow( EnvEnum.NODE_ENV ) === 'production',
+        expires: new Date( parseInt( decodedRt[ 'exp' ] ) * 1000 )
+      } );
+
+    return { ...user, accessToken: user.accessToken };
+  }
+
+  // Register by mobile
+  @Post( 'users/register-by-mobile' )
+  @Serialize( LoginRegisterDto )
+  async registerByMobile (
+    @I18n() i18n: I18nContext,
+    @Body() dto: UserRegisterByMobileDto,
+    @Metadata() metadata: IMetadataDecorator ): Promise<User> {
+    return this.usersService.registerByMobilePhone( i18n, dto, metadata );
+  }
+
+  // Activate mobile registration
+  @Post( 'users/activate-mobile-registration' )
+  @Serialize( LoginRegisterDto )
+  async activateMobileRegistration (
+    @I18n() i18n: I18nContext,
+    @Body() dto: UserActivateMobileRegistrationDto,
+    @Res( { passthrough: true } ) res: Response ): Promise<IControllerUserRegisterResult> {
+    const user = await this.usersService.activateMobilePhoneRegistration( dto, i18n );
     const decodedRt = this.jwtService.decode( user.refreshToken );
 
     res.cookie(
@@ -134,16 +227,44 @@ export class UsersController {
   }
 
   // Edit Profile
-  @Post( 'users/profile' )
+  @Patch( 'users/profile' )
   @UseGuards( JwtAuthGuard )
   @Serialize( UserDto )
   editProfile (
     @Body() body: UpdateUserDto,
-    @CurrentUser() user: IJwtStrategyUser,
     @I18n() i18n: I18nContext,
     @Metadata() metadata: IMetadataDecorator
   ): Promise<User> {
-    return this.usersService.update( i18n, user.userId, body, metadata );
+    return this.usersService.update( i18n, metadata.user.id, body, metadata );
+  }
+
+  // Edit Profile Avatar
+  @Patch( 'users/profile/edit-avatar' )
+  @UseGuards( JwtAuthGuard, UsersAvatarGuard )
+  @UseInterceptors( FileInterceptor( 'avatar' ) )
+  @Serialize( UserDto )
+  updateAvatar (
+    @UploadedFile( new ParseFilePipe( {
+      validators: [
+        new MaxFileSizeValidator( { maxSize: 1024 * 100 } ),
+        new FileTypeValidator( { fileType: 'jpeg' } )
+      ]
+    } ) ) avatar: Express.Multer.File,
+    @I18n() i18n: I18nContext,
+    @Metadata() metadata: IMetadataDecorator
+  ): Promise<User> {
+    return this.usersService.updateAvatar( avatar, i18n, metadata );
+  }
+
+  // Delete Profile Avatar
+  @Delete( 'users/profile/delete-avatar' )
+  @UseGuards( JwtAuthGuard, UsersAvatarGuard )
+  @Serialize( UserDto )
+  removeAvatar (
+    @I18n() i18n: I18nContext,
+    @Metadata() metadata: IMetadataDecorator
+  ): Promise<User> {
+    return this.usersService.removeAvatar( i18n, metadata );
   }
 
   // Find all bookmarks
@@ -152,6 +273,83 @@ export class UsersController {
   @Serialize( PostListDto )
   findAllBookmarks ( @Query() query: BookmarksListQueryDto, @CurrentUser() currentUser: IJwtStrategyUser ) {
     return this.postsService.findAllBookmarks( query, currentUser.userId );
+  }
+
+  // Email Verification Request
+  @Get( 'users/email/verification-request' )
+  @UseGuards( JwtAuthGuard )
+  @Serialize( UserDto )
+  emailVerificationReq ( @I18n() i18n: I18nContext, @Metadata() metadata: IMetadataDecorator ) {
+    return this.usersService.verifyEmailReq( i18n, metadata.user.id );
+  }
+
+  // Verify Email
+  @Post( 'users/email/verify' )
+  @UseGuards( JwtAuthGuard )
+  @Serialize( UserDto )
+  verifyEmail (
+    @Body() body: UsersVerificationTokenDto,
+    @Metadata() metadata: IMetadataDecorator,
+    @I18n() i18n: I18nContext ): Promise<User> {
+    return this.usersService.verifyEmail( i18n, metadata.user.id, body.token );
+  }
+
+  // Mobile Phone Verification Request
+  @Get( 'users/mobile-phone/verification-request' )
+  @UseGuards( JwtAuthGuard )
+  @Serialize( UserDto )
+  mobilePhoneVerificationReq ( @I18n() i18n: I18nContext, @Metadata() metadata: IMetadataDecorator ) {
+    return this.usersService.verifyMobilePhoneReq( i18n, metadata.user.id );
+  }
+
+  // Verify Mobile Phone
+  @Post( 'users/mobile-phone/verify' )
+  @UseGuards( JwtAuthGuard )
+  @Serialize( UserDto )
+  verifyMobilePhone (
+    @Body() body: UsersVerificationTokenDto,
+    @Metadata() metadata: IMetadataDecorator,
+    @I18n() i18n: I18nContext ): Promise<User> {
+    return this.usersService.verifyMobilePhone( i18n, metadata.user.id, body.token );
+  }
+
+  // Change Password
+  @Patch( 'users/change-password/:id' )
+  @UseGuards( JwtAuthGuard )
+  @Serialize( UserDto )
+  changePassword (
+    @Param( 'id' ) id: string,
+    @Body() body: UserChangePasswordDto,
+    @I18n() i18n: I18nContext ): Promise<User> {
+    return this.usersService.changePassword( id, body, i18n );
+  }
+
+  // Reset Password by Email Request
+  @Post( 'users/reset-password/by-email/request' )
+  @Serialize( UserDto )
+  resetPasswordByEmailReq ( @Body() body: UserEmailDto, @I18n() i18n: I18nContext ) {
+    return this.usersService.resetPasswordByEmailReq( body, i18n );
+  }
+
+  // Reset Password by Email
+  @Post( 'users/reset-password/by-email' )
+  @Serialize( UserDto )
+  resetPasswordByEmail ( @Body() body: UserResetPasswordByEmailDto, @I18n() i18n: I18nContext ) {
+    return this.usersService.resetPasswordByEmail( body, i18n );
+  }
+
+  // Reset Password by Mobile Phone Request
+  @Post( 'users/reset-password/by-mobile-phone/request' )
+  @Serialize( UserDto )
+  resetPasswordByMobilePhoneReq ( @Body() body: UserMobilePhoneDto, @I18n() i18n: I18nContext ) {
+    return this.usersService.resetPasswordByMobilePhoneReq( body, i18n );
+  }
+
+  // Reset Password by Mobile Phone
+  @Post( 'users/reset-password/by-mobile-phone' )
+  @Serialize( UserDto )
+  resetPasswordByMobilePhone ( @Body() body: UserResetPasswordByMobileDto, @I18n() i18n: I18nContext ) {
+    return this.usersService.resetPasswordByMobilePhone( body, i18n );
   }
 
   /************************ */
@@ -185,6 +383,37 @@ export class UsersController {
     @Metadata() metadata: IMetadataDecorator
   ): Promise<User> {
     return this.usersService.update( i18n, id, body, metadata );
+  }
+
+  // Edit Profile Avatar
+  @Patch( 'admin/users/edit-avatar/:id' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_EDIT )
+  @UseInterceptors( FileInterceptor( 'avatar' ) )
+  adminUpdateAvatar (
+    @UploadedFile( new ParseFilePipe( {
+      validators: [
+        new MaxFileSizeValidator( { maxSize: 1024 * 100 } ),
+        new FileTypeValidator( { fileType: 'jpeg' } )
+      ]
+    } ) ) avatar: Express.Multer.File,
+    @Param( 'id' ) id: string,
+    @I18n() i18n: I18nContext,
+    @Metadata() metadata: IMetadataDecorator
+  ): Promise<User> {
+    return this.usersService.updateAvatar( avatar, i18n, metadata, id );
+  }
+
+  // Delete Profile Avatar
+  @Delete( 'admin/users/delete-avatar/:id' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_DELETE )
+  adminRemoveAvatar (
+    @Param( 'id' ) id: string,
+    @I18n() i18n: I18nContext,
+    @Metadata() metadata: IMetadataDecorator
+  ): Promise<User> {
+    return this.usersService.removeAvatar( i18n, metadata, id );
   }
 
   // Edit User Claims

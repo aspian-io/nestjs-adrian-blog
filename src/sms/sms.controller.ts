@@ -1,34 +1,51 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { IFarazSendSMSResult } from '@aspianet/faraz-sms';
+import { Controller, Get, Post, Body, UseGuards, Query } from '@nestjs/common';
+import { I18n, I18nContext } from 'nestjs-i18n';
+import { PermissionsEnum } from 'src/common/security/permissions.enum';
+import { RequirePermission } from 'src/users/decorators/require-permission.decorator';
+import { JwtAuthGuard } from 'src/users/guards/jwt.guard';
+import { PermissionsGuard } from 'src/users/guards/require-permissions.guard';
+import { SendSMSDto } from './dto/send-sms.dto';
+import { SMSAddContactDto } from './dto/sms-add-contact.dto';
+import { IFarazSMSAddNumberResult, IFarazSMSCredit, IPhoneBook } from './helpers/faraz-sms.helper';
 import { SmsService } from './sms.service';
-import { CreateSmDto } from './dto/create-sm.dto';
-import { UpdateSmDto } from './dto/update-sm.dto';
 
-@Controller('sms')
+@Controller()
 export class SmsController {
-  constructor(private readonly smsService: SmsService) {}
+  constructor ( private readonly smsService: SmsService ) { }
 
-  @Post()
-  create(@Body() createSmDto: CreateSmDto) {
-    return this.smsService.create(createSmDto);
+  @Get( 'admin/sms/get-originators' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.SMS_READ )
+  getOriginators (): string[] {
+    return this.smsService.getOriginators();
   }
 
-  @Get()
-  findAll() {
-    return this.smsService.findAll();
+  @Get( 'admin/sms/get-credit' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.SMS_READ )
+  getCredit ( @I18n() i18n: I18nContext ): Promise<IFarazSMSCredit> {
+    return this.smsService.getCredit( i18n );
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.smsService.findOne(+id);
+  @Get( 'admin/sms/phone-books' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.SMS_READ )
+  getPhoneBooks ( @I18n() i18n: I18nContext ): Promise<IPhoneBook[]> {
+    return this.smsService.getPhoneBooks( i18n );
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSmDto: UpdateSmDto) {
-    return this.smsService.update(+id, updateSmDto);
+  @Post( 'admin/sms/add-contact' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.SMS_CREATE )
+  addContact ( @Body() smsAddContactDto: SMSAddContactDto, @I18n() i18n: I18nContext ): Promise<IFarazSMSAddNumberResult> {
+    return this.smsService.addContact( smsAddContactDto, i18n );
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.smsService.remove(+id);
+  @Post( 'admin/sms/send' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.SMS_CREATE )
+  sendSMS ( @Body() sendSMSDto: SendSMSDto, @I18n() i18n: I18nContext ): Promise<void> {
+    return this.smsService.sendSMS( sendSMSDto, i18n );
   }
 }

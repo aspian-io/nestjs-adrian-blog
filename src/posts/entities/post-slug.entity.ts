@@ -7,6 +7,6 @@ export class PostSlugsHistory extends BaseMinimalEntity {
   @Column()
   slug: string;
 
-  @ManyToOne( () => Post, ( post ) => post.slugsHistory )
+  @ManyToOne( () => Post, ( post ) => post.slugsHistory, { onDelete: 'CASCADE' } )
   post: Post;
 }

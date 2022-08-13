@@ -1,5 +1,4 @@
 import { BaseMinimalEntity } from "src/common/entities/base-minimal.entity";
-import { BaseEntity } from "src/common/entities/base.entity";
 import { Post } from "src/posts/entities/post.entity";
 import { User } from "src/users/entities/user.entity";
 import { Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany } from "typeorm";
@@ -38,7 +37,7 @@ export class Comment extends BaseMinimalEntity {
   @ManyToOne( () => Comment )
   parent?: Comment;
 
-  @ManyToOne( () => Post )
+  @ManyToOne( () => Post, { onDelete: 'CASCADE' } )
   post: Post;
 
   @ManyToOne( () => User )

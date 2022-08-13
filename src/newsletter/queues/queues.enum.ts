@@ -1,0 +1,4 @@
+export enum NewsletterQueues {
+  SUBSCRIPTION_EMAIL = "SUBSCRIPTION_EMAIL_QUEUE",
+  CAMPAIGN = "CAMPAIGN_QUEUE"
+}

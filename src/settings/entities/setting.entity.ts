@@ -16,5 +16,8 @@ export class Setting extends BaseMinimalEntity {
   service: SettingsServiceEnum;
 
   @ManyToOne( () => User )
+  createdBy?: User;
+
+  @ManyToOne( () => User )
   updatedBy?: User;
 }

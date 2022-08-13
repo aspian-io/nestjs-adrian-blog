@@ -1,6 +1,7 @@
 export enum CommonErrorsLocale {
   Not_Found = "common-errors.not-found",
   Bad_Request = "common-errors.bad-request",
+  TERMS_SERVICE = "common-errors.terms.service",
 
   // Class validator 
   VALIDATOR_IS_UUID = "common-errors.class-validator.is-uuid",
@@ -8,6 +9,8 @@ export enum CommonErrorsLocale {
   VALIDATOR_IS_NUMBER = "common-errors.class-validator.is-number",
   VALIDATOR_IS_NOT_EMPTY = "common-errors.class-validator.is-not-empty",
   VALIDATOR_IS_EMAIL = "common-errors.class-validator.is-email",
+  VALIDATOR_MIN = "common-errors.class-validator.min",
+  VALIDATOR_MAX = "common-errors.class-validator.max",
   VALIDATOR_MIN_LENGTH = "common-errors.class-validator.min-length",
   VALIDATOR_MAX_LENGTH = "common-errors.class-validator.max-length",
   VALIDATOR_WEAK_PASSWORD = "common-errors.class-validator.weak-password",

@@ -15,6 +15,6 @@ import { PostSlugsHistory } from './entities/post-slug.entity';
   ],
   controllers: [ PostsController ],
   providers: [ PostsService, ScheduledPostJobConsumer ],
-  exports: [ PostsService ]
+  exports: [ PostsService, TypeOrmModule ]
 } )
 export class PostsModule { }

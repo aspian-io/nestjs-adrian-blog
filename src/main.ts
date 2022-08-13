@@ -7,10 +7,17 @@ import { i18nValidationErrorFactory, I18nValidationExceptionFilter } from 'nestj
 import * as companion from '@uppy/companion';
 import { EnvEnum } from './env.enum';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap () {
   // Get Nest app
-  const app = await NestFactory.create( AppModule );
+  const app = await NestFactory.create<NestExpressApplication>( AppModule );
+  // Get config service
+  const config = app.get( ConfigService );
+  // In case of using reverse proxy
+  if ( config.getOrThrow( EnvEnum.TRUST_PROXY_ENABLE ) === "true" ) {
+    app.set( 'trust proxy', config.get( EnvEnum.TRUST_PROXY_IP ) );
+  }
   // CORS Config
   app.enableCors( {
     origin: "*",
@@ -28,8 +35,7 @@ async function bootstrap () {
     methods: [ 'get', 'post', 'put', 'patch', 'OPTIONS', 'delete', 'DELETE' ],
     optionsSuccessStatus: 200,
   } );
-  // Get config service
-  const config = app.get( ConfigService );
+
   // Use global filters and config
   app.useGlobalFilters( new I18nValidationExceptionFilter() );
   // Use global pipes and config
@@ -47,6 +53,7 @@ async function bootstrap () {
   SwaggerModule.setup( 'api', app, document );
   // Run the server
   const server = await app.listen( 3000 );
+
   // Uppy companion socket
   companion.socket( server );
 }

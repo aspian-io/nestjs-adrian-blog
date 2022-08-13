@@ -1,47 +1,27 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus, Get } from '@nestjs/common';
 import { EmailsService } from './emails.service';
-import { CreateEmailDto } from './dto/create-email.dto';
-import { UpdateEmailDto } from './dto/update-email.dto';
-import { getTestMessageUrl } from 'nodemailer';
+import { SendEmailDto } from './dto/send-email.dto';
+import { JwtAuthGuard } from 'src/users/guards/jwt.guard';
+import { RequirePermission } from 'src/users/decorators/require-permission.decorator';
+import { PermissionsEnum } from 'src/common/security/permissions.enum';
+import { EmailContactUsDto } from './dto/contact-us.dto';
+import { I18n, I18nContext } from 'nestjs-i18n';
 
 @Controller()
 export class EmailsController {
   constructor ( private readonly emailsService: EmailsService ) { }
 
+  @UseGuards( JwtAuthGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.EMAIL_SEND )
   @Post( 'admin/emails/send' )
-  async sendMail () {
-    const info = await this.emailsService.sendMail(
-      "admin@test.com",
-      "test@test.com",
-      "An email to test the service"
-    );
-
-    console.log( "TEST URL IS: ", getTestMessageUrl( info ) );
-    return info;
+  @HttpCode( HttpStatus.OK )
+  async sendMail ( @Body() sendEmailDto: SendEmailDto ) {
+    return this.emailsService.sendMail( sendEmailDto );
   }
 
-  @Post()
-  create ( @Body() createEmailDto: CreateEmailDto ) {
-    return this.emailsService.create( createEmailDto );
-  }
-
-  @Get()
-  findAll () {
-    return this.emailsService.findAll();
-  }
-
-  @Get( ':id' )
-  findOne ( @Param( 'id' ) id: string ) {
-    return this.emailsService.findOne( +id );
-  }
-
-  @Patch( ':id' )
-  update ( @Param( 'id' ) id: string, @Body() updateEmailDto: UpdateEmailDto ) {
-    return this.emailsService.update( +id, updateEmailDto );
-  }
-
-  @Delete( ':id' )
-  remove ( @Param( 'id' ) id: string ) {
-    return this.emailsService.remove( +id );
+  @Post( 'contact-us' )
+  @HttpCode( HttpStatus.OK )
+  contactUs ( @Body() dto: EmailContactUsDto, @I18n() i18n: I18nContext ) {
+    return this.emailsService.contactUs( dto, i18n );
   }
 }

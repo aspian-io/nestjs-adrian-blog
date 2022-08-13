@@ -1,6 +1,5 @@
 import { Controller, Get, Body, Patch, Param, Query, UseGuards, CacheTTL } from '@nestjs/common';
 import { SettingsService } from './settings.service';
-import { UpdateSettingDto } from './dto/update-setting.dto';
 import { I18n, I18nContext } from 'nestjs-i18n';
 import { IMetadataDecorator, Metadata } from 'src/common/decorators/metadata.decorator';
 import { JwtAuthGuard } from 'src/users/guards/jwt.guard';
@@ -9,6 +8,7 @@ import { RequirePermission } from 'src/users/decorators/require-permission.decor
 import { PermissionsEnum } from 'src/common/security/permissions.enum';
 import { SettingListQueryDto } from './dto/list-query.dto';
 import { SettingsKeyEnum } from './types/settings-key.enum';
+import { UpsertSettingDto } from './dto/upsert-setting.dto';
 
 @Controller( 'admin/settings' )
 @UseGuards( JwtAuthGuard, PermissionsGuard )
@@ -27,13 +27,12 @@ export class SettingsController {
     return this.settingsService.findOne( settingsKey, i18n );
   }
 
-  @Patch( ':settingsKey' )
+  @Patch( 'upsert' )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.SETTING_EDIT )
-  update (
-    @Param( 'settingsKey' ) settingsKey: SettingsKeyEnum,
-    @Body() updateSettingDto: UpdateSettingDto,
+  upsert (
+    @Body() upsertSettingDto: UpsertSettingDto,
     @I18n() i18n: I18nContext,
     @Metadata() metadata: IMetadataDecorator ) {
-    return this.settingsService.update( settingsKey, updateSettingDto, i18n, metadata );
+    return this.settingsService.upsert( upsertSettingDto, i18n, metadata );
   }
 }
