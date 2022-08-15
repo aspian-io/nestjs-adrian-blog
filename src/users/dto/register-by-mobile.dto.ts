@@ -4,7 +4,7 @@ import { CommonErrorsLocale } from "src/i18n/locale-keys/common/errors.locale";
 import { CreateUserDto } from "./create-user.dto";
 
 export class UserRegisterByMobileDto extends PickType( CreateUserDto, [ 'firstName', 'lastName', 'password' ] as const ) {
-  @IsMobilePhone( null, { message: CommonErrorsLocale.VALIDATOR_IS_MOBILE_PHONE } )
+  @IsMobilePhone( 'fa-IR', null, { message: CommonErrorsLocale.VALIDATOR_IS_MOBILE_PHONE } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   mobilePhone: string;
 

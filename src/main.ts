@@ -6,7 +6,6 @@ import { ConfigService } from '@nestjs/config';
 import { i18nValidationErrorFactory, I18nValidationExceptionFilter } from 'nestjs-i18n';
 import * as companion from '@uppy/companion';
 import { EnvEnum } from './env.enum';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap () {
@@ -42,15 +41,7 @@ async function bootstrap () {
   app.useGlobalPipes( new ValidationPipe( { exceptionFactory: i18nValidationErrorFactory, transform: true, whitelist: true } ) );
   // Use cookie parser
   app.use( cookieParser( config.get( EnvEnum.COOKIE_SECRET ) ) );
-  // Swagger and config
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle( 'Adrian Blog API' )
-    .setDescription( 'Adrian blog API description' )
-    .setVersion( '1.0' )
-    .addTag( 'cats' )
-    .build();
-  const document = SwaggerModule.createDocument( app, swaggerConfig );
-  SwaggerModule.setup( 'api', app, document );
+
   // Run the server
   const server = await app.listen( 3000 );
 

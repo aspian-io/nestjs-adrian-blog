@@ -1,9 +1,11 @@
-import { PickType } from "@nestjs/mapped-types";
-import { IsNotEmpty, IsNumber } from "class-validator";
+import { IsMobilePhone, IsNotEmpty, IsNumber } from "class-validator";
 import { CommonErrorsLocale } from "src/i18n/locale-keys/common/errors.locale";
-import { CreateUserDto } from "./create-user.dto";
 
-export class UserLoginByMobilePhoneDto extends PickType( CreateUserDto, [ 'mobilePhone' ] ) {
+export class UserLoginByMobilePhoneDto {
+  @IsMobilePhone( 'fa-IR', null, { message: CommonErrorsLocale.VALIDATOR_IS_MOBILE_PHONE } )
+  @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
+  mobilePhone: string;
+
   @IsNumber( {}, { message: CommonErrorsLocale.VALIDATOR_IS_NUMBER } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   token: number;

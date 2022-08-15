@@ -13,6 +13,7 @@ import { Claim } from './entities/claim.entity';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { UppyJwtStrategy } from './strategies/uppy.strategy';
 import { PostsModule } from 'src/posts/posts.module';
+import { AvatarEmptyValidator } from './validators/avatar-empty.validator';
 
 @Module( {
   imports: [
@@ -30,7 +31,8 @@ import { PostsModule } from 'src/posts/posts.module';
     RefreshTokenStrategy,
     JwtAuthGuard,
     RtAuthGuard,
-    PermissionsGuard
+    PermissionsGuard,
+    AvatarEmptyValidator
   ],
   exports: [ TypeOrmModule, UsersService ]
 } )

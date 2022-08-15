@@ -1,4 +1,5 @@
 import { Expose } from "class-transformer";
+import { GenderEnum } from "../entities/user.entity";
 
 export class LoginRegisterDto {
   @Expose()
@@ -8,7 +9,7 @@ export class LoginRegisterDto {
   email: string;
 
   @Expose()
-  gender: string;
+  gender: GenderEnum;
 
   @Expose()
   country?: string;

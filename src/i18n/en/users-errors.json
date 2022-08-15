@@ -1,16 +1,19 @@
 {
   "email-in-use": "Email is already in use",
   "incorrect-credentials": "Incorrect credentials",
-  "old-password-not-match": "Old password is incorrect",
+  "current-password-not-match": "Current password is incorrect",
   "duplicate-info": "User's data with duplicate language is not allowed",
   "mobile-phone-in-use": "Mobile phone is already in use",
   "meta-id": "User's meta information Id must be provided in case metadata needs to be changed",
   "user-suspended": "The user has been suspended",
-  "only-admin": "The only admin claim cannot be removed from the user. It is mandatory that one admin user to be existed for the system to remain functional.",
+  "only-admin": "The only admin claim cannot be removed. It is mandatory that one admin user to be existed for the system to remain functional.",
+  "admin-suspend": "Admin users cannot be suspended",
+  "no-avatar": "Please select a file as your avar before sending",
   "email-already-verified": "The email address has been already verified",
   "mobile-already-verified": "The mobile phone number has been already verified",
   "invalid-expired-token": "The code is invalid or expired",
   "mobile-is-empty": "Mobile phone number has not been entered",
   "phone-verification-code-limit": "New code cannot be generated until next {time} seconds",
-  "email-verification-code-limit": "New verification code cannot be generated until next {time} seconds"
+  "email-verification-code-limit": "New verification code cannot be generated until next {time} seconds",
+  "account-activation-by-email": "Please enter the activation token that has been sent to your email address to activate your user account"
 }

@@ -10,11 +10,6 @@ export enum PermissionsEnum {
   // SETTINGS
   SETTING_READ = "setting_r",
   SETTING_EDIT = "setting_w+",
-  // LANGS
-  LANG_READ = "lng_r",
-  LANG_CREATE = "lng_w",
-  LANG_EDIT = "lng_w+",
-  LANG_DELETE = "lng_d",
   // FILES
   FILE_READ = "file_r",
   FILE_CREATE = "file_w",

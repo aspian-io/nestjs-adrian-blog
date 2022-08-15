@@ -37,6 +37,8 @@ import { UserLoginByMobilePhoneDto } from './dto/login-by-mobile.dto';
 import { UserActivateEmailRegistrationDto } from './dto/activate-email-registration.dto';
 import { UserRegisterByMobileDto } from './dto/register-by-mobile.dto';
 import { UserActivateMobileRegistrationDto } from './dto/activate-mobile-registration.dto';
+import { LoginMethodsDto } from './dto/login-methods.dto';
+import { AvatarEmptyValidator } from './validators/avatar-empty.validator';
 
 @Controller()
 export class UsersController {
@@ -53,7 +55,7 @@ export class UsersController {
 
   // Get Login Methods
   @Get( 'users/login-methods' )
-  getLoginMethods () {
+  getLoginMethods (): Promise<LoginMethodsDto> {
     return this.usersService.getLoginMethods();
   }
 
@@ -238,6 +240,30 @@ export class UsersController {
     return this.usersService.update( i18n, metadata.user.id, body, metadata );
   }
 
+  // Update mobile phone number request
+  @Post( 'users/edit-mobile-phone-request' )
+  @UseGuards( JwtAuthGuard )
+  @Serialize( UserDto )
+  editMobilePhoneReq (
+    @Body() dto: UserMobilePhoneDto,
+    @I18n() i18n: I18nContext,
+    @Metadata() metadata: IMetadataDecorator
+  ) {
+    return this.usersService.updateMobilePhoneReq( dto.mobilePhone, i18n, metadata );
+  }
+
+  // Update mobile phone number request
+  @Patch( 'users/edit-mobile-phone' )
+  @UseGuards( JwtAuthGuard )
+  @Serialize( UserDto )
+  editMobilePhone (
+    @Body() dto: UsersVerificationTokenDto,
+    @I18n() i18n: I18nContext,
+    @Metadata() metadata: IMetadataDecorator
+  ) {
+    return this.usersService.updateMobilePhone( metadata.user.id, dto.token, i18n );
+  }
+
   // Edit Profile Avatar
   @Patch( 'users/profile/edit-avatar' )
   @UseGuards( JwtAuthGuard, UsersAvatarGuard )
@@ -393,6 +419,7 @@ export class UsersController {
   adminUpdateAvatar (
     @UploadedFile( new ParseFilePipe( {
       validators: [
+        new AvatarEmptyValidator(),
         new MaxFileSizeValidator( { maxSize: 1024 * 100 } ),
         new FileTypeValidator( { fileType: 'jpeg' } )
       ]

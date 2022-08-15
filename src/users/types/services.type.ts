@@ -1,11 +1,5 @@
 import { User } from "../entities/user.entity";
 
-export enum LoginMethods {
-  EMAIL_ONLY = "email_only",
-  MOBILE_ONLY = "mobile_only",
-  MOBILE_EMAIL = "mobile_email"
-}
-
 // Tokens Type
 export enum Tokens {
   ACCESS_TOKEN = 'AT',

@@ -1,6 +1,6 @@
 import { Expose, Type } from "class-transformer";
 import { PostDto } from "src/posts/dto/user/post.dto";
-import { GenderEnum } from "../entities/user.entity";
+import { AvatarSourceEnum, GenderEnum } from "../entities/user.entity";
 
 export class UserDto {
   @Expose()
@@ -53,6 +53,9 @@ export class UserDto {
 
   @Expose()
   postalCode: string;
+
+  @Expose()
+  avatarSource: AvatarSourceEnum;
 
   @Expose()
   avatar?: string;

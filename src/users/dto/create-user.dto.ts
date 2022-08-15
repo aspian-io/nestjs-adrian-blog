@@ -5,7 +5,6 @@ import { CommonErrorsLocale } from "src/i18n/locale-keys/common/errors.locale";
 import { GenderEnum } from "src/users/entities/user.entity";
 
 export class CreateUserDto {
-
   @IsEmail( {}, { message: CommonErrorsLocale.VALIDATOR_IS_EMAIL } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   email: string;
@@ -19,47 +18,47 @@ export class CreateUserDto {
   @IsDate( { message: CommonErrorsLocale.VALIDATOR_IS_DATE } )
   @Type( () => Date )
   @IsOptional()
-  birthDate: Date;
+  birthDate?: Date;
 
   @IsIn( Object.values( GenderEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN ) } )
   @IsOptional()
-  gender: GenderEnum;
+  gender?: GenderEnum;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @MinLength( 2, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
   @MaxLength( 30, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
   @IsOptional()
-  country: string;
+  country?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @MinLength( 2, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
   @MaxLength( 30, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
   @IsOptional()
-  state: string;
+  state?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @MinLength( 2, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
   @MaxLength( 30, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
   @IsOptional()
-  city: string;
+  city?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @MinLength( 10, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
   @MaxLength( 100, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
   @IsOptional()
-  address: string;
+  address?: string;
 
-  @IsPhoneNumber( null, { message: CommonErrorsLocale.VALIDATOR_IS_PHONE_NUMBER } )
+  @IsPhoneNumber( 'IR', { message: CommonErrorsLocale.VALIDATOR_IS_PHONE_NUMBER } )
   @IsOptional()
-  phone: string;
+  phone?: string;
 
-  @IsMobilePhone( null, null, { message: CommonErrorsLocale.VALIDATOR_IS_MOBILE_PHONE } )
+  @IsMobilePhone( 'fa-IR', null, { message: CommonErrorsLocale.VALIDATOR_IS_MOBILE_PHONE } )
   @IsOptional()
-  mobilePhone: string;
+  mobilePhone?: string;
 
   @IsPostalCode( 'any', { message: CommonErrorsLocale.VALIDATOR_IS_POSTAL_CODE } )
   @IsOptional()
-  postalCode: string;
+  postalCode?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @MinLength( 2, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
@@ -74,7 +73,7 @@ export class CreateUserDto {
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @MinLength( 5, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
   @IsOptional()
-  bio: string;
+  bio?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @MinLength( 5, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )

@@ -77,6 +77,9 @@ export class User extends BaseMinimalEntity {
   mobilePhone: string;
 
   @Column( { nullable: true } )
+  mobilePhoneTemp: string;
+
+  @Column( { nullable: true } )
   mobilePhoneVerificationToken?: number;
 
   @Column( { default: () => 'CURRENT_TIMESTAMP(6)' } )

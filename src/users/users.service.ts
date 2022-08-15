@@ -1,4 +1,4 @@
-import { BadRequestException, CACHE_MANAGER, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, CACHE_MANAGER, ForbiddenException, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IMetadataDecorator } from 'src/common/decorators/metadata.decorator';
 import { Between, In, IsNull, Not, Raw, Repository } from 'typeorm';
@@ -6,7 +6,7 @@ import { AvatarSourceEnum, User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { IServiceUserLoginResult, IServiceUserRefreshTokensResult, IServiceUserRegisterResult, LoginMethods } from './types/services.type';
+import { IServiceUserLoginResult, IServiceUserRefreshTokensResult, IServiceUserRegisterResult } from './types/services.type';
 import { I18nContext } from 'nestjs-i18n';
 import { UsersInfoLocale } from 'src/i18n/locale-keys/users/info.locale';
 import { NotFoundLocalizedException } from 'src/common/exceptions/not-found-localized.exception';
@@ -16,7 +16,7 @@ import { Claim } from './entities/claim.entity';
 import { Cache } from 'cache-manager';
 import { EnvEnum } from 'src/env.enum';
 import { FilterPaginationUtil, IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
-import { AdminUpdateUserDto, UserLoginDto, UsersListQueryDto, CreateUserDto, UsersVerificationTokenDto } from './dto';
+import { AdminUpdateUserDto, UserLoginDto, UsersListQueryDto, CreateUserDto } from './dto';
 import { UpdateUserClaimsDto } from './dto/update-claims.dto';
 import { InjectS3, S3 } from 'nestjs-s3';
 import * as path from 'path';
@@ -37,6 +37,7 @@ import { UserActivateEmailRegistrationDto } from './dto/activate-email-registrat
 import { CommonErrorsLocale } from 'src/i18n/locale-keys/common/errors.locale';
 import { UserActivateMobileRegistrationDto } from './dto/activate-mobile-registration.dto';
 import { UserRegisterByMobileDto } from './dto/register-by-mobile.dto';
+import { LoginMethodsDto } from './dto/login-methods.dto';
 
 @Injectable()
 export class UsersService {
@@ -54,7 +55,7 @@ export class UsersService {
   ) { }
 
   // Get login available Methods
-  async getLoginMethods () {
+  async getLoginMethods (): Promise<LoginMethodsDto> {
     const emailLogin = ( await this.settingsService.findOne( SettingsKeyEnum.USERS_LOGIN_BY_EMAIL ) ).value === "true";
     let mobileLogin = ( await this.settingsService.findOne( SettingsKeyEnum.USERS_LOGIN_BY_MOBILE_PHONE ) ).value === "true";
     const smsIsActive = this.configService.getOrThrow( EnvEnum.SMS_EQUIPPED ) === "true";
@@ -71,13 +72,21 @@ export class UsersService {
         claims: true,
       }
     } );
-    if ( !user ) throw new NotFoundException( i18n.t( UsersErrorsLocal.INCORRECT_CREDENTIALS ) );
+    if ( !user ) throw new UnauthorizedException( i18n.t( UsersErrorsLocal.INCORRECT_CREDENTIALS ) );
 
     const passwordMatch = await bcrypt.compare( userLoginDto.password, user.password );
-    if ( !passwordMatch ) throw new BadRequestException( i18n.t( UsersErrorsLocal.INCORRECT_CREDENTIALS ) );
+    if ( !passwordMatch ) throw new UnauthorizedException( i18n.t( UsersErrorsLocal.INCORRECT_CREDENTIALS ) );
 
     if ( user.suspend && user.suspend.getTime() > Date.now() ) {
       throw new ForbiddenException( i18n.t( UsersErrorsLocal.USER_SUSPENDED ) );
+    }
+
+    if ( !user.isActivated ) {
+      if ( user.emailVerificationTokenExpiresAt.getTime() > Date.now() ) {
+        throw new BadRequestException( i18n.t( UsersErrorsLocal.ACCOUNT_ACTIVATION_BY_EMAIL ) );
+      }
+      await this.verifyEmailReq( i18n, user.id );
+      throw new BadRequestException( i18n.t( UsersErrorsLocal.ACCOUNT_ACTIVATION_BY_EMAIL ) );
     }
 
     const accessToken = await this.generateAccessToken( user.id, user.email, user.claims.map( c => c.name ) );
@@ -138,7 +147,7 @@ export class UsersService {
         claims: true
       }
     } );
-    if ( !user ) throw new NotFoundLocalizedException( i18n, UsersInfoLocale.TERM_USER );
+    if ( !user ) throw new UnauthorizedException( i18n.t( UsersErrorsLocal.INCORRECT_CREDENTIALS ) );
     if ( user.mobilePhoneVerificationToken !== token || user.isMobilePhoneVerificationTokenExpired ) {
       throw new BadRequestException( i18n.t( UsersErrorsLocal.INVALID_EXPIRED_TOKEN ) );
     }
@@ -150,9 +159,10 @@ export class UsersService {
     if ( !user.mobilePhoneVerified || !user.isActivated ) {
       user.mobilePhoneVerified = true;
       user.isActivated = true;
-
-      await this.userRepository.save( user );
     }
+
+    user.mobilePhoneVerificationTokenExpiresAt = new Date( Date.now() - 24 * 60 * 60 * 1000 );
+    await this.userRepository.save( user );
 
     const accessToken = await this.generateAccessToken( user.id, user.email, user.claims.map( c => c.name ) );
     const refreshToken = await this.generateRefreshToken( user.id, user.email );
@@ -218,7 +228,10 @@ export class UsersService {
       where: { mobilePhone: dto.mobilePhone }
     } );
     if ( !user ) throw new NotFoundLocalizedException( i18n, UsersInfoLocale.TERM_USER );
-    if ( dto.token !== user.mobilePhoneVerificationToken ) {
+    if ( user.mobilePhoneVerified ) {
+      throw new BadRequestException( i18n.t( UsersErrorsLocal.MOBILE_ALREADY_VERIFIED ) );
+    }
+    if ( dto.token !== user.mobilePhoneVerificationToken || user.isMobilePhoneVerificationTokenExpired ) {
       throw new BadRequestException( i18n.t( UsersErrorsLocal.INVALID_EXPIRED_TOKEN ) );
     }
 
@@ -406,6 +419,13 @@ export class UsersService {
     return user;
   }
 
+  // Check if the user is Admin
+  async isUserAdmin ( id: string ) {
+    const adminClaim = await this.claimRepository.findOne( { where: { name: PermissionsEnum.ADMIN } } );
+    const isUserAdmin = await this.userRepository.findOne( { relations: { claims: true }, where: { id, claims: { id: adminClaim.id } } } );
+    return !!isUserAdmin;
+  }
+
   // Check to see if user is the only admin
   async isOnlyAdmin ( id: string ) {
     const adminClaim = await this.claimRepository.findOne( { where: { name: PermissionsEnum.ADMIN } } );
@@ -418,12 +438,18 @@ export class UsersService {
   async update ( i18n: I18nContext, id: string, userBody: AdminUpdateUserDto, logData: IMetadataDecorator ): Promise<User> {
 
     const user = await this.findOne( id, i18n );
+    // The only admin cannot be suspended
+    const isUserAdmin = await this.isUserAdmin( user.id );
+    if ( isUserAdmin && userBody.suspend.getTime() >= Date.now() ) {
+      throw new BadRequestException( i18n.t( UsersErrorsLocal.ADMIN_SUSPEND ) );
+    }
     // Check if new email address is in use
     if ( userBody.email && userBody.email !== user.email ) {
       const duplicateEmail = await this.userRepository.findOne( { where: { id: Not( id ), email: userBody.email } } );
       if ( duplicateEmail ) throw new BadRequestException( i18n.t( UsersErrorsLocal.EMAIL_IN_USE ) );
       user.emailVerified = false;
     }
+
     // Check if new mobile phone is in use
     if ( userBody.mobilePhone && userBody.mobilePhone !== user.mobilePhone ) {
       const duplicateMobilePhone = await this.userRepository.findOne( { where: { id: Not( id ), mobilePhone: userBody.mobilePhone } } );
@@ -440,6 +466,77 @@ export class UsersService {
 
     await this.cacheManager.reset();
     return this.userRepository.save( user );
+  }
+
+  // Update mobile phone number request
+  async updateMobilePhoneReq ( mobilePhone: string, i18n: I18nContext, metadata: IMetadataDecorator ) {
+    const user = await this.findOne( metadata.user.id, i18n );
+
+    if ( mobilePhone === user.mobilePhone ) return user;
+
+    const duplicate = await this.userRepository.findOne( {
+      where: {
+        id: Not( user.id ),
+        mobilePhone
+      }
+    } );
+    if ( duplicate ) throw new BadRequestException( i18n.t( UsersErrorsLocal.MOBILE_PHONE_IN_USE ) );
+
+    user.mobilePhoneTemp = mobilePhone;
+
+    if ( user.mobilePhoneVerificationTokenExpiresAt.getTime() > Date.now() ) {
+      const remainingTime = Math.trunc( ( user.mobilePhoneVerificationTokenExpiresAt.getTime() - Date.now() ) / 1000 );
+      throw new BadRequestException( i18n.t( UsersErrorsLocal.MOBILE_PHONE_VERIFICATION_CODE_LIMIT, { args: { time: remainingTime } } ) );
+    }
+
+    const expTimeInMins = +( await this.settingsService.findOne( SettingsKeyEnum.USERS_MOBILE_TOKEN_EXP_IN_MINS ) ).value ?? 2;
+
+    user.mobilePhoneVerificationToken = this.sixDigitTokenGenerator();
+    user.mobilePhoneVerificationTokenExpiresAt = new Date( Date.now() + ( expTimeInMins * 60_000 ) );
+
+    const result = await this.userRepository.save( user );
+    await this.cacheManager.reset();
+
+    const patternCode = ( await this.settingsService.findOne( SettingsKeyEnum.USERS_MOBILE_VERIFICATION_SMS_PATTERN_CODE ) ).value;
+    const defaultOriginator = ( await this.settingsService.findOne( SettingsKeyEnum.SMS_DEFAULT_ORIGINATOR ) ).value;
+    await this.smsService.sendByPattern(
+      i18n,
+      patternCode,
+      defaultOriginator,
+      user.mobilePhoneTemp,
+      {
+        name: user.firstName,
+        verificationCode: result.mobilePhoneVerificationToken
+      }
+    );
+
+    return result;
+  }
+
+  // Update mobile phone
+  async updateMobilePhone ( userId: string, token: number, i18n: I18nContext ) {
+    const user = await this.findOne( userId, i18n );
+    if ( user.mobilePhoneVerificationToken !== token || user.isMobilePhoneVerificationTokenExpired ) {
+      throw new BadRequestException( i18n.t( UsersErrorsLocal.INVALID_EXPIRED_TOKEN ) );
+    }
+
+    const duplicate = await this.userRepository.findOne( {
+      where: {
+        id: Not( user.id ),
+        mobilePhone: user.mobilePhoneTemp
+      }
+    } );
+    if ( duplicate ) throw new BadRequestException( i18n.t( UsersErrorsLocal.MOBILE_PHONE_IN_USE ) );
+
+    user.mobilePhoneVerified = true;
+    user.mobilePhoneVerificationTokenExpiresAt = new Date( Date.now() - 24 * 60 * 60 * 1000 );
+    user.isActivated = true;
+    user.mobilePhone = user.mobilePhoneTemp;
+    user.mobilePhoneTemp = null;
+    const result = await this.userRepository.save( user );
+    await this.cacheManager.reset();
+
+    return result;
   }
 
   // Email Verification Request
@@ -568,6 +665,7 @@ export class UsersService {
   // Edit Avatar
   async updateAvatar ( avatar: Express.Multer.File, i18n: I18nContext, metadata: IMetadataDecorator, userId?: string ): Promise<User> {
     const user = await this.findOne( userId ? userId : metadata.user.id, i18n );
+    if ( !avatar?.size ) throw new BadRequestException( i18n.t( UsersErrorsLocal.NO_AVATAR ) );
     if ( user?.avatar?.length && user.avatarSource !== AvatarSourceEnum.OAUTH2 ) {
       try {
         await this.s3.deleteObject( {
@@ -644,11 +742,11 @@ export class UsersService {
 
   // Change Password
   async changePassword ( id: string, changePasswordDto: UserChangePasswordDto, i18n: I18nContext ): Promise<User> {
-    const { oldPassword, password } = changePasswordDto;
+    const { currentPassword, password } = changePasswordDto;
     const user = await this.findOne( id, i18n );
     // Check old password
-    const passwordMatch = await bcrypt.compare( oldPassword, user.password );
-    if ( !passwordMatch ) throw new BadRequestException( i18n.t( UsersErrorsLocal.OLD_PASSWORD_NOT_MATCH ) );
+    const passwordMatch = await bcrypt.compare( currentPassword, user.password );
+    if ( !passwordMatch ) throw new BadRequestException( i18n.t( UsersErrorsLocal.CURRENT_PASSWORD_NOT_MATCH ) );
     // Hashing password
     const hash = await this.hash( password );
     user.password = hash;
