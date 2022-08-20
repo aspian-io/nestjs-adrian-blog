@@ -203,7 +203,7 @@ export class TaxonomiesService {
 
   // Recover a soft-removed taxonomy
   async recover ( id: string, i18n: I18nContext ): Promise<Taxonomy> {
-    const taxonomy = await this.findOne( id, i18n );
+    const taxonomy = await this.findOne( id, i18n, true );
 
     const result = await this.taxonomyRepository.recover( taxonomy );
     await this.cacheManager.reset();
@@ -213,7 +213,7 @@ export class TaxonomiesService {
 
   // Remove a taxonomy permanently
   async remove ( id: string, i18n: I18nContext ): Promise<Taxonomy> {
-    const taxonomy = await this.findOne( id, i18n );
+    const taxonomy = await this.findOne( id, i18n, true );
 
     const result = await this.taxonomyRepository.remove( taxonomy );
     await this.cacheManager.reset();

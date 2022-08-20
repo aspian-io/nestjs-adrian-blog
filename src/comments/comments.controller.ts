@@ -1,8 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, BadRequestException } from '@nestjs/common';
 import { I18n, I18nContext } from 'nestjs-i18n';
 import { IMetadataDecorator, Metadata } from 'src/common/decorators/metadata.decorator';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { PermissionsEnum } from 'src/common/security/permissions.enum';
+import { CommentsErrorsLocale } from 'src/i18n/locale-keys/comments/errors.locale';
+import { SettingsService } from 'src/settings/settings.service';
+import { SettingsKeyEnum } from 'src/settings/types/settings-key.enum';
 import { RequirePermission } from 'src/users/decorators/require-permission.decorator';
 import { JwtAuthGuard } from 'src/users/guards/jwt.guard';
 import { PermissionsGuard } from 'src/users/guards/require-permissions.guard';
@@ -17,17 +20,29 @@ import { Comment } from './entities/comment.entity';
 
 @Controller()
 export class CommentsController {
-  constructor ( private readonly commentsService: CommentsService ) { }
+  constructor (
+    private readonly commentsService: CommentsService,
+    private readonly settingsService: SettingsService
+  ) { }
 
   /**************************** USER REGION ***********************************/
 
   @UseGuards( JwtAuthGuard )
   @Post( 'comments' )
   @Serialize( UserCommentsDto )
-  create (
+  async create (
     @Body() createCommentDto: CreateCommentDto,
     @I18n() i18n: I18nContext,
     @Metadata() metadata: IMetadataDecorator ): Promise<Comment> {
+    const maxAllowedCommentLength = +( await this.settingsService.findOne( SettingsKeyEnum.COMMENT_MAX_LENGTH ) )?.value ?? 200;
+    if ( createCommentDto.content.length > maxAllowedCommentLength ) {
+      throw new BadRequestException(
+        i18n.t(
+          CommentsErrorsLocale.MAX_ALLOWED_LENGTH,
+          { args: { maxLength: maxAllowedCommentLength } }
+        )
+      );
+    }
     return this.commentsService.create( createCommentDto, i18n, metadata );
   }
 

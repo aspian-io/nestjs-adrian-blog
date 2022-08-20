@@ -24,6 +24,11 @@ export class SmsService {
     );
   }
 
+  // Is System SMS Equipped
+  isSMSEquipped (): boolean {
+    return this.configService.getOrThrow( EnvEnum.SMS_EQUIPPED ) === "true";
+  }
+
   // Get originators
   getOriginators (): string[] {
     return this.smsOriginators;

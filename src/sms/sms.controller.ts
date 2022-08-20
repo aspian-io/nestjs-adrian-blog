@@ -14,6 +14,11 @@ import { SmsService } from './sms.service';
 export class SmsController {
   constructor ( private readonly smsService: SmsService ) { }
 
+  @Get( 'sms/is-sms-equipped' )
+  isSMSEquipped (): boolean {
+    return this.smsService.isSMSEquipped();
+  }
+
   @Get( 'admin/sms/get-originators' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.SMS_READ )

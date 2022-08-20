@@ -9,8 +9,8 @@ export class Setting extends BaseMinimalEntity {
   @Column()
   key: SettingsKeyEnum;
 
-  @Column()
-  value: string;
+  @Column( { nullable: true } )
+  value?: string;
 
   @Column()
   service: SettingsServiceEnum;

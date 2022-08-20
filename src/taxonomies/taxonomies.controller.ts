@@ -100,6 +100,13 @@ export class TaxonomiesController {
     return this.taxonomiesService.findAll( query, TaxonomyTypeEnum.MENU );
   }
 
+  @Get( 'admin/taxonomies/menu-items' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_READ )
+  adminFindAllMenuItems ( @Query() query: TaxonomiesListQueryDto ): Promise<IListResultGenerator<Taxonomy>> {
+    return this.taxonomiesService.findAll( query, TaxonomyTypeEnum.MENU_ITEM );
+  }
+
   @Get( 'admin/taxonomies/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_READ )

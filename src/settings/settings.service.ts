@@ -50,14 +50,16 @@ export class SettingsService {
 
   // Upsert a setting
   async upsert ( upsertSettingDto: UpsertSettingDto, i18n: I18nContext, metadata: IMetadataDecorator ) {
-    if ( upsertSettingDto.id ) {
+    const foundSettingByKey = await this.repo.findOne( { where: { key: upsertSettingDto.key } } );
+    if ( upsertSettingDto?.id || foundSettingByKey ) {
       const setting = await this.repo.findOne( {
         where: { id: upsertSettingDto.id }
       } );
+      if ( !setting ) throw new NotFoundLocalizedException( i18n, SettingsInfoLocale.TERM_SETTING );
       if ( setting && setting.key !== upsertSettingDto.key ) {
         throw new BadRequestException( i18n.t( SettingsErrorsLocal.ID_KEY_NOT_MATCH ) );
       }
-
+      console.log( upsertSettingDto );
       setting.value = upsertSettingDto.value;
       setting.updatedBy = { id: metadata.user.id } as User;
       setting.ipAddress = metadata.ipAddress;
@@ -66,6 +68,7 @@ export class SettingsService {
       await this.cacheManager.reset();
       return updateResult;
     }
+
     const settingObj = this.repo.create( {
       key: upsertSettingDto.key,
       value: upsertSettingDto.value,

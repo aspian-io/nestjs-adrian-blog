@@ -1,3 +1,4 @@
 {
-  "reply-not-allowed": "Reply is not allowed in this level"
+  "reply-not-allowed": "Reply is not allowed in this level",
+  "max-allowed-length": "Maximum allowed length of the comment is {maxLength}"
 }

@@ -107,24 +107,6 @@ export const settingsData = ( configService: ConfigService ) => [
     service: SettingsServiceEnum.SMS,
     userAgent: "SYSTEM"
   },
-  {
-    key: SettingsKeyEnum.SMS_ORIGINATORS,
-    value: configService.get( EnvEnum.SMS_ORIGINATORS ),
-    service: SettingsServiceEnum.SMS,
-    userAgent: "SYSTEM"
-  },
-  {
-    key: SettingsKeyEnum.SMS_BIRTHDAY_CONGRATS,
-    value: "false",
-    service: SettingsServiceEnum.SMS,
-    userAgent: "SYSTEM"
-  },
-  {
-    key: SettingsKeyEnum.SMS_BIRTHDAY_CONGRATS_TIME,
-    value: "12",
-    service: SettingsServiceEnum.SMS,
-    userAgent: "SYSTEM"
-  },
 
   {
     key: SettingsKeyEnum.COMMENT_IS_APPROVED,
@@ -145,9 +127,9 @@ export const settingsData = ( configService: ConfigService ) => [
     userAgent: "SYSTEM"
   },
   {
-    key: SettingsKeyEnum.FILE_URL_EXP_HOURS,
-    value: "24",
-    service: SettingsServiceEnum.FILES,
+    key: SettingsKeyEnum.COMMENT_MAX_LENGTH,
+    value: "200",
+    service: SettingsServiceEnum.COMMENTS,
     userAgent: "SYSTEM"
   },
   {
