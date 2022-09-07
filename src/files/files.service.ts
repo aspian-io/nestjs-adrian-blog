@@ -27,6 +27,7 @@ import { sanitize } from 'string-sanitizer';
 import { S3 as S3Type } from "aws-sdk";
 import { EnvEnum } from 'src/env.enum';
 import { FilterPaginationUtil, IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
+import { FilesErrorsLocale } from 'src/i18n/locale-keys/files/errors.locale';
 
 @Injectable()
 export class FilesService {
@@ -42,10 +43,11 @@ export class FilesService {
   // Create new record of uploaded file information in database
   async create ( createFileDto: CreateFileDto, i18n: I18nContext, metadata: IMetadataDecorator ) {
     const duplicate = await this.fileRepository.findOne( { where: { key: createFileDto.key } } );
-    if ( duplicate ) { return duplicate; }
+    if ( duplicate ) {
+      throw new BadRequestException( i18n.t( FilesErrorsLocale.DUPLICATE_FILE ) );
+    }
 
     let status = this.isFileTypeAllowed( createFileDto.type, [ 'image/*' ] )
-      && ( !createFileDto.imageSizeCategory || createFileDto.imageSizeCategory === ImageSizeCategories.ORIGINAL )
       ? FileStatus.IN_PROGRESS
       : FileStatus.READY;
 
@@ -53,13 +55,13 @@ export class FilesService {
       status = FileStatus.READY;
     }
 
-    const imageSizeCategory = status === FileStatus.IN_PROGRESS ? ImageSizeCategories.ORIGINAL : createFileDto.imageSizeCategory;
+    const imageSizeCategory = this.isFileTypeAllowed( createFileDto.type, [ 'image/*' ] )
+      ? ImageSizeCategories.ORIGINAL : null;
 
     const file = this.fileRepository.create( {
       ...createFileDto,
       imageSizeCategory,
       status,
-      originalImage: { id: createFileDto.originalImage },
       ipAddress: metadata.ipAddress,
       userAgent: metadata.userAgent
     } );
@@ -355,7 +357,9 @@ export class FilesService {
     let isWatermarkedEnabled = ( await this.settingsService.findOne( SettingsKeyEnum.FILE_WATERMARK_ACTIVE ) ).value === "true";
     const watermarkImageId = ( await this.settingsService.findOne( SettingsKeyEnum.FILE_WATERMARK_IMAGE_ID ) ).value;
     // Get watermark file info from database
-    const watermarkImage = await this.fileRepository.findOne( { where: { id: watermarkImageId } } );
+    const watermarkImage = isWatermarkedEnabled && watermarkImageId
+      ? await this.fileRepository.findOne( { where: { id: watermarkImageId } } )
+      : null;
     if ( !watermarkImage ) isWatermarkedEnabled = false;
 
     // Get image file from S3 storage

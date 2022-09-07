@@ -47,10 +47,6 @@ export class UpdatePostDto {
   @IsOptional()
   attachmentsIds?: string[];
 
-  @IsUUID( 'all', { message: CommonErrorsLocale.VALIDATOR_IS_UUID } )
-  @IsOptional()
-  id?: string;
-
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   title: string;

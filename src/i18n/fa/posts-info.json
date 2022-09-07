@@ -1,6 +1,7 @@
 {
   "terms": {
     "post": "پست",
+    "parent-post": "پست والد",
     "post-old-slug": "نامک قدیمی پست"
   }
 }

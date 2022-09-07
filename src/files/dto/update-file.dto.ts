@@ -4,7 +4,7 @@ import { CommonErrorsLocale } from 'src/i18n/locale-keys/common/errors.locale';
 import { FilePolicyEnum, FileSectionEnum } from '../entities/file.entity';
 
 export class UpdateFileDto {
-  @IsIn( Object.values( FilePolicyEnum ) )
+  @IsIn( Object.values( FilePolicyEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN ) } )
   @IsOptional()
   policy: FilePolicyEnum;
 

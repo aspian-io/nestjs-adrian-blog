@@ -168,20 +168,6 @@ export class PostsController {
     return this.postsService.findAll( query, PostTypeEnum.PAGE );
   }
 
-  @Get( 'admin/posts/sms-birthday-templates' )
-  @UseGuards( JwtAuthGuard, PermissionsGuard )
-  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
-  adminFindAllSMSBirthdayTemplates ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
-    return this.postsService.findAll( query, PostTypeEnum.SMS_BIRTHDAY_TEMPLATE );
-  }
-
-  @Get( 'admin/posts/sms-templates' )
-  @UseGuards( JwtAuthGuard, PermissionsGuard )
-  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
-  adminFindAllSMSTemplates ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
-    return this.postsService.findAll( query, PostTypeEnum.SMS_TEMPLATE );
-  }
-
   @Get( 'admin/posts/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )

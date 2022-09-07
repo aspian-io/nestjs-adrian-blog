@@ -12,7 +12,7 @@ import { PostsErrorsLocale } from 'src/i18n/locale-keys/posts/errors.locale';
 import { PostsInfoLocale } from 'src/i18n/locale-keys/posts/info.locale';
 import { Taxonomy, TaxonomyTypeEnum } from 'src/taxonomies/entities/taxonomy.entity';
 import { User } from 'src/users/entities/user.entity';
-import { Between, FindOptionsOrder, FindOptionsWhere, In, MoreThanOrEqual, Not, Repository } from 'typeorm';
+import { Between, FindOptionsOrder, FindOptionsWhere, In, IsNull, MoreThanOrEqual, Not, Repository } from 'typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
 import { PostsQueryListDto } from './dto/post-query-list.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -38,20 +38,26 @@ export class PostsService {
   async create ( createPostDto: CreatePostDto, i18n: I18nContext, metadata: IMetadataDecorator ): Promise<Post> {
     // Check for slug duplication
     const duplicatePost = await this.postRepository.findOne( {
-      relations: {
-        slugsHistory: true
-      },
-      where: {
-        slug: createPostDto.slug,
-        slugsHistory: { slug: createPostDto.slug }
-      }
+      where: { slug: createPostDto.slug, type: createPostDto.type },
+    } );
+    const duplicateSlugHistory = await this.postSlugsHistoryRepository.findOne( {
+      relations: { post: true },
+      where: { slug: createPostDto.slug, post: { type: createPostDto.type } }
     } );
     // Throw slug duplication error
-    if ( duplicatePost ) throw new BadRequestException( i18n.t( PostsErrorsLocale.DUPLICATE_POST_SLUG ) );
+    if ( duplicatePost || duplicateSlugHistory ) throw new BadRequestException( i18n.t( PostsErrorsLocale.DUPLICATE_POST_SLUG ) );
+
+    let postStatus = createPostDto?.scheduledToPublish ? PostStatusEnum.FUTURE : createPostDto.status;
+
+    if ( createPostDto.parentId ) {
+      const parent = await this.postRepository.findOne( { where: { id: createPostDto.parentId } } );
+      if ( !parent ) throw new NotFoundLocalizedException( i18n, PostsInfoLocale.TERM_PARENT_POST );
+      postStatus = parent.status;
+    }
     const post = this.postRepository.create( {
       ...createPostDto,
       featuredImage: { id: createPostDto?.featuredImageId },
-      status: createPostDto?.scheduledToPublish ? PostStatusEnum.FUTURE : createPostDto.status,
+      status: postStatus,
       parent: { id: createPostDto?.parentId },
       taxonomies: [ ...new Set( createPostDto.taxonomiesIds ) ].map( tid => ( { id: tid } ) ),
       attachments: [ ...new Set( createPostDto.attachmentsIds ) ].map( aid => ( { id: aid } ) ),
@@ -289,19 +295,17 @@ export class PostsService {
 
     // Check for slug duplication
     const duplicatePost = await this.postRepository.findOne( {
-      relations: {
-        slugsHistory: true
-      },
       where: {
         id: Not( post.id ),
-        slug: updatePostDto.slug,
-        slugsHistory: {
-          slug: updatePostDto.slug
-        }
+        slug: updatePostDto.slug
       }
     } );
+    const duplicateSlugHistory = await this.postSlugsHistoryRepository.findOne( {
+      relations: { post: true },
+      where: { slug: updatePostDto.slug, post: { id: Not( post.id ), type: post.type } }
+    } );
     // Throw slug duplication error
-    if ( duplicatePost ) throw new BadRequestException( i18n.t( PostsErrorsLocale.DUPLICATE_POST_SLUG ) );
+    if ( duplicatePost || duplicateSlugHistory ) throw new BadRequestException( i18n.t( PostsErrorsLocale.DUPLICATE_POST_SLUG ) );
 
     // Store old slugs for redirection
     if ( updatePostDto.slug != post.slug && updatePostDto.storeOldSlugToRedirect ) {
@@ -326,9 +330,14 @@ export class PostsService {
       ? updatePostDto?.attachmentsIds.map( aid => ( { id: aid } ) ) as File[]
       : [];
 
-    updatePostDto?.parentId
-      ? post.parent = { id: updatePostDto?.parentId } as Post
-      : null;
+    if (updatePostDto?.scheduledToPublish ) post.status = PostStatusEnum.FUTURE;
+
+    if ( updatePostDto?.parentId ) {
+      const parent = await this.postRepository.findOne( { where: { id: updatePostDto.parentId } } );
+      if ( !parent ) throw new NotFoundLocalizedException( i18n, PostsInfoLocale.TERM_PARENT_POST );
+      post.parent = parent;
+      post.status = parent.status;
+    }
 
     post.updatedBy = { id: metadata?.user?.id } as User;
     post.ipAddress = metadata.ipAddress;
@@ -336,6 +345,8 @@ export class PostsService {
 
     const result = await this.postRepository.save( post );
     await this.cacheManager.reset();
+    // Add scheduled post jobs to queue
+    await this.addScheduledPostJobToQueue( result );
 
     return result;
   }
