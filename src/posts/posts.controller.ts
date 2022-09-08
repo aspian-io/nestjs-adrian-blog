@@ -28,7 +28,7 @@ export class PostsController {
   @Get( '/posts/blogs' )
   @Serialize( PostListDto )
   blogsList ( @Query() query: UserBlogsListDto ) {
-    return this.postsService.findAll( query, PostTypeEnum.BLOG );
+    return this.postsService.findAll( query, PostTypeEnum.BLOG, false );
   }
 
   @Get( '/posts/blogs/:slug' )
@@ -37,7 +37,7 @@ export class PostsController {
     @Res( { passthrough: true } ) res: Response,
     @Param( 'slug' ) slug: string,
     @I18n() i18n: I18nContext ) {
-    const result = await this.postsService.findBySlug( slug, i18n, PostTypeEnum.BLOG );
+    const result = await this.postsService.findBySlug( slug, i18n, PostTypeEnum.BLOG, false );
     if ( result?.redirect?.status === 301 ) {
       res.status( 301 );
       return result.post;
@@ -48,7 +48,7 @@ export class PostsController {
   @Get( '/posts/pages' )
   @Serialize( PostListDto )
   pagesList ( @Query() query: UserBlogsListDto ) {
-    return this.postsService.findAll( query, PostTypeEnum.PAGE );
+    return this.postsService.findAll( query, PostTypeEnum.PAGE, false );
   }
 
   @Get( '/posts/pages/:slug' )
@@ -57,7 +57,7 @@ export class PostsController {
     @Res( { passthrough: true } ) res: Response,
     @Param( 'slug' ) slug: string,
     @I18n() i18n: I18nContext ) {
-    const result = await this.postsService.findBySlug( slug, i18n, PostTypeEnum.PAGE );
+    const result = await this.postsService.findBySlug( slug, i18n, PostTypeEnum.PAGE, false );
     if ( result?.redirect?.status === 301 ) {
       res.status( 301 );
       return result.post;
@@ -68,7 +68,7 @@ export class PostsController {
   @Get( '/posts/news' )
   @Serialize( PostListDto )
   newsList ( @Query() query: UserBlogsListDto ) {
-    return this.postsService.findAll( query, PostTypeEnum.NEWS );
+    return this.postsService.findAll( query, PostTypeEnum.NEWS, false );
   }
 
   @Get( '/posts/news/:slug' )
@@ -77,7 +77,7 @@ export class PostsController {
     @Res( { passthrough: true } ) res: Response,
     @Param( 'slug' ) slug: string,
     @I18n() i18n: I18nContext ) {
-    const result = await this.postsService.findBySlug( slug, i18n, PostTypeEnum.NEWS );
+    const result = await this.postsService.findBySlug( slug, i18n, PostTypeEnum.NEWS, false );
     if ( result?.redirect?.status === 301 ) {
       res.status( 301 );
       return result.post;

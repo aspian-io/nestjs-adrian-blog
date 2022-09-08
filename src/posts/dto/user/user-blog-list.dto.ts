@@ -7,15 +7,7 @@ type OrderType = 'ASC' | 'DESC';
 export class UserBlogsListDto {
   @Transform( ( { value } ) => QueryStringUtil.extractSearchString( value ) )
   @IsOptional()
-  "searchBy.title"?: string;
-
-  @Transform( ( { value } ) => QueryStringUtil.extractSearchString( value ) )
-  @IsOptional()
-  "searchBy.subtitle"?: string;
-
-  @Transform( ( { value } ) => QueryStringUtil.extractSearchString( value ) )
-  @IsOptional()
-  "searchBy.content"?: string;
+  search?: string;
 
   @Transform( ( { value } ) => QueryStringUtil.trim( value ) )
   @IsOptional()

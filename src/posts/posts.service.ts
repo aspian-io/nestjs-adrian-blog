@@ -19,7 +19,7 @@ import { UpdatePostDto } from './dto/update-post.dto';
 import { BookmarksListQueryDto } from './dto/user/bookmarks-list-query.dto';
 import { UserBlogsListDto } from './dto/user/user-blog-list.dto';
 import { PostSlugsHistory } from './entities/post-slug.entity';
-import { Post, PostStatusEnum, PostTypeEnum } from './entities/post.entity';
+import { Post, PostStatusEnum, PostTypeEnum, PostVisibilityEnum } from './entities/post.entity';
 import { IScheduledPostPayload } from './queues/consumers/scheduled-post.consumer';
 import { PostJobs } from './queues/jobs.enum';
 import { PostQueues } from './queues/queues.enum';
@@ -79,13 +79,17 @@ export class PostsService {
   }
 
   // Find and filter and paginate posts
-  async findAll ( query: PostsQueryListDto | UserBlogsListDto, type: PostTypeEnum ): Promise<IListResultGenerator<Post>> {
+  async findAll ( query: PostsQueryListDto & UserBlogsListDto, type: PostTypeEnum, admin: boolean = true ): Promise<IListResultGenerator<Post>> {
     const { page, limit } = query;
     const { skip, take } = FilterPaginationUtil.takeSkipGenerator( limit, page );
-    const taxonomyFilterType = query[ 'filterBy' ];
-    // TypeORM where object
+
+    // TypeORM where object for admin
     const where: FindOptionsWhere<Post> | FindOptionsWhere<Post>[] = {
       type,
+      title: query[ 'searchBy.title' ],
+      subtitle: query[ 'searchBy.subtitle' ],
+      content: query[ 'searchBy.content' ],
+      slug: query[ 'searchBy.slug' ],
       taxonomies: [
         query[ 'filterBy.category' ] && { type: TaxonomyTypeEnum.CATEGORY, term: query[ 'filterBy.category' ] },
         query[ 'filterBy.tag' ] && { type: TaxonomyTypeEnum.TAG, term: query[ 'filterBy.tag' ] },
@@ -162,7 +166,7 @@ export class PostsService {
       ];
     }
 
-    // TypeORM order object
+    // TypeORM order object for admin
     const order: FindOptionsOrder<Post> = {
       viewCount: query[ 'orderBy.viewCount' ],
       likesNum: query[ 'orderBy.likesNum' ],
@@ -175,6 +179,48 @@ export class PostsService {
       subtitle: query[ 'orderBy.subtitle' ],
     };
 
+    // TypeORM where array for user (no admin)
+    const notAdminWhere: FindOptionsWhere<Post> | FindOptionsWhere<Post>[] = [
+      {
+        type,
+        title: query?.search,
+        visibility: PostVisibilityEnum.PUBLIC,
+        status: PostStatusEnum.PUBLISH,
+        taxonomies: [
+          query[ 'filterBy.category' ] && { type: TaxonomyTypeEnum.CATEGORY, term: query[ 'filterBy.category' ] },
+          query[ 'filterBy.tag' ] && { type: TaxonomyTypeEnum.TAG, term: query[ 'filterBy.tag' ] },
+        ]
+      },
+      {
+        type,
+        subtitle: query?.search,
+        visibility: PostVisibilityEnum.PUBLIC,
+        status: PostStatusEnum.PUBLISH,
+        taxonomies: [
+          query[ 'filterBy.category' ] && { type: TaxonomyTypeEnum.CATEGORY, term: query[ 'filterBy.category' ] },
+          query[ 'filterBy.tag' ] && { type: TaxonomyTypeEnum.TAG, term: query[ 'filterBy.tag' ] },
+        ]
+      },
+      {
+        type,
+        content: query?.search,
+        visibility: PostVisibilityEnum.PUBLIC,
+        status: PostStatusEnum.PUBLISH,
+        taxonomies: [
+          query[ 'filterBy.category' ] && { type: TaxonomyTypeEnum.CATEGORY, term: query[ 'filterBy.category' ] },
+          query[ 'filterBy.tag' ] && { type: TaxonomyTypeEnum.TAG, term: query[ 'filterBy.tag' ] },
+        ]
+      }
+    ];
+
+    // TypeORM order object for user (no admin)
+    const notAdminOrder: FindOptionsOrder<Post> = {
+      viewCount: query[ 'orderBy.viewCount' ],
+      likesNum: query[ 'orderBy.likesNum' ],
+      bookmarksNum: query[ 'orderBy.bookmarksNum' ],
+      createdAt: query[ 'orderBy.createdAt' ],
+    };
+
     // Get the result from database
     const [ items, totalItems ] = await this.postRepository.findAndCount( {
       relations: {
@@ -185,8 +231,8 @@ export class PostsService {
         parent: true,
         taxonomies: true
       },
-      where,
-      order,
+      where: admin ? where : notAdminWhere,
+      order: admin ? order : notAdminOrder,
       take,
       skip
     } );
@@ -244,7 +290,19 @@ export class PostsService {
   }
 
   // Find a post by slug
-  async findBySlug ( slug: string, i18n: I18nContext, type?: PostTypeEnum ): Promise<IPostReturnFindBySlug> {
+  async findBySlug ( slug: string, i18n: I18nContext, type?: PostTypeEnum, admin: boolean = true ): Promise<IPostReturnFindBySlug> {
+    const where: FindOptionsWhere<Post> = {
+      slug,
+      type
+    };
+
+    const notAdminWhere: FindOptionsWhere<Post> = {
+      status: PostStatusEnum.PUBLISH,
+      visibility: PostVisibilityEnum.PUBLIC,
+      slug,
+      type
+    };
+
     const post = await this.postRepository.findOne( {
       relations: {
         featuredImage: true,
@@ -256,13 +314,22 @@ export class PostsService {
         updatedBy: true,
         slugsHistory: true
       },
-      where: {
-        slug,
-        type
-      }
+      where: admin ? where : notAdminWhere
     } );
 
     if ( !post ) {
+      const where: FindOptionsWhere<Post> = {
+        slugsHistory: { slug },
+        type
+      };
+
+      const notAdminWhere: FindOptionsWhere<Post> = {
+        status: PostStatusEnum.PUBLISH,
+        visibility: PostVisibilityEnum.PUBLIC,
+        slugsHistory: { slug },
+        type
+      };
+
       const postWithOldSlug = await this.postRepository.findOne( {
         relations: {
           featuredImage: true,
@@ -274,10 +341,7 @@ export class PostsService {
           updatedBy: true,
           slugsHistory: true
         },
-        where: {
-          slugsHistory: { slug },
-          type
-        }
+        where: admin ? where : notAdminWhere
       } );
       if ( !postWithOldSlug ) throw new NotFoundLocalizedException( i18n, PostsInfoLocale.TERM_POST );
 
@@ -330,7 +394,7 @@ export class PostsService {
       ? updatePostDto?.attachmentsIds.map( aid => ( { id: aid } ) ) as File[]
       : [];
 
-    if (updatePostDto?.scheduledToPublish ) post.status = PostStatusEnum.FUTURE;
+    if ( updatePostDto?.scheduledToPublish ) post.status = PostStatusEnum.FUTURE;
 
     if ( updatePostDto?.parentId ) {
       const parent = await this.postRepository.findOne( { where: { id: updatePostDto.parentId } } );
