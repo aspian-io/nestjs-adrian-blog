@@ -1,5 +1,6 @@
 import { Transform } from "class-transformer";
 import { IsIn, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { i18nValidationMessage } from "nestjs-i18n";
 import { QueryStringUtil } from "src/common/utils/query-string.utils";
 import { CommonErrorsLocale } from "src/i18n/locale-keys/common/errors.locale";
 
@@ -34,7 +35,7 @@ export class SendEmailDto {
   @IsOptional()
   replyTo?: string;
 
-  @IsIn( Object.values( EmailPriorityEnum ) )
+  @IsIn( Object.values( EmailPriorityEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN ) } )
   @IsOptional()
   priority?: EmailPriorityEnum = EmailPriorityEnum.NORMAL;
 

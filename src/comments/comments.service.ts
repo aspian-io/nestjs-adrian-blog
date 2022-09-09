@@ -20,12 +20,14 @@ import { PermissionsEnum } from 'src/common/security/permissions.enum';
 import { User } from 'src/users/entities/user.entity';
 import { CommentQueryListDto } from './dto/comment-query-list.dto';
 import { FilterPaginationUtil, IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
+import { PostsService } from 'src/posts/posts.service';
 
 @Injectable()
 export class CommentsService {
   constructor (
     @InjectRepository( Comment ) private readonly commentRepository: Repository<Comment>,
     @Inject( CACHE_MANAGER ) private readonly cacheManager: Cache,
+    private readonly postsService: PostsService,
     private readonly settingsService: SettingsService,
     private readonly configService: ConfigService
   ) { }
@@ -44,6 +46,8 @@ export class CommentsService {
     } = await this.commentSanitizer( createCommentDto.title, createCommentDto.content );
 
     const isAdmin = metadata.user.claims.some( c => c.name === PermissionsEnum.ADMIN || c.name === PermissionsEnum.COMMENT_CREATE );
+
+    const post = await this.postsService.findOne( createCommentDto.postId, i18n );
 
     const parentComment = createCommentDto?.parentId
       ? await this.findOne( createCommentDto.parentId, i18n )
@@ -65,7 +69,7 @@ export class CommentsService {
       isApproved: isAdmin ? true : isApproved,
       replyLevel: currentReplyLevel,
       isReplyAllowed: isReplyAllowedForCurrentComment,
-      post: { id: createCommentDto.postId },
+      post,
       createdBy: { id: metadata.user.id },
       ipAddress: metadata.ipAddress,
       userAgent: metadata.userAgent

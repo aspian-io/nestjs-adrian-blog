@@ -35,7 +35,7 @@ export class FarazSMSHelper {
       const { data } = await this.httpService.axiosRef.post( this.restEndPoint, dataToSend );
       return { credit: Math.trunc( data[ 1 ] ) };
     } catch ( error ) {
-      console.log( `Something went wrong getting SMS credit` );
+      console.log( `Something went wrong getting SMS credit`, error );
       throw new BadRequestException( i18n.t( SMSErrorsLocale.GET_CREDIT ) );
     }
   }
@@ -135,13 +135,17 @@ export class FarazSMSHelper {
     try {
       const { data } = await this.httpService.axiosRef.post<IFarazSMSAddNumberResult>( this.restEndPoint, dataToSend );
       if ( data.status.code !== 0 ) {
+        if ( data.status.code === 101 ) {
+          console.log( `Something went wrong adding the phone number '${ lineNumber }' to Faraz SMS phone book '${ phoneBookId }'. The number is duplicated (error status code 101)` );
+          throw new BadRequestException( i18n.t( SMSErrorsLocale.DUPLICATE_NUMBER ) );
+        }
         console.log( `Something went wrong adding the phone number '${ lineNumber }' to Faraz SMS phone book '${ phoneBookId }'` );
         throw new BadRequestException( i18n.t( SMSErrorsLocale.ADD_NUMBER_TO_PHONE_BOOK ) );
       }
       return data;
     } catch ( error ) {
-      console.log( `Something went wrong adding the phone number '${ lineNumber }' to Faraz SMS phone book '${ phoneBookId }'` );
-      throw new BadRequestException( i18n.t( SMSErrorsLocale.ADD_NUMBER_TO_PHONE_BOOK ) );
+      console.log( `Something went wrong adding the phone number '${ lineNumber }' to Faraz SMS phone book '${ phoneBookId }'`, error );
+      throw new BadRequestException( error.message );
     }
   }
 }

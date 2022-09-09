@@ -3,5 +3,6 @@
   "send-sms": "Something went wrong sending the SMS",
   "send-pattern-sms": "Something went wrong sending the patterned SMS",
   "get-phone-books-list": "Something went wrong getting phone books list",
-  "add-number-to-phone-book": "Something went wrong adding the phone number to the phone book"
+  "add-number-to-phone-book": "Something went wrong adding the phone number to the phone book",
+  "duplicate-number": "The number is duplicated"
 }

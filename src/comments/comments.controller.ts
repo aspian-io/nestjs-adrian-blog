@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, BadRequestException, Query } from '@nestjs/common';
 import { I18n, I18nContext } from 'nestjs-i18n';
 import { IMetadataDecorator, Metadata } from 'src/common/decorators/metadata.decorator';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
@@ -49,27 +49,27 @@ export class CommentsController {
   @UseGuards( JwtAuthGuard )
   @Post( 'comments/:id/like' )
   @Serialize( UserCommentsDto )
-  like ( @Param( 'id' ) id: string, i18n: I18nContext, @Metadata() metadata: IMetadataDecorator ): Promise<Comment> {
+  like ( @Param( 'id' ) id: string, @I18n() i18n: I18nContext, @Metadata() metadata: IMetadataDecorator ): Promise<Comment> {
     return this.commentsService.like( id, i18n, metadata );
   }
 
   @UseGuards( JwtAuthGuard )
   @Post( 'comments/:id/dislike' )
   @Serialize( UserCommentsDto )
-  dislike ( @Param( 'id' ) id: string, i18n: I18nContext, @Metadata() metadata: IMetadataDecorator ): Promise<Comment> {
+  dislike ( @Param( 'id' ) id: string, @I18n() i18n: I18nContext, @Metadata() metadata: IMetadataDecorator ): Promise<Comment> {
     return this.commentsService.dislike( id, i18n, metadata );
   }
 
   @Get( 'comments/:postId' )
   @Serialize( UserCommentsListDto )
-  findAll ( @Param( 'postId' ) postId: string, @Body() query: UserCommentQueryListDto ) {
+  findAll ( @Param( 'postId' ) postId: string, @Query() query: UserCommentQueryListDto ) {
     return this.commentsService.findAll( query, postId );
   }
 
   /**************************** ADMIN REGION ***********************************/
 
   @Get( 'admin/comments' )
-  adminFindAll ( @Body() query: CommentQueryListDto ) {
+  adminFindAll ( @Query() query: CommentQueryListDto ) {
     return this.commentsService.findAll( query );
   }
 
@@ -80,7 +80,7 @@ export class CommentsController {
     return this.commentsService.findOne( id, i18n );
   }
 
-  @UseGuards( JwtAuthGuard )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_EDIT )
   @Patch( 'admin/comments/:id' )
   adminUpdate (
@@ -91,21 +91,21 @@ export class CommentsController {
     return this.commentsService.update( id, updateCommentDto, i18n, metadata );
   }
 
-  @UseGuards( JwtAuthGuard )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )
   @Delete( 'admin/comments/soft-delete/:id' )
   adminSoftRemove ( @Param( 'id' ) id: string, @I18n() i18n: I18nContext ) {
     return this.commentsService.softRemove( id, i18n );
   }
 
-  @UseGuards( JwtAuthGuard )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )
   @Patch( 'admin/comments/recover/:id' )
   adminRecover ( @Param( 'id' ) id: string, @I18n() i18n: I18nContext ) {
     return this.commentsService.recover( id, i18n );
   }
 
-  @UseGuards( JwtAuthGuard )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )
   @Delete( 'admin/comments/permanent-delete/:id' )
   adminRemove ( @Param( 'id' ) id: string, @I18n() i18n: I18nContext ) {
