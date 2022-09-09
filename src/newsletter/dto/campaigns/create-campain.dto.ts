@@ -10,6 +10,7 @@ export class NewsletterCreateCampaignDto {
   name: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
+  @IsOptional()
   description?: string;
 
   @IsDate( { message: CommonErrorsLocale.VALIDATOR_IS_DATE } )

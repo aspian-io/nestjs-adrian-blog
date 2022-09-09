@@ -53,7 +53,9 @@ export class NewsletterService {
     const duplicate = await this.subscriberRepo.findOne( {
       where: { email: createSubscriberDto.email }
     } );
+    console.log( "DUPLICATE" );
     if ( duplicate ) {
+      console.log( "DUPLICATE IS APPROVED? ", duplicate.approved );
       if ( duplicate.approved ) throw new BadRequestException( i18n.t( NewsletterErrorsLocale.ALREADY_SUBSCRIBED ) );
 
       const oneMinAfterNow = Date.now() + 60_000;
@@ -101,8 +103,8 @@ export class NewsletterService {
   }
 
   // Approve subscription
-  async approveSubscription ( id: string, subscriptionTokenDto: SubscriptionTokenDto, i18n: I18nContext ) {
-    const subscriber = await this.findOneSubscriberById( id, i18n );
+  async approveSubscription ( subscriptionTokenDto: SubscriptionTokenDto, i18n: I18nContext ) {
+    const subscriber = await this.findOneSubscriberByEmail( subscriptionTokenDto.email, i18n );
     if ( subscriber.approved ) {
       throw new BadRequestException( i18n.t( NewsletterErrorsLocale.ALREADY_APPROVED ) );
     }

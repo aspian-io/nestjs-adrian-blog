@@ -39,7 +39,6 @@ export class EmailsService {
         throw new BadRequestException( i18n.t( CommonErrorsLocale.Bad_Request ) );
       }
     }
-
     await this.mailerService.sendMail( {
       from: dto.from,
       to: contactEmail,
@@ -50,7 +49,8 @@ export class EmailsService {
 
     const defaultTemplatePath = path.join( __dirname, './templates/contact-us.template.hbs' );
     const customTemplateId = ( await this.settingsService.findOneOrNull( SettingsKeyEnum.CONTACT_AUTO_RESPONSE_TEMPLATE_ID ) )?.value;
-    const customTemplate = customTemplateId ? await this.postsService.findOne( customTemplateId ) : null;
+    const customTemplate = customTemplateId ? await this.postsService.findOneOrNull( customTemplateId ) : null;
+
     const websiteName = ( await this.settingsService.findOne( SettingsKeyEnum.SITE_NAME ) ).value;
     const websiteUrl = ( await this.settingsService.findOne( SettingsKeyEnum.SITE_URL ) ).value;
     const subject = ( await this.settingsService.findOne( SettingsKeyEnum.CONTACT_AUTO_RESPONSE_EMAIL_SUBJECT ) ).value;
@@ -69,7 +69,7 @@ export class EmailsService {
         html,
       } );
     }
-
+    
     return this.mailerService.sendMail( {
       from: siteSupportEmail,
       to: dto.from,

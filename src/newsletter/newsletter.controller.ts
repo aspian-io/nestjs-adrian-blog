@@ -34,14 +34,13 @@ export class NewsletterController {
     return this.newsletterService.subscribe( createSubscriberDto, i18n );
   }
 
-  @Post( 'newsletter/subscribers/approve-subscription/:id' )
+  @Post( 'newsletter/subscribers/approve-subscription' )
   @Serialize( SubscriberDto )
   approveSubscription (
-    @Param( 'id' ) id: string,
     @Body() subscriptionTokenDto: SubscriptionTokenDto,
     @I18n() i18n: I18nContext
   ) {
-    return this.newsletterService.approveSubscription( id, subscriptionTokenDto, i18n );
+    return this.newsletterService.approveSubscription( subscriptionTokenDto, i18n );
   }
 
   @Post( 'newsletter/subscribers/unsubscribe-request' )
@@ -83,21 +82,21 @@ export class NewsletterController {
   @Delete( 'admin/newsletter/subscribers/soft-delete/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_DELETE )
-  softRemoveSubscriber ( @Param( 'id' ) id: string, i18n: I18nContext ) {
+  softRemoveSubscriber ( @Param( 'id' ) id: string, @I18n() i18n: I18nContext ) {
     return this.newsletterService.softRemoveSubscriber( id, i18n );
   }
 
   @Patch( 'admin/newsletter/subscribers/recover/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_DELETE )
-  recoverSubscriber ( @Param( 'id' ) id: string, i18n: I18nContext ) {
+  recoverSubscriber ( @Param( 'id' ) id: string, @I18n() i18n: I18nContext ) {
     return this.newsletterService.recoverSubscriber( id, i18n );
   }
 
   @Delete( 'admin/newsletter/subscribers/permanent-delete/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_DELETE )
-  removeSubscriber ( @Param( 'id' ) id: string, i18n: I18nContext ) {
+  removeSubscriber ( @Param( 'id' ) id: string, @I18n() i18n: I18nContext ) {
     return this.newsletterService.removeSubscriber( id, i18n );
   }
 

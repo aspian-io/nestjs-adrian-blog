@@ -289,6 +289,28 @@ export class PostsService {
     return post;
   }
 
+  // Find a post or null
+  async findOneOrNull ( id: string, i18n?: I18nContext, withDeleted: boolean = false ): Promise<Post> {
+    return this.postRepository.findOne( {
+      relations: {
+        featuredImage: true,
+        taxonomies: true,
+        attachments: true,
+        bookmarks: true,
+        likes: true,
+        parent: true,
+        child: true,
+        createdBy: true,
+        updatedBy: true,
+        slugsHistory: true
+      },
+      where: {
+        id
+      },
+      withDeleted
+    } );
+  }
+
   // Find a post by slug
   async findBySlug ( slug: string, i18n: I18nContext, type?: PostTypeEnum, admin: boolean = true ): Promise<IPostReturnFindBySlug> {
     const where: FindOptionsWhere<Post> = {
