@@ -43,7 +43,7 @@ async function bootstrap () {
   app.use( cookieParser( config.get( EnvEnum.COOKIE_SECRET ) ) );
 
   // Run the server
-  const server = await app.listen( 3000 );
+  const server = await app.listen( 3001 );
 
   // Uppy companion socket
   companion.socket( server );

@@ -1,5 +1,5 @@
 import { Expose } from "class-transformer";
-import { GenderEnum } from "../entities/user.entity";
+import { AvatarSourceEnum, GenderEnum } from "../entities/user.entity";
 
 export class LoginRegisterDto {
   @Expose()
@@ -7,19 +7,7 @@ export class LoginRegisterDto {
 
   @Expose()
   email: string;
-
-  @Expose()
-  gender: GenderEnum;
-
-  @Expose()
-  country?: string;
-
-  @Expose()
-  state?: string;
-
-  @Expose()
-  city?: string;
-
+  
   @Expose()
   firstName: string;
 
@@ -28,4 +16,13 @@ export class LoginRegisterDto {
 
   @Expose()
   accessToken: string;
+
+  @Expose()
+  refreshToken: string;
+
+  @Expose()
+  avatarSource: AvatarSourceEnum;
+
+  @Expose()
+  avatar?: string;
 }

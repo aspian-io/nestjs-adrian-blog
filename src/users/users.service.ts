@@ -38,6 +38,9 @@ import { CommonErrorsLocale } from 'src/i18n/locale-keys/common/errors.locale';
 import { UserActivateMobileRegistrationDto } from './dto/activate-mobile-registration.dto';
 import { UserRegisterByMobileDto } from './dto/register-by-mobile.dto';
 import { LoginMethodsDto } from './dto/login-methods.dto';
+import * as sanitizeHtml from 'sanitize-html';
+import { OAuth2LoginRegisterDto } from './dto/oauth2-login-register.dto';
+import * as passGenerator from 'generate-password';
 
 @Injectable()
 export class UsersService {
@@ -62,6 +65,37 @@ export class UsersService {
     if ( !smsIsActive ) mobileLogin = false;
 
     return { emailLogin, mobileLogin };
+  }
+
+  // OAth2 Login or Register
+  async oAuth2LoginRegister ( i18n: I18nContext, oAuthLoginRegisterDto: OAuth2LoginRegisterDto, metadata: IMetadataDecorator ): Promise<IServiceUserLoginResult> {
+    const user = await this.userRepository.findOne( { where: { email: oAuthLoginRegisterDto.username } } );
+    if ( !user ) {
+      const password = passGenerator.generate( { length: 10, numbers: true } );
+      const userObj: CreateUserDto = { ...oAuthLoginRegisterDto, email: oAuthLoginRegisterDto.username, password };
+      const newUser = await this.create( i18n, userObj, metadata, true );
+
+      const accessToken = await this.generateAccessToken( newUser.id, newUser.email, newUser.claims?.map( c => c.name ) );
+      const refreshToken = await this.generateRefreshToken( newUser.id, newUser.email );
+
+      return {
+        ...newUser,
+        accessToken,
+        refreshToken
+      };
+    }
+
+    if ( user.suspend && user.suspend.getTime() > Date.now() ) {
+      throw new ForbiddenException( i18n.t( UsersErrorsLocal.USER_SUSPENDED ) );
+    }
+    const accessToken = await this.generateAccessToken( user.id, user.email, user.claims?.map( c => c.name ) );
+    const refreshToken = await this.generateRefreshToken( user.id, user.email );
+
+    return {
+      ...user,
+      accessToken,
+      refreshToken
+    };
   }
 
   // Login Service (Local JWT)
@@ -252,7 +286,7 @@ export class UsersService {
   }
 
   // Create a new user
-  async create ( i18n: I18nContext, dto: CreateUserDto | UserRegisterByMobileDto, metadata: IMetadataDecorator ): Promise<User> {
+  async create ( i18n: I18nContext, dto: CreateUserDto | UserRegisterByMobileDto, metadata: IMetadataDecorator, oAuth2: boolean = false ): Promise<User> {
     const { ipAddress, userAgent } = metadata;
     if ( this.configService.getOrThrow( EnvEnum.AUTH_REGISTER_BY ) === "email" ) {
       const registerByEmailDto = dto as CreateUserDto;
@@ -261,7 +295,7 @@ export class UsersService {
       if ( existingUser ) {
         throw new BadRequestException( i18n.t( UsersErrorsLocal.EMAIL_IN_USE ) );
       }
-      // Check if new mobile phone is in use
+      // Check if the new mobile phone is in use
       if ( registerByEmailDto.mobilePhone ) {
         const duplicateMobilePhone = await this.userRepository.findOne( { where: { mobilePhone: registerByEmailDto.mobilePhone } } );
         if ( duplicateMobilePhone ) throw new BadRequestException( i18n.t( UsersErrorsLocal.MOBILE_PHONE_IN_USE ) );
@@ -273,13 +307,17 @@ export class UsersService {
         ...registerByEmailDto,
         password: hash, // replace hashed password
         ipAddress,
-        userAgent
+        userAgent,
+        emailVerified: oAuth2,
+        isActivated: oAuth2,
+        avatarSource: oAuth2 ? AvatarSourceEnum.OAUTH2 : AvatarSourceEnum.STORAGE,
+        claims: []
       } );
 
       await this.cacheManager.reset();
       const result = await this.userRepository.save( user );
 
-      await this.verifyEmailReq( i18n, result.id );
+      if ( !oAuth2 ) await this.verifyEmailReq( i18n, result.id );
 
       return result;
     }
@@ -304,7 +342,8 @@ export class UsersService {
         ...registerBySMSDto,
         password: hash, // replace hashed password
         ipAddress,
-        userAgent
+        userAgent,
+        claims: []
       } );
 
       await this.cacheManager.reset();
@@ -327,6 +366,7 @@ export class UsersService {
           claims: true,
         }
       } );
+
       if ( !user ) throw new ForbiddenException();
       if ( user.suspend && user.suspend.getTime() > Date.now() ) {
         throw new ForbiddenException();
@@ -435,7 +475,7 @@ export class UsersService {
   }
 
   // Update user's info
-  async update ( i18n: I18nContext, id: string, userBody: AdminUpdateUserDto, logData: IMetadataDecorator ): Promise<User> {
+  async update ( i18n: I18nContext, id: string, userBody: AdminUpdateUserDto, logData: IMetadataDecorator, sanitizeBio: boolean = false ): Promise<User> {
 
     const user = await this.findOne( id, i18n );
     // The only admin cannot be suspended
@@ -463,6 +503,7 @@ export class UsersService {
     Object.assign( user, userBody );
     user.ipAddress = logData.ipAddress;
     user.userAgent = logData.userAgent;
+    if ( userBody?.bio && sanitizeBio ) user.bio = await this.bioSanitizer( userBody.bio );
 
     await this.cacheManager.reset();
     return this.userRepository.save( user );
@@ -1015,5 +1056,28 @@ export class UsersService {
     const sanitizedFileName = sanitize.addUnderscore( rawFileName );
     const key = `public/${ userId }/avatars/${ sanitizedFileName }_${ Date.now() }${ fileExt }`;
     return key;
+  }
+
+  // Sanitize biography
+  async bioSanitizer ( bio: string ): Promise<string> {
+    const sanitizeHtmlOptions = {
+      allowedTags: [],
+      allowedAttributes: {},
+      allowedIframeHostnames: []
+    };
+
+    let sanitizedBio = sanitizeHtml( bio, sanitizeHtmlOptions );
+    const forbiddenExps = ( await this.settingsService.findOne( SettingsKeyEnum.COMMENT_FORBIDDEN_EXPRESSIONS ) )
+      .value
+      .split( ',' ).map( e => e.trim() );
+
+    forbiddenExps.map( exp => {
+      const bioForbidden = sanitizedBio.includes( exp );
+      if ( bioForbidden ) {
+        sanitizedBio = bioForbidden ? sanitizedBio.replace( exp, '...' ) : sanitizedBio;
+      }
+    } );
+
+    return sanitizedBio;
   }
 }

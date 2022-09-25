@@ -11,14 +11,14 @@ import { EnvEnum } from 'src/env.enum';
 export class RefreshTokenStrategy extends PassportStrategy( Strategy, 'jwt-refresh' ) {
   constructor ( private readonly configService: ConfigService ) {
     super( {
-      jwtFromRequest: ExtractJwt.fromExtractors( [ ( req: Request ) => { return req.signedCookies[ Tokens.REFRESH_TOKEN ]; } ] ),
+      jwtFromRequest: ExtractJwt.fromExtractors( [ ( req: Request ) => { return req.cookies[ Tokens.REFRESH_TOKEN ]; } ] ),
       secretOrKey: configService.getOrThrow( EnvEnum.AUTH_REFRESH_TOKEN_SECRET ),
       passReqToCallback: true
     } );
   }
 
   validate ( req: Request, payload: IRefreshTokenStrategyPayload ): IRtStrategyUser {
-    const refreshToken: string = req.signedCookies[ Tokens.REFRESH_TOKEN ];
+    const refreshToken: string = req.cookies[ Tokens.REFRESH_TOKEN ];
     return {
       userId: payload.sub,
       username: payload.email,

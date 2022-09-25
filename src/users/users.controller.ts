@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Res, UseGuards, HttpCode, HttpStatus, Query, UseInterceptors, UploadedFile, MaxFileSizeValidator, FileTypeValidator, ParseFilePipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Res, UseGuards, HttpCode, HttpStatus, Query, UseInterceptors, UploadedFile, MaxFileSizeValidator, FileTypeValidator, ParseFilePipe, Req } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { IMetadataDecorator, Metadata } from 'src/common/decorators/metadata.decorator';
@@ -39,6 +39,7 @@ import { UserRegisterByMobileDto } from './dto/register-by-mobile.dto';
 import { UserActivateMobileRegistrationDto } from './dto/activate-mobile-registration.dto';
 import { LoginMethodsDto } from './dto/login-methods.dto';
 import { AvatarEmptyValidator } from './validators/avatar-empty.validator';
+import { OAuth2LoginRegisterDto } from './dto/oauth2-login-register.dto';
 
 @Controller()
 export class UsersController {
@@ -74,14 +75,39 @@ export class UsersController {
       Tokens.REFRESH_TOKEN,
       user.refreshToken,
       {
-        signed: true,
         httpOnly: true,
         sameSite: true,
         secure: this.configService.getOrThrow( EnvEnum.NODE_ENV ) === 'production',
         expires: new Date( parseInt( decodedRt[ 'exp' ] ) * 1000 )
       } );
 
-    return { ...user, accessToken: user.accessToken };
+    return { ...user, accessToken: user.accessToken, refreshToken: user.refreshToken };
+  }
+
+  // Login by Google
+  @Post( 'users/oauth2-login' )
+  @UseGuards( JwtAuthGuard )
+  @HttpCode( HttpStatus.OK )
+  @Serialize( LoginRegisterDto )
+  async oAuth2Login (
+    @I18n() i18n: I18nContext,
+    @Body() body: OAuth2LoginRegisterDto,
+    @Metadata() metadata: IMetadataDecorator,
+    @Res( { passthrough: true } ) res: Response ) {
+    const user = await this.usersService.oAuth2LoginRegister( i18n, body, metadata );
+    const decodedRt = this.jwtService.decode( user.refreshToken );
+
+    res.cookie(
+      Tokens.REFRESH_TOKEN,
+      user.refreshToken,
+      {
+        httpOnly: true,
+        sameSite: true,
+        secure: this.configService.getOrThrow( EnvEnum.NODE_ENV ) === 'production',
+        expires: new Date( parseInt( decodedRt[ 'exp' ] ) * 1000 )
+      } );
+
+    return { ...user, accessToken: user.accessToken, refreshToken: user.refreshToken };
   }
 
   // Login by Mobile Phone Request
@@ -109,14 +135,13 @@ export class UsersController {
       Tokens.REFRESH_TOKEN,
       user.refreshToken,
       {
-        signed: true,
         httpOnly: true,
         sameSite: true,
         secure: this.configService.getOrThrow( EnvEnum.NODE_ENV ) === 'production',
         expires: new Date( parseInt( decodedRt[ 'exp' ] ) * 1000 )
       } );
 
-    return { ...user, accessToken: user.accessToken };
+    return { ...user, accessToken: user.accessToken, refreshToken: user.refreshToken };
   }
 
   // Register by email
@@ -143,14 +168,13 @@ export class UsersController {
       Tokens.REFRESH_TOKEN,
       user.refreshToken,
       {
-        signed: true,
         httpOnly: true,
         sameSite: true,
         secure: this.configService.getOrThrow( EnvEnum.NODE_ENV ) === 'production',
         expires: new Date( parseInt( decodedRt[ 'exp' ] ) * 1000 )
       } );
 
-    return { ...user, accessToken: user.accessToken };
+    return { ...user, accessToken: user.accessToken, refreshToken: user.refreshToken };
   }
 
   // Register by mobile
@@ -177,38 +201,35 @@ export class UsersController {
       Tokens.REFRESH_TOKEN,
       user.refreshToken,
       {
-        signed: true,
         httpOnly: true,
         sameSite: true,
         secure: this.configService.getOrThrow( EnvEnum.NODE_ENV ) === 'production',
         expires: new Date( parseInt( decodedRt[ 'exp' ] ) * 1000 )
       } );
 
-    return { ...user, accessToken: user.accessToken };
+    return { ...user, accessToken: user.accessToken, refreshToken: user.refreshToken };
   }
 
   // Refresh Tokens
   @UseGuards( RtAuthGuard )
-  @Get( 'users/refresh-tokens' )
+  @Post( 'users/refresh-tokens' )
   @Serialize( LoginRegisterDto )
   async refreshTokens (
     @CurrentUser() user: IRtStrategyUser,
     @Res( { passthrough: true } ) res: Response ): Promise<IControllerUserRefreshTokensResult> {
     const result = await this.usersService.refreshTokens( user.refreshToken );
     const decodedRt = this.jwtService.decode( result.refreshToken );
-
-    res.cookie(
+    const cookie = res.cookie(
       Tokens.REFRESH_TOKEN,
       result.refreshToken,
       {
-        signed: true,
         httpOnly: true,
         sameSite: true,
         secure: this.configService.getOrThrow( EnvEnum.NODE_ENV ) === 'production',
         expires: new Date( parseInt( decodedRt[ 'exp' ] ) * 1000 )
       } );
 
-    return { ...result, accessToken: result.accessToken };
+    return { ...result, accessToken: result.accessToken, refreshToken: result.refreshToken };
   }
 
   // Logout
@@ -237,7 +258,7 @@ export class UsersController {
     @I18n() i18n: I18nContext,
     @Metadata() metadata: IMetadataDecorator
   ): Promise<User> {
-    return this.usersService.update( i18n, metadata.user.id, body, metadata );
+    return this.usersService.update( i18n, metadata.user.id, body, metadata, true );
   }
 
   // Update mobile phone number request

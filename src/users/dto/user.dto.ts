@@ -66,4 +66,22 @@ export class UserDto {
 
   @Expose()
   bookmarksNum: number;
+
+  @Expose()
+  website?: string;
+
+  @Expose()
+  facebook?: string;
+
+  @Expose()
+  twitter?: string;
+
+  @Expose()
+  instagram?: string;
+
+  @Expose()
+  linkedIn?: string;
+
+  @Expose()
+  pinterest?: string;
 }
