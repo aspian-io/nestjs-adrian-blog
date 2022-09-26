@@ -84,7 +84,7 @@ export class UsersController {
     return { ...user, accessToken: user.accessToken, refreshToken: user.refreshToken };
   }
 
-  // Login by Google
+  // OAuth2 Login
   @Post( 'users/oauth2-login' )
   @UseGuards( JwtAuthGuard )
   @HttpCode( HttpStatus.OK )
