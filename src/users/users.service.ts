@@ -1,4 +1,4 @@
-import { BadRequestException, CACHE_MANAGER, ForbiddenException, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, CACHE_MANAGER, ForbiddenException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IMetadataDecorator } from 'src/common/decorators/metadata.decorator';
 import { Between, In, IsNull, Not, Raw, Repository } from 'typeorm';
@@ -6,7 +6,7 @@ import { AvatarSourceEnum, User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { IServiceUserLoginResult, IServiceUserRefreshTokensResult, IServiceUserRegisterResult } from './types/services.type';
+import { IServiceUserLoginResult, IServiceUserRefreshTokensResult, IServiceUserRegisterResult, UserErrorsEnum, UserErrorsInternalCodeEnum } from './types/services.type';
 import { I18nContext } from 'nestjs-i18n';
 import { UsersInfoLocale } from 'src/i18n/locale-keys/users/info.locale';
 import { NotFoundLocalizedException } from 'src/common/exceptions/not-found-localized.exception';
@@ -81,12 +81,17 @@ export class UsersService {
       return {
         ...newUser,
         accessToken,
-        refreshToken
+        refreshToken,
       };
     }
 
     if ( user.suspend && user.suspend.getTime() > Date.now() ) {
-      throw new ForbiddenException( i18n.t( UsersErrorsLocal.USER_SUSPENDED ) );
+      throw new ForbiddenException( {
+        statusCode: 403,
+        internalCode: UserErrorsInternalCodeEnum.SUSPENDED_ACCOUNT,
+        message: i18n.t( UsersErrorsLocal.USER_SUSPENDED ),
+        error: UserErrorsEnum.SUSPENDED_ACCOUNT
+      } );
     }
     const accessToken = await this.generateAccessToken( user.id, user.email, user.claims?.map( c => c.name ) );
     const refreshToken = await this.generateRefreshToken( user.id, user.email );
@@ -112,15 +117,31 @@ export class UsersService {
     if ( !passwordMatch ) throw new UnauthorizedException( i18n.t( UsersErrorsLocal.INCORRECT_CREDENTIALS ) );
 
     if ( user.suspend && user.suspend.getTime() > Date.now() ) {
-      throw new ForbiddenException( i18n.t( UsersErrorsLocal.USER_SUSPENDED ) );
+      throw new ForbiddenException( {
+        statusCode: 403,
+        internalCode: UserErrorsInternalCodeEnum.SUSPENDED_ACCOUNT,
+        message: i18n.t( UsersErrorsLocal.USER_SUSPENDED ),
+        error: UserErrorsEnum.SUSPENDED_ACCOUNT
+      } );
     }
 
     if ( !user.isActivated ) {
       if ( user.emailVerificationTokenExpiresAt.getTime() > Date.now() ) {
-        throw new BadRequestException( i18n.t( UsersErrorsLocal.ACCOUNT_ACTIVATION_BY_EMAIL ) );
+        throw new ForbiddenException( {
+          statusCode: 403,
+          internalCode: UserErrorsInternalCodeEnum.INACTIVE_ACCOUNT,
+          message: i18n.t( UsersErrorsLocal.ACCOUNT_ACTIVATION_BY_EMAIL ),
+          error: UserErrorsEnum.INACTIVE_ACCOUNT
+        } );
       }
+
       await this.verifyEmailReq( i18n, user.id );
-      throw new BadRequestException( i18n.t( UsersErrorsLocal.ACCOUNT_ACTIVATION_BY_EMAIL ) );
+      throw new ForbiddenException( {
+        statusCode: 403,
+        internalCode: UserErrorsInternalCodeEnum.INACTIVE_ACCOUNT,
+        message: i18n.t( UsersErrorsLocal.ACCOUNT_ACTIVATION_BY_EMAIL ),
+        error: UserErrorsEnum.INACTIVE_ACCOUNT
+      } );
     }
 
     const accessToken = await this.generateAccessToken( user.id, user.email, user.claims.map( c => c.name ) );
@@ -140,6 +161,15 @@ export class UsersService {
       where: { mobilePhone }
     } );
     if ( !user ) throw new NotFoundLocalizedException( i18n, UsersInfoLocale.TERM_USER );
+
+    if ( user.suspend && user.suspend.getTime() > Date.now() ) {
+      throw new ForbiddenException( {
+        statusCode: 403,
+        internalCode: UserErrorsInternalCodeEnum.SUSPENDED_ACCOUNT,
+        message: i18n.t( UsersErrorsLocal.USER_SUSPENDED ),
+        error: UserErrorsEnum.SUSPENDED_ACCOUNT
+      } );
+    }
 
     if ( user.mobilePhoneVerificationTokenExpiresAt.getTime() > Date.now() ) {
       const remainingTime = Math.trunc( ( user.mobilePhoneVerificationTokenExpiresAt.getTime() - Date.now() ) / 1000 );
@@ -186,10 +216,6 @@ export class UsersService {
       throw new BadRequestException( i18n.t( UsersErrorsLocal.INVALID_EXPIRED_TOKEN ) );
     }
 
-    if ( user.suspend && user.suspend.getTime() > Date.now() ) {
-      throw new ForbiddenException( i18n.t( UsersErrorsLocal.USER_SUSPENDED ) );
-    }
-
     if ( !user.mobilePhoneVerified || !user.isActivated ) {
       user.mobilePhoneVerified = true;
       user.isActivated = true;
@@ -209,7 +235,7 @@ export class UsersService {
   }
 
   // Register Service (Local JWT) By Email
-  registerByEmail ( i18n: I18nContext, createUserDto: CreateUserDto, metadata: IMetadataDecorator ): Promise<User> {
+  async registerByEmail ( i18n: I18nContext, createUserDto: CreateUserDto, metadata: IMetadataDecorator ) {
     if ( this.configService.getOrThrow( EnvEnum.AUTH_REGISTER_BY ) !== "email" ) {
       throw new NotFoundLocalizedException( i18n, CommonErrorsLocale.TERMS_SERVICE );
     }
@@ -243,6 +269,47 @@ export class UsersService {
       accessToken,
       refreshToken
     };
+  }
+
+  // Get verification email token remaining time in seconds
+  async getEmailTokenRemainingTimeInSec ( i18n: I18nContext, email: string ) {
+    const user = await this.userRepository.findOne( { where: { email } } );
+    if ( !user ) throw new NotFoundLocalizedException( i18n, UsersInfoLocale.TERM_USER );
+    let remainingTimeInSec = 0;
+
+    if ( !user.isActivated ) {
+      if ( user.emailVerificationTokenExpiresAt.getTime() > Date.now() ) {
+        remainingTimeInSec = Math.floor( ( user.emailVerificationTokenExpiresAt.getTime() - Date.now() ) / 1000 );
+        return { remainingTimeInSec };
+      }
+
+      return { remainingTimeInSec: 0 };
+    }
+
+    throw new ForbiddenException( { statusCode: 403, message: i18n.t( UsersErrorsLocal.EMAIL_ALREADY_VERIFIED ), error: 'Already Verified' } );
+  }
+
+  // Resend verification token email
+  async resendVerificationTokenEmail ( i18n: I18nContext, email: string ) {
+    if ( this.configService.getOrThrow( EnvEnum.AUTH_REGISTER_BY ) !== "email" ) {
+      throw new NotFoundLocalizedException( i18n, CommonErrorsLocale.TERMS_SERVICE );
+    }
+
+    const user = await this.userRepository.findOne( { where: { email } } );
+    if ( !user ) throw new NotFoundLocalizedException( i18n, UsersInfoLocale.TERM_USER );
+
+    if ( !user.isActivated ) {
+      if ( user.emailVerificationTokenExpiresAt.getTime() > Date.now() ) {
+        const emailTokenExpInSec = Math.floor( ( user.emailVerificationTokenExpiresAt.getTime() - Date.now() ) / 1000 );
+        throw new BadRequestException( { statusCode: 400, message: i18n.t( UsersErrorsLocal.EMAIL_PHONE_VERIFICATION_CODE_LIMIT ), error: 'Bad Request', emailTokenExpInSec } );
+      }
+
+      await this.verifyEmailReq( i18n, user.id );
+      const emailTokenExpInSec = +( ( await this.settingsService.findOne( SettingsKeyEnum.USERS_EMAIL_TOKEN_EXP_IN_MINS ) ).value ) * 60;
+      return { ...user, emailTokenExpInSec };
+    }
+
+    throw new ForbiddenException( i18n.t( UsersErrorsLocal.EMAIL_ALREADY_VERIFIED ) );
   }
 
   // Register Service (Local JWT) By mobile phone
@@ -838,6 +905,15 @@ export class UsersService {
     } );
     if ( !user ) throw new NotFoundLocalizedException( i18n, UsersInfoLocale.TERM_USER );
 
+    if ( user.suspend && user.suspend.getTime() > Date.now() ) {
+      throw new ForbiddenException( {
+        statusCode: 403,
+        internalCode: UserErrorsInternalCodeEnum.SUSPENDED_ACCOUNT,
+        message: i18n.t( UsersErrorsLocal.USER_SUSPENDED ),
+        error: UserErrorsEnum.SUSPENDED_ACCOUNT
+      } );
+    }
+
     if ( user.emailVerificationTokenExpiresAt.getTime() > Date.now() ) {
       const remainingTime = Math.trunc( ( user.emailVerificationTokenExpiresAt.getTime() - Date.now() ) / 1000 );
       throw new BadRequestException( i18n.t( UsersErrorsLocal.EMAIL_PHONE_VERIFICATION_CODE_LIMIT, { args: { time: remainingTime } } ) );
@@ -915,6 +991,15 @@ export class UsersService {
       where: { mobilePhone }
     } );
     if ( !user ) throw new NotFoundLocalizedException( i18n, UsersInfoLocale.TERM_USER );
+
+    if ( user.suspend && user.suspend.getTime() > Date.now() ) {
+      throw new ForbiddenException( {
+        statusCode: 403,
+        internalCode: UserErrorsInternalCodeEnum.SUSPENDED_ACCOUNT,
+        message: i18n.t( UsersErrorsLocal.USER_SUSPENDED ),
+        error: UserErrorsEnum.SUSPENDED_ACCOUNT
+      } );
+    }
 
     if ( user.mobilePhoneVerificationTokenExpiresAt.getTime() > Date.now() ) {
       const remainingTime = Math.trunc( ( user.mobilePhoneVerificationTokenExpiresAt.getTime() - Date.now() ) / 1000 );

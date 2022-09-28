@@ -7,7 +7,7 @@ export class LoginRegisterDto {
 
   @Expose()
   email: string;
-  
+
   @Expose()
   firstName: string;
 

@@ -23,3 +23,16 @@ export interface IServiceUserRefreshTokensResult extends Partial<User> {
   accessToken: string;
   refreshToken: string;
 }
+
+// Auth Errors
+export enum UserErrorsEnum {
+  INACTIVE_ACCOUNT = 'Inactive Account',
+  SUSPENDED_ACCOUNT = 'Suspended Account',
+  ALREADY_VERIFIED = 'Already Verified'
+}
+
+export enum UserErrorsInternalCodeEnum {
+  INACTIVE_ACCOUNT = 4031,
+  SUSPENDED_ACCOUNT = 4032,
+  ALREADY_VERIFIED = 4033
+}

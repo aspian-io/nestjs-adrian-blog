@@ -137,13 +137,14 @@ import { S3Module } from 'nestjs-s3';
       useFactory: async ( configService: ConfigService ) => ( {
         transport: {
           host: configService.getOrThrow( EnvEnum.MAILER_HOST ),
-          // port: configService.getOrThrow( EnvEnum.MAILER_PORT ),
+          port: configService.getOrThrow( EnvEnum.MAILER_PORT ),
           // ignoreTLS: true,
+          // requireTLS: false,
           // secure: false,
-          // auth: {
-          //   user: ( await nodemailer.createTestAccount() ).user,
-          //   pass: ( await nodemailer.createTestAccount() ).pass,
-          // },
+          auth: {
+            user: ( await nodemailer.createTestAccount() ).user,
+            pass: ( await nodemailer.createTestAccount() ).pass,
+          },
         },
         defaults: {
           from: '"No Reply" <no-reply@localhost>',

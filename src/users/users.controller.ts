@@ -150,7 +150,7 @@ export class UsersController {
   async registerByEmail (
     @I18n() i18n: I18nContext,
     @Body() createUserDto: CreateUserDto,
-    @Metadata() metadata: IMetadataDecorator ): Promise<User> {
+    @Metadata() metadata: IMetadataDecorator ) {
     return this.usersService.registerByEmail( i18n, createUserDto, metadata );
   }
 
@@ -175,6 +175,23 @@ export class UsersController {
       } );
 
     return { ...user, accessToken: user.accessToken, refreshToken: user.refreshToken };
+  }
+
+  // Get verification email token remaining time in seconds
+  @Post( 'users/email-token-remaining-time' )
+  async getEmailTokenRemainingTimeInSec (
+    @I18n() i18n: I18nContext,
+    @Body() body: UserEmailDto ) {
+    return this.usersService.getEmailTokenRemainingTimeInSec( i18n, body.email );
+  }
+
+  // Resend verification email
+  @Post( 'users/resend-verification-email' )
+  @Serialize( LoginRegisterDto )
+  async resendVerificationTokenEmail (
+    @I18n() i18n: I18nContext,
+    @Body() body: UserEmailDto ) {
+    return this.usersService.resendVerificationTokenEmail( i18n, body.email );
   }
 
   // Register by mobile
