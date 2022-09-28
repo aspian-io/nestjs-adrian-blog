@@ -126,7 +126,17 @@ export class UsersService {
     }
 
     if ( !user.isActivated ) {
-      if ( user.emailVerificationTokenExpiresAt.getTime() > Date.now() ) {
+      if ( !user.emailVerified ) {
+        if ( user.emailVerificationTokenExpiresAt.getTime() > Date.now() ) {
+          throw new ForbiddenException( {
+            statusCode: 403,
+            internalCode: UserErrorsInternalCodeEnum.INACTIVE_ACCOUNT,
+            message: i18n.t( UsersErrorsLocal.ACCOUNT_ACTIVATION_BY_EMAIL ),
+            error: UserErrorsEnum.INACTIVE_ACCOUNT
+          } );
+        }
+
+        await this.verifyEmailReq( i18n, user.id );
         throw new ForbiddenException( {
           statusCode: 403,
           internalCode: UserErrorsInternalCodeEnum.INACTIVE_ACCOUNT,
@@ -135,13 +145,9 @@ export class UsersService {
         } );
       }
 
-      await this.verifyEmailReq( i18n, user.id );
-      throw new ForbiddenException( {
-        statusCode: 403,
-        internalCode: UserErrorsInternalCodeEnum.INACTIVE_ACCOUNT,
-        message: i18n.t( UsersErrorsLocal.ACCOUNT_ACTIVATION_BY_EMAIL ),
-        error: UserErrorsEnum.INACTIVE_ACCOUNT
-      } );
+      user.isActivated = true;
+      await this.userRepository.save( user );
+      await this.cacheManager.reset();
     }
 
     const accessToken = await this.generateAccessToken( user.id, user.email, user.claims.map( c => c.name ) );
@@ -915,8 +921,7 @@ export class UsersService {
     }
 
     if ( user.emailVerificationTokenExpiresAt.getTime() > Date.now() ) {
-      const remainingTime = Math.trunc( ( user.emailVerificationTokenExpiresAt.getTime() - Date.now() ) / 1000 );
-      throw new BadRequestException( i18n.t( UsersErrorsLocal.EMAIL_PHONE_VERIFICATION_CODE_LIMIT, { args: { time: remainingTime } } ) );
+      return;
     }
 
     const expTimeInMins = +( await this.settingsService.findOne( SettingsKeyEnum.USERS_EMAIL_TOKEN_EXP_IN_MINS ) ).value ?? 20;
