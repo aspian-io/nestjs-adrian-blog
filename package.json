@@ -37,7 +37,7 @@
     "@nestjs/throttler": "^3.0.0",
     "@nestjs/typeorm": "^9.0.0",
     "@nestlab/google-recaptcha": "^3.0.1",
-    "@uppy/companion": "^3.7.0",
+    "@uppy/companion": "^4.0.3",
     "bcrypt": "^5.0.1",
     "bull": "^4.8.4",
     "cache-manager": "^4.1.0",
@@ -47,6 +47,7 @@
     "class-validator": "^0.13.2",
     "cookie-parser": "^1.4.6",
     "cross-env": "^7.0.3",
+    "csurf": "^1.11.0",
     "generate-password": "^1.7.0",
     "handlebars": "^4.7.7",
     "joi": "^17.6.0",
@@ -104,7 +105,7 @@
     "ts-loader": "^9.2.3",
     "ts-node": "^10.0.0",
     "tsconfig-paths": "4.0.0",
-    "typescript": "^4.3.5"
+    "typescript": "^4.8.4"
   },
   "jest": {
     "moduleFileExtensions": [

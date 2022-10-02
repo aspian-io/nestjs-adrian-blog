@@ -40,6 +40,7 @@ import { UserActivateMobileRegistrationDto } from './dto/activate-mobile-registr
 import { LoginMethodsDto } from './dto/login-methods.dto';
 import { AvatarEmptyValidator } from './validators/avatar-empty.validator';
 import { OAuth2LoginRegisterDto } from './dto/oauth2-login-register.dto';
+import { Recaptcha } from '@nestlab/google-recaptcha';
 
 @Controller()
 export class UsersController {
@@ -61,6 +62,7 @@ export class UsersController {
   }
 
   // Login by Email
+  @Recaptcha()
   @Post( 'users/login-by-email' )
   @HttpCode( HttpStatus.OK )
   @Serialize( LoginRegisterDto )

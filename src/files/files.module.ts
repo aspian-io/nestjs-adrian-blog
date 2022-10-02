@@ -41,7 +41,7 @@ export class FilesModule implements NestModule {
         this.configService.getOrThrow(EnvEnum.NODE_ENV) === "production" ? UppyAuthMiddleware : null,
         companion.app( this.fileService.getS3ConfigParams(
           math.evaluate( this.configService.getOrThrow( EnvEnum.S3_UPLOAD_LINK_EXPIRATION_IN_SECONDS ) )
-        ) )
+        ) ) as any
       ).forRoutes( this.configService.getOrThrow( EnvEnum.UPLOAD_ROUTE ) );
   }
 }

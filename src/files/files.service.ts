@@ -806,25 +806,26 @@ export class FilesService {
   s3BucketConfig ( configService: ConfigService, expiresInSeconds: number, allowedMimeTypes: string[] ) {
     return {
       providerOptions: {
-        s3: {
-          getKey: ( req: any, filename: any, metadata: any ) => {
-            return this.fileNameGenerator( {
-              allowedMimeTypes,
-              metadata,
-            } );
-          },
-          key: configService.getOrThrow( EnvEnum.S3_ACCESS_KEY ),
-          secret: configService.getOrThrow( EnvEnum.S3_SECRET_KEY ),
-          bucket: configService.getOrThrow( EnvEnum.S3_BUCKET ),
-          region: configService.getOrThrow( EnvEnum.S3_REGION ),
-          useAccelerateEndpoint: false, // default: false,
-          expires: expiresInSeconds, // default: 300 (5 minutes)
-          acl: configService.getOrThrow( EnvEnum.S3_ACL ), // default: public-read
-          awsClientOptions: {
-            endpoint: configService.getOrThrow( EnvEnum.S3_ENDPOINT ),
-            s3ForcePathStyle: configService.getOrThrow( EnvEnum.S3_FORTH_PATH_STYLE ) === "true"
-          }
+        // Instagram, Facebook, OneDrive, DriveBox, Drive
+      },
+      s3: {
+        getKey: ( req: any, filename: any, metadata: any ) => {
+          return this.fileNameGenerator( {
+            allowedMimeTypes,
+            metadata,
+          } );
         },
+        key: configService.getOrThrow( EnvEnum.S3_ACCESS_KEY ),
+        secret: configService.getOrThrow( EnvEnum.S3_SECRET_KEY ),
+        bucket: configService.getOrThrow( EnvEnum.S3_BUCKET ),
+        region: configService.getOrThrow( EnvEnum.S3_REGION ),
+        useAccelerateEndpoint: false, // default: false,
+        expires: expiresInSeconds, // default: 300 (5 minutes)
+        acl: configService.getOrThrow( EnvEnum.S3_ACL ), // default: public-read
+        awsClientOptions: {
+          endpoint: configService.getOrThrow( EnvEnum.S3_ENDPOINT ),
+          s3ForcePathStyle: configService.getOrThrow( EnvEnum.S3_FORTH_PATH_STYLE ) === "true"
+        }
       },
       server: {
         host: `${ this.configService.getOrThrow( EnvEnum.SITE_HOST ) }:${ this.configService.getOrThrow( EnvEnum.SITE_PORT ) }`,

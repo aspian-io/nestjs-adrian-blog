@@ -28,20 +28,22 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
 import { ThrottlerBehindProxyGuard } from './common/guards/throttler-behind-proxy.guard';
 import { S3Module } from 'nestjs-s3';
+import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha';
+import { IncomingMessage } from 'http';
 
 @Module( {
   imports: [
-    // GoogleRecaptchaModule.forRootAsync( {
-    //   imports: [ ConfigModule ],
-    //   useFactory: ( configService: ConfigService ) => ( {
-    //     secretKey: configService.getOrThrow( EnvEnum.GOOGLE_RECAPTCHA_SECRET_KEY ),
-    //     response: ( req: IncomingMessage ) => ( req.headers.recaptcha || '' ).toString(),
-    //     skipIf: process.env.NODE_ENV !== 'production',
-    //     //actions: [ 'register', 'login', 'subscribe' ],
-    //     score: 0.5,
-    //   } ),
-    //   inject: [ ConfigService ],
-    // } ),
+    GoogleRecaptchaModule.forRootAsync( {
+      imports: [ ConfigModule ],
+      useFactory: ( configService: ConfigService ) => ( {
+        secretKey: configService.getOrThrow( EnvEnum.GOOGLE_RECAPTCHA_SECRET_KEY ),
+        response: ( req: IncomingMessage ) => ( req.headers.recaptcha || '' ).toString(),
+        // skipIf: process.env.NODE_ENV !== 'production',
+        actions: [ 'register', 'login', 'subscribe' ],
+        score: 0.6,
+      } ),
+      inject: [ ConfigService ],
+    } ),
     ThrottlerModule.forRootAsync( {
       imports: [ ConfigModule ],
       inject: [ ConfigService ],
