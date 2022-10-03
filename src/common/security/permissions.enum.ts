@@ -1,4 +1,7 @@
 export enum PermissionsEnum {
+  // EXTERNAL APP PERMISSION
+  EXTERNAL_ACCESS = "external_a",
+
   // ADMIN
   ADMIN = "rw_a",
 

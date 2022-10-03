@@ -88,7 +88,8 @@ export class UsersController {
 
   // OAuth2 Login
   @Post( 'users/oauth2-login' )
-  @UseGuards( JwtAuthGuard )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.EXTERNAL_ACCESS )
   @HttpCode( HttpStatus.OK )
   @Serialize( LoginRegisterDto )
   async oAuth2Login (
