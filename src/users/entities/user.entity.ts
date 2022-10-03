@@ -1,6 +1,6 @@
 import { BaseMinimalEntity } from "src/common/entities/base-minimal.entity";
 import { Post } from "src/posts/entities/post.entity";
-import { AfterLoad, Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { AfterLoad, Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn, RelationId } from "typeorm";
 import { Claim } from "./claim.entity";
 
 export enum GenderEnum {
@@ -134,4 +134,7 @@ export class User extends BaseMinimalEntity {
     name: 'users_posts_bookmarks',
   } )
   bookmarks: Post[];
+
+  @RelationId( ( post: Post ) => post.bookmarks )
+  bookmarkIds: string[];
 }

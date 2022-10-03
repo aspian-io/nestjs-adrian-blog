@@ -61,8 +61,7 @@ export class UserDto {
   avatar?: string;
 
   @Expose()
-  @Type( () => PostDto )
-  bookmarks: PostDto[];
+  bookmarkIds: string[];
 
   @Expose()
   bookmarksNum: number;

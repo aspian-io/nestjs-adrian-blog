@@ -38,7 +38,7 @@ import { IncomingMessage } from 'http';
       useFactory: ( configService: ConfigService ) => ( {
         secretKey: configService.getOrThrow( EnvEnum.GOOGLE_RECAPTCHA_SECRET_KEY ),
         response: ( req: IncomingMessage ) => ( req.headers.recaptcha || '' ).toString(),
-        // skipIf: process.env.NODE_ENV !== 'production',
+        skipIf: process.env.NODE_ENV !== 'production',
         actions: [ 'register', 'login', 'subscribe' ],
         score: 0.6,
       } ),
