@@ -261,6 +261,30 @@ export class UsersController {
     return {};
   }
 
+  // Get Current User
+  @Get( 'users/current-user' )
+  @UseGuards( JwtAuthGuard )
+  @Serialize( LoginRegisterDto )
+  async currentUser (
+    @CurrentUser() currentUser: IJwtStrategyUser,
+    @I18n() i18n: I18nContext,
+    @Res( { passthrough: true } ) res: Response ) {
+    const user = await this.usersService.getCurrentUser( currentUser.userId, i18n );
+    const decodedRt = this.jwtService.decode( user.refreshToken );
+
+    res.cookie(
+      Tokens.REFRESH_TOKEN,
+      user.refreshToken,
+      {
+        httpOnly: true,
+        sameSite: true,
+        secure: this.configService.getOrThrow( EnvEnum.NODE_ENV ) === 'production',
+        expires: new Date( parseInt( decodedRt[ 'exp' ] ) * 1000 )
+      } );
+
+    return { ...user, accessToken: user.accessToken, refreshToken: user.refreshToken };
+  }
+
   // View Profile
   @Get( 'users/profile' )
   @UseGuards( JwtAuthGuard )
@@ -396,6 +420,14 @@ export class UsersController {
   @Serialize( UserDto )
   resetPasswordByEmailReq ( @Body() body: UserEmailDto, @I18n() i18n: I18nContext ) {
     return this.usersService.resetPasswordByEmailReq( body, i18n );
+  }
+
+  // Get verification email token remaining time in seconds
+  @Post( 'users/reset-password-token-time' )
+  async getResetPasswordTokenRemainingTimeInSec (
+    @I18n() i18n: I18nContext,
+    @Body() body: UserEmailDto ) {
+    return this.usersService.getEmailTokenRemainingTimeInSec( i18n, body.email, false );
   }
 
   // Reset Password by Email

@@ -240,6 +240,28 @@ export class UsersService {
     };
   }
 
+  // Get Current User
+  async getCurrentUser ( id: string, i18n: I18nContext ): Promise<IServiceUserLoginResult> {
+    const user = await this.findOne( id, i18n );
+    if ( !user.isActivated || user.suspend && user.suspend.getTime() > Date.now() ) {
+      throw new ForbiddenException( {
+        statusCode: 403,
+        internalCode: UserErrorsInternalCodeEnum.SUSPENDED_ACCOUNT,
+        message: i18n.t( UsersErrorsLocal.USER_SUSPENDED ),
+        error: UserErrorsEnum.SUSPENDED_ACCOUNT
+      } );
+    }
+
+    const accessToken = await this.generateAccessToken( user.id, user.email, user.claims.map( c => c.name ) );
+    const refreshToken = await this.generateRefreshToken( user.id, user.email );
+
+    return {
+      ...user,
+      accessToken,
+      refreshToken
+    };
+  }
+
   // Register Service (Local JWT) By Email
   async registerByEmail ( i18n: I18nContext, createUserDto: CreateUserDto, metadata: IMetadataDecorator ) {
     if ( this.configService.getOrThrow( EnvEnum.AUTH_REGISTER_BY ) !== "email" ) {
@@ -278,21 +300,21 @@ export class UsersService {
   }
 
   // Get verification email token remaining time in seconds
-  async getEmailTokenRemainingTimeInSec ( i18n: I18nContext, email: string ) {
+  async getEmailTokenRemainingTimeInSec ( i18n: I18nContext, email: string, accountActivationCheck: boolean = true ) {
     const user = await this.userRepository.findOne( { where: { email } } );
     if ( !user ) throw new NotFoundLocalizedException( i18n, UsersInfoLocale.TERM_USER );
     let remainingTimeInSec = 0;
 
-    if ( !user.isActivated ) {
-      if ( user.emailVerificationTokenExpiresAt.getTime() > Date.now() ) {
-        remainingTimeInSec = Math.floor( ( user.emailVerificationTokenExpiresAt.getTime() - Date.now() ) / 1000 );
-        return { remainingTimeInSec };
-      }
-
-      return { remainingTimeInSec: 0 };
+    if ( user.emailVerificationTokenExpiresAt.getTime() > Date.now() ) {
+      remainingTimeInSec = Math.floor( ( user.emailVerificationTokenExpiresAt.getTime() - Date.now() ) / 1000 );
     }
 
-    throw new ForbiddenException( { statusCode: 403, message: i18n.t( UsersErrorsLocal.EMAIL_ALREADY_VERIFIED ), error: 'Already Verified' } );
+    if ( accountActivationCheck ) {
+      if ( !user.isActivated ) return { remainingTimeInSec };
+      throw new ForbiddenException( { statusCode: 403, message: i18n.t( UsersErrorsLocal.EMAIL_ALREADY_VERIFIED ), error: 'Already Verified' } );
+    }
+
+    return { remainingTimeInSec };
   }
 
   // Resend verification token email

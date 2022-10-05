@@ -31,7 +31,7 @@ async function bootstrap () {
       'uppy-auth-token'
     ],
     exposedHeaders: [ "ETag" ],
-    methods: [ 'get', 'post', 'put', 'patch', 'OPTIONS', 'delete', 'DELETE' ],
+    methods: [ 'get', 'post', 'put', 'PATCH', 'OPTIONS', 'delete', 'DELETE' ],
     optionsSuccessStatus: 200,
   } );
 
