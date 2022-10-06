@@ -798,6 +798,11 @@ export class UsersService {
     return result;
   }
 
+  // Get Update Avatar Setting For User
+  async getUserUpdateAvatarSetting (): Promise<boolean> {
+    return ( await this.settingsService.findOne( SettingsKeyEnum.USERS_AVATARS_ENABLE ) ).value === "true";
+  }
+
   // Edit Avatar
   async updateAvatar ( avatar: Express.Multer.File, i18n: I18nContext, metadata: IMetadataDecorator, userId?: string ): Promise<User> {
     const user = await this.findOne( userId ? userId : metadata.user.id, i18n );

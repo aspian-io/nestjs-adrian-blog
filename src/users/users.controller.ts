@@ -329,6 +329,13 @@ export class UsersController {
     return this.usersService.updateMobilePhone( metadata.user.id, dto.token, i18n );
   }
 
+  // Get User Update Avatar Setting
+  @Get( 'users/profile/update-avatar-setting' )
+  @UseGuards( JwtAuthGuard )
+  getUserUpdateAvatarSetting (): Promise<boolean> {
+    return this.usersService.getUserUpdateAvatarSetting();
+  }
+
   // Edit Profile Avatar
   @Patch( 'users/profile/edit-avatar' )
   @UseGuards( JwtAuthGuard, UsersAvatarGuard )
