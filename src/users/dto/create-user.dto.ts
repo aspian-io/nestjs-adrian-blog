@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsDate, IsEmail, IsIn, IsMobilePhone, IsNotEmpty, IsOptional, IsPhoneNumber, IsPostalCode, IsString, Matches, MaxLength, MinLength } from "class-validator";
+import { IsDate, IsEmail, IsIn, IsMobilePhone, IsNotEmpty, IsOptional, IsPhoneNumber, IsPostalCode, IsString, Matches, MaxLength, MinLength, ValidateIf } from "class-validator";
 import { i18nValidationMessage } from "nestjs-i18n";
 import { CommonErrorsLocale } from "src/i18n/locale-keys/common/errors.locale";
 import { GenderEnum } from "src/users/entities/user.entity";
@@ -46,14 +46,17 @@ export class CreateUserDto {
   address?: string;
 
   @IsPhoneNumber( 'IR', { message: CommonErrorsLocale.VALIDATOR_IS_PHONE_NUMBER } )
+  @ValidateIf( e => e.phone !== '' )
   @IsOptional()
   phone?: string;
 
   @IsMobilePhone( 'fa-IR', null, { message: CommonErrorsLocale.VALIDATOR_IS_MOBILE_PHONE } )
+  @ValidateIf( e => e.mobilePhone !== '' )
   @IsOptional()
   mobilePhone?: string;
 
   @IsPostalCode( 'any', { message: CommonErrorsLocale.VALIDATOR_IS_POSTAL_CODE } )
+  @ValidateIf( e => e.postalCode !== '' )
   @IsOptional()
   postalCode?: string;
 
