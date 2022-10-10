@@ -15,5 +15,6 @@
   "mobile-is-empty": "Mobile phone number has not been entered",
   "phone-verification-code-limit": "New code cannot be generated until next {time} seconds",
   "email-verification-code-limit": "New verification code cannot be generated until next {time} seconds",
-  "account-activation-by-email": "Please enter the activation token that has been sent to your email address to activate your user account"
+  "account-activation-by-email": "Please enter the activation token that has been sent to your email address to activate your user account",
+  "current-new-password-same": "Your current and new password are identical. Please enter a new password."
 }

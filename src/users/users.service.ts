@@ -575,7 +575,7 @@ export class UsersService {
     const user = await this.findOne( id, i18n );
     // The only admin cannot be suspended
     const isUserAdmin = await this.isUserAdmin( user.id );
-    if ( isUserAdmin && userBody.suspend.getTime() >= Date.now() ) {
+    if ( isUserAdmin && userBody.suspend?.getTime() >= Date.now() ) {
       throw new BadRequestException( i18n.t( UsersErrorsLocal.ADMIN_SUSPEND ) );
     }
     // Check if new email address is in use
@@ -888,6 +888,11 @@ export class UsersService {
     // Check old password
     const passwordMatch = await bcrypt.compare( currentPassword, user.password );
     if ( !passwordMatch ) throw new BadRequestException( i18n.t( UsersErrorsLocal.CURRENT_PASSWORD_NOT_MATCH ) );
+
+    if ( currentPassword === password ) {
+      throw new BadRequestException( i18n.t( UsersErrorsLocal.CURRENT_NEW_PASSWORD_SAME ) );
+    }
+
     // Hashing password
     const hash = await this.hash( password );
     user.password = hash;

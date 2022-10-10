@@ -2,6 +2,7 @@ export enum UsersErrorsLocal {
   EMAIL_IN_USE = "users-errors.email-in-use",
   INCORRECT_CREDENTIALS = "users-errors.incorrect-credentials",
   CURRENT_PASSWORD_NOT_MATCH = "users-errors.current-password-not-match",
+  CURRENT_NEW_PASSWORD_SAME = "users-errors.current-new-password-same",
   DUPLICATE_INFO = "users-errors.duplicate-info",
   MOBILE_PHONE_IN_USE = "users-errors.mobile-phone-in-use",
   META_ID = "users-errors.meta-id",

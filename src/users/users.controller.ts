@@ -412,14 +412,14 @@ export class UsersController {
   }
 
   // Change Password
-  @Patch( 'users/change-password/:id' )
+  @Patch( 'users/change-password' )
   @UseGuards( JwtAuthGuard )
   @Serialize( UserDto )
   changePassword (
-    @Param( 'id' ) id: string,
+    @CurrentUser() user: IJwtStrategyUser,
     @Body() body: UserChangePasswordDto,
     @I18n() i18n: I18nContext ): Promise<User> {
-    return this.usersService.changePassword( id, body, i18n );
+    return this.usersService.changePassword( user.userId, body, i18n );
   }
 
   // Reset Password by Email Request

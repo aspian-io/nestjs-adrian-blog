@@ -11,6 +11,9 @@ export class PostDto {
   subtitle?: string;
 
   @Expose()
+  excerpt?: string;
+
+  @Expose()
   content?: string;
 
   @Expose()
@@ -47,6 +50,10 @@ export class PostDto {
   @Expose()
   @Type( () => FileDto )
   attachments: FileDto[];
+
+  @Transform( ( { obj } ) => obj?.commentsNum )
+  @Expose()
+  comments: number;
 
   @Transform( ( { obj } ) => obj?.likesNum )
   @Expose()

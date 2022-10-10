@@ -76,6 +76,7 @@ export class CommentsService {
     } );
 
     const result = await this.commentRepository.save( comment );
+    await this.postsService.increasePostCommentsNum( post );
     await this.cacheManager.reset();
 
     return result;
@@ -260,7 +261,9 @@ export class CommentsService {
   // Soft remove a comment
   async softRemove ( id: string, i18n: I18nContext ): Promise<Comment> {
     const comment = await this.findOne( id, i18n );
+    const post = await this.postsService.findOne( comment.post.id, i18n );
     const result = await this.commentRepository.softRemove( comment );
+    await this.postsService.decreasePostCommentsNum( post );
     await this.cacheManager.reset();
     return result;
   }
@@ -268,7 +271,9 @@ export class CommentsService {
   // Recover a soft-removed comment
   async recover ( id: string, i18n: I18nContext ): Promise<Comment> {
     const comment = await this.findOne( id, i18n, true );
+    const post = await this.postsService.findOne( comment.post.id, i18n );
     const result = await this.commentRepository.recover( comment );
+    await this.postsService.increasePostCommentsNum( post );
     await this.cacheManager.reset();
     return result;
   }
@@ -276,7 +281,9 @@ export class CommentsService {
   // Remove a comment Permanently
   async remove ( id: string, i18n: I18nContext ): Promise<Comment> {
     const comment = await this.findOne( id, i18n, true );
+    const post = await this.postsService.findOne( comment.post.id, i18n );
     const result = await this.commentRepository.remove( comment );
+    await this.postsService.decreasePostCommentsNum( post );
     await this.cacheManager.reset();
     return result;
   }

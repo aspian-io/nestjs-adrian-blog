@@ -6,14 +6,14 @@ export class MinimalUserDto {
   email: string;
 
   @Expose()
-  gender: GenderEnum;
+  gender?: GenderEnum;
 
   @Expose()
   firstName: string;
 
   @Expose()
-  bio: string;
+  lastName: string;
 
   @Expose()
-  lastName: string;
+  bio?: string;
 }

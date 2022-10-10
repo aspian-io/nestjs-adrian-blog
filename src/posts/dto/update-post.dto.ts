@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsDate, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsArray, IsBoolean, IsDate, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { CommonErrorsLocale } from 'src/i18n/locale-keys/common/errors.locale';
 import { PostStatusEnum, PostVisibilityEnum } from '../entities/post.entity';
@@ -54,6 +54,11 @@ export class UpdatePostDto {
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @IsOptional()
   subtitle?: string;
+
+  @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
+  @MaxLength( 200, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @IsOptional()
+  excerpt?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @IsOptional()

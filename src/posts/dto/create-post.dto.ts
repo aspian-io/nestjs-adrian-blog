@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsArray, IsBoolean, IsDate, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from "class-validator";
+import { IsArray, IsBoolean, IsDate, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from "class-validator";
 import { i18nValidationMessage } from "nestjs-i18n";
 import { CommonErrorsLocale } from "src/i18n/locale-keys/common/errors.locale";
 import { PostStatusEnum, PostTypeEnum, PostVisibilityEnum } from "../entities/post.entity";
@@ -14,6 +14,11 @@ export class CreatePostDto {
   subtitle?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
+  @MaxLength( 200, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @IsOptional()
+  excerpt?: string;
+
+  @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @IsOptional()
   content?: string;
 
@@ -24,7 +29,7 @@ export class CreatePostDto {
   @IsUUID( 'all', { message: CommonErrorsLocale.VALIDATOR_IS_UUID } )
   @IsOptional()
   featuredImageId?: string;
-  
+
   @IsIn( Object.values( PostVisibilityEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN ) } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   visibility: PostVisibilityEnum;

@@ -247,7 +247,10 @@ export class PostsService {
 
     const [ items, totalItems ] = await this.postRepository.findAndCount( {
       relations: {
-        bookmarks: true
+        bookmarks: true,
+        createdBy: true,
+        featuredImage: true,
+        taxonomies: true
       },
       where: {
         bookmarks: {
@@ -435,6 +438,21 @@ export class PostsService {
     await this.addScheduledPostJobToQueue( result );
 
     return result;
+  }
+
+  // Increasing comments number by one
+  increasePostCommentsNum ( post: Post ): Promise<Post> {
+    post.commentsNum += 1;
+    return this.postRepository.save( post );
+  }
+
+  // Decreasing comments number by one
+  decreasePostCommentsNum ( post: Post ): Promise<Post> {
+    if ( post.commentsNum > 0 ) {
+      post.commentsNum -= 1;
+      return this.postRepository.save( post );
+    }
+    return;
   }
 
   // Delete a slug history

@@ -40,6 +40,9 @@ export class Post extends BaseEntity {
   subtitle?: string;
 
   @Column( { nullable: true } )
+  excerpt?: string;
+
+  @Column( { nullable: true } )
   content?: string;
 
   @Column()
@@ -90,6 +93,9 @@ export class Post extends BaseEntity {
   @ManyToMany( () => File, { onDelete: 'CASCADE' } )
   @JoinTable( { name: 'posts_files' } )
   attachments: File[];
+
+  @Column( { default: 0 } )
+  commentsNum: number;
 
   @ManyToMany( () => User, { onDelete: 'CASCADE' } )
   @JoinTable( { name: 'posts_likes' } )
