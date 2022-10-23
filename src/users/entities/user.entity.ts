@@ -21,13 +21,13 @@ export class User extends BaseMinimalEntity {
 
   @Column( { nullable: true } )
   @Index( 'user-email-idx', { unique: true } )
-  email: string;
+  email: string | null;
 
   @Column( { default: false } )
   emailVerified: boolean;
 
   @Column( { nullable: true } )
-  emailVerificationToken?: number;
+  emailVerificationToken: number | null;
 
   @Column( { default: () => 'CURRENT_TIMESTAMP(6)' } )
   emailVerificationTokenExpiresAt?: Date;
@@ -39,7 +39,7 @@ export class User extends BaseMinimalEntity {
     this.isEmailVerificationTokenExpired = this.emailVerificationTokenExpiresAt.getTime() < Date.now();
   }
 
-  @Column( { nullable: true } )
+  @Column()
   password: string;
 
   @Column()
@@ -49,41 +49,44 @@ export class User extends BaseMinimalEntity {
   lastName: string;
 
   @Column( { nullable: true } )
-  bio?: string;
+  bio: string | null;
 
   @Column( { nullable: true } )
-  birthDate: Date;
+  role: string | null;
 
   @Column( { nullable: true } )
-  gender: GenderEnum;
+  birthDate: Date | null;
 
   @Column( { nullable: true } )
-  country: string;
+  gender: GenderEnum | null;
 
   @Column( { nullable: true } )
-  state: string;
+  country: string | null;
 
   @Column( { nullable: true } )
-  city: string;
+  state: string | null;
 
   @Column( { nullable: true } )
-  address: string;
+  city: string | null;
 
   @Column( { nullable: true } )
-  phone: string;
+  address: string | null;
+
+  @Column( { nullable: true } )
+  phone: string | null;
 
   @Column( { nullable: true } )
   @Index( 'user-mobile-idx', { unique: true } )
-  mobilePhone: string;
+  mobilePhone: string | null;
 
   @Column( { nullable: true } )
-  mobilePhoneTemp: string;
+  mobilePhoneTemp: string | null;
 
   @Column( { nullable: true } )
-  mobilePhoneVerificationToken?: number;
+  mobilePhoneVerificationToken: number | null;
 
   @Column( { default: () => 'CURRENT_TIMESTAMP(6)' } )
-  mobilePhoneVerificationTokenExpiresAt?: Date;
+  mobilePhoneVerificationTokenExpiresAt: Date;
 
   isMobilePhoneVerificationTokenExpired: boolean;
 
@@ -96,31 +99,31 @@ export class User extends BaseMinimalEntity {
   mobilePhoneVerified: boolean;
 
   @Column( { nullable: true } )
-  postalCode: string;
+  postalCode: string | null;
 
   @Column( { nullable: true } )
-  website?: string;
+  website: string | null;
 
   @Column( { nullable: true } )
-  facebook?: string;
+  facebook: string | null;
 
   @Column( { nullable: true } )
-  twitter?: string;
+  twitter: string | null;
 
   @Column( { nullable: true } )
-  instagram?: string;
+  instagram: string | null;
 
   @Column( { nullable: true } )
-  linkedIn?: string;
+  linkedIn: string | null;
 
   @Column( { nullable: true } )
-  pinterest?: string;
+  pinterest: string | null;
 
   @Column( { nullable: true } )
   suspend: Date | null;
 
   @Column( { nullable: true } )
-  avatar?: string;
+  avatar: string | null;
 
   @Column( { enum: AvatarSourceEnum, default: AvatarSourceEnum.STORAGE } )
   avatarSource: AvatarSourceEnum;
@@ -137,4 +140,9 @@ export class User extends BaseMinimalEntity {
 
   @RelationId( ( post: Post ) => post.bookmarks )
   bookmarkIds: string[];
+
+  toJSON () {
+    delete this.password;
+    return this;
+  }
 }

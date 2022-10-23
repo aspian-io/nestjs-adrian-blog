@@ -5,16 +5,11 @@ import { i18nValidationMessage } from "nestjs-i18n";
 import { CommonErrorsLocale } from "src/i18n/locale-keys/common/errors.locale";
 import { CreateUserDto } from "./create-user.dto";
 
-export class AdminUpdateUserDto extends PartialType( OmitType( CreateUserDto, [ 'firstName', 'lastName' ] as const ) ) {
+export class AdminUpdateUserDto extends PartialType( CreateUserDto ) {
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @MaxLength( 30, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
-  @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
-  firstName: string;
-
-  @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 30, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
-  @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
-  lastName: string;
+  @IsOptional()
+  role?: string;
 
   @IsBoolean( { message: CommonErrorsLocale.VALIDATOR_IS_BOOLEAN } )
   @IsOptional()

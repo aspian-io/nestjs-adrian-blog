@@ -864,9 +864,9 @@ export class UsersService {
   // Update user claims
   async updateUserClaims ( userId: string, body: UpdateUserClaimsDto, i18n: I18nContext ): Promise<User> {
     const user = await this.findOne( userId, i18n );
+    const adminClaim = await this.claimRepository.findOne( { where: { name: PermissionsEnum.ADMIN } } );
     if ( user.claims?.length ) {
       // Check for the only admin claim not to be removed
-      const adminClaim = await this.claimRepository.findOne( { where: { name: PermissionsEnum.ADMIN } } );
       const isUserAdmin = await this.userRepository.findOne( { relations: { claims: true }, where: { id: user.id, claims: { id: adminClaim.id } } } );
       const adminCount = await this.userRepository.count( { relations: { claims: true }, where: { claims: { id: adminClaim.id } } } );
       if ( adminCount <= 1 && isUserAdmin && !body.claimIds.includes( adminClaim.id ) ) {
@@ -876,6 +876,7 @@ export class UsersService {
 
     const claims = await this.claimRepository.find( { where: { id: In( body.claimIds ) } } );
     user.claims = claims;
+    if ( body.claimIds.includes( adminClaim.id ) ) user.role = 'Admin';
     const result = await this.userRepository.save( user );
     await this.cacheManager.reset();
     return result;

@@ -25,7 +25,7 @@ export class Taxonomy extends BaseMinimalEntity {
   parent?: Taxonomy;
 
   @Column( { nullable: true } )
-  description?: string;
+  description: string | null;
 
   @Column()
   term: string;

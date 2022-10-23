@@ -37,13 +37,13 @@ export class Post extends BaseEntity {
   title: string;
 
   @Column( { nullable: true } )
-  subtitle?: string;
+  subtitle: string | null;
 
   @Column( { nullable: true } )
-  excerpt?: string;
+  excerpt: string | null;
 
   @Column( { nullable: true } )
-  content?: string;
+  content: string | null;
 
   @Column()
   @Index( 'post-slug-idx' )
@@ -59,10 +59,10 @@ export class Post extends BaseEntity {
   status: PostStatusEnum;
 
   @Column( { nullable: true } )
-  scheduledToPublish?: Date;
+  scheduledToPublish: Date | null;
 
   @Column( { nullable: true } )
-  scheduledToArchive?: Date;
+  scheduledToArchive: Date | null;
 
   @Column( { default: false } )
   commentAllowed?: Boolean;
