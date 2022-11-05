@@ -539,8 +539,8 @@ export class UsersController {
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_DELETE )
   @Delete( 'admin/users/soft-delete/:id' )
-  adminSoftRemove ( @I18n() i18n: I18nContext, @Param( 'id' ) id: string ): Promise<User> {
-    return this.usersService.softRemove( i18n, id );
+  adminSoftRemove ( @I18n() i18n: I18nContext, @Param( 'id' ) id: string, @CurrentUser() user: IJwtStrategyUser ): Promise<User> {
+    return this.usersService.softRemove( i18n, id, user );
   }
 
   // Recover User
@@ -556,8 +556,8 @@ export class UsersController {
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_DELETE )
   @Delete( 'admin/users/permanent-delete/:id' )
-  adminRemove ( @I18n() i18n: I18nContext, @Param( 'id' ) id: string ): Promise<User> {
-    return this.usersService.remove( i18n, id );
+  adminRemove ( @I18n() i18n: I18nContext, @Param( 'id' ) id: string, @CurrentUser() user: IJwtStrategyUser ): Promise<User> {
+    return this.usersService.remove( i18n, id, user );
   }
 
   // Claims List

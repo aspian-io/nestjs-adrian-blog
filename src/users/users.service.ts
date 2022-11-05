@@ -41,6 +41,7 @@ import { LoginMethodsDto } from './dto/login-methods.dto';
 import * as sanitizeHtml from 'sanitize-html';
 import { OAuth2LoginRegisterDto } from './dto/oauth2-login-register.dto';
 import * as passGenerator from 'generate-password';
+import { IJwtStrategyUser } from './strategies/types';
 
 @Injectable()
 export class UsersService {
@@ -1095,7 +1096,10 @@ export class UsersService {
 
 
   // Soft remove a user
-  async softRemove ( i18n: I18nContext, id: string ): Promise<User> {
+  async softRemove ( i18n: I18nContext, id: string, currentUser: IJwtStrategyUser ): Promise<User> {
+    if ( id === currentUser.userId ) {
+      throw new BadRequestException( i18n.t( UsersErrorsLocal.CURRENT_USER_DELETE_FORBIDDEN ) );
+    }
     const user = await this.userRepository.findOne( { where: { id } } );
     if ( !user ) throw new NotFoundLocalizedException( i18n, UsersInfoLocale.TERM_USER );
 
@@ -1116,7 +1120,10 @@ export class UsersService {
   }
 
   // Remove a user permanently
-  async remove ( i18n: I18nContext, id: string ): Promise<User> {
+  async remove ( i18n: I18nContext, id: string, currentUser: IJwtStrategyUser ): Promise<User> {
+    if ( id === currentUser.userId ) {
+      throw new BadRequestException( i18n.t( UsersErrorsLocal.CURRENT_USER_DELETE_FORBIDDEN ) );
+    }
     const user = await this.userRepository.findOne( { where: { id }, withDeleted: true } );
     if ( !user ) throw new NotFoundLocalizedException( i18n, UsersInfoLocale.TERM_USER );
 
