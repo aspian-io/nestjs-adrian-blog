@@ -543,6 +543,14 @@ export class UsersController {
     return this.usersService.softRemove( i18n, id, user );
   }
 
+  // Users Trash Soft Removed Items
+  @Get( 'admin/users/soft-deleted/trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_DELETE )
+  softRemovedFindAll ( @Query() query: UsersListQueryDto ): Promise<IListResultGenerator<User>> {
+    return this.usersService.softRemovedFindAll( query );
+  }
+
   // Recover User
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_DELETE )

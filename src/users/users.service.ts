@@ -42,6 +42,7 @@ import * as sanitizeHtml from 'sanitize-html';
 import { OAuth2LoginRegisterDto } from './dto/oauth2-login-register.dto';
 import * as passGenerator from 'generate-password';
 import { IJwtStrategyUser } from './strategies/types';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class UsersService {
@@ -582,14 +583,14 @@ export class UsersService {
     // Check if new email address is in use
     if ( userBody.email && userBody.email !== user.email ) {
       const duplicateEmail = await this.userRepository.findOne( { where: { id: Not( id ), email: userBody.email } } );
-      if ( duplicateEmail ) throw new BadRequestException( i18n.t( UsersErrorsLocal.EMAIL_IN_USE ) );
+      if ( duplicateEmail ) throw new BadRequestException( i18n.t( UsersErrorsLocal.EMAIL_IN_USE), 'EMAIL_IN_USE' );
       user.emailVerified = false;
     }
 
     // Check if new mobile phone is in use
     if ( userBody.mobilePhone && userBody.mobilePhone !== user.mobilePhone ) {
       const duplicateMobilePhone = await this.userRepository.findOne( { where: { id: Not( id ), mobilePhone: userBody.mobilePhone } } );
-      if ( duplicateMobilePhone ) throw new BadRequestException( i18n.t( UsersErrorsLocal.MOBILE_PHONE_IN_USE ) );
+      if ( duplicateMobilePhone ) throw new BadRequestException( i18n.t( UsersErrorsLocal.MOBILE_PHONE_IN_USE), 'MOBILE_IN_USE' );
       user.mobilePhoneVerified = false;
     }
 
@@ -1108,6 +1109,22 @@ export class UsersService {
 
     await this.cacheManager.reset();
     return this.userRepository.softRemove( user );
+  }
+
+  // Recover a soft-removed user
+  async softRemovedFindAll ( query: PaginationDto ): Promise<IListResultGenerator<User>> {
+    const { page, limit } = query;
+    const { skip, take } = FilterPaginationUtil.takeSkipGenerator( limit, page );
+
+    const [ items, totalItems ] = await this.userRepository.findAndCount( {
+      withDeleted: true,
+      where: { deletedAt: Not( IsNull() ) },
+      order: { deletedAt: { direction: 'DESC' } },
+      take,
+      skip
+    } );
+
+    return FilterPaginationUtil.resultGenerator( items, totalItems, limit, page );
   }
 
   // Recover a soft-removed user
