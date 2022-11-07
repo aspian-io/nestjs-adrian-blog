@@ -526,13 +526,14 @@ export class UsersController {
   // Edit User Claims
   @Patch( 'admin/users/update-claims/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
-  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_EDIT )
+  @RequirePermission( PermissionsEnum.ADMIN )
   adminUpdateUserClaims (
     @I18n() i18n: I18nContext,
     @Param( 'id' ) id: string,
     @Body() body: UpdateUserClaimsDto,
+    @CurrentUser() user: IJwtStrategyUser
   ): Promise<User> {
-    return this.usersService.updateUserClaims( id, body, i18n );
+    return this.usersService.updateUserClaims( id, body, i18n, user );
   }
 
   // Soft Remove User
@@ -570,7 +571,7 @@ export class UsersController {
 
   // Claims List
   @UseGuards( JwtAuthGuard, PermissionsGuard )
-  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_READ )
+  @RequirePermission( PermissionsEnum.ADMIN )
   @Get( 'admin/claims' )
   adminFindAllClaims (): Promise<Claim[]> {
     return this.usersService.findAllClaims();

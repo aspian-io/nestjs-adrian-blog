@@ -17,5 +17,6 @@ export enum UsersErrorsLocal {
   MOBILE_PHONE_VERIFICATION_CODE_LIMIT = "users-errors.phone-verification-code-limit",
   EMAIL_PHONE_VERIFICATION_CODE_LIMIT = "users-errors.email-verification-code-limit",
   ACCOUNT_ACTIVATION_BY_EMAIL = "users-errors.account-activation-by-email",
-  CURRENT_USER_DELETE_FORBIDDEN = "users-errors.current-user-delete"
+  CURRENT_USER_DELETE_FORBIDDEN = "users-errors.current-user-delete",
+  CURRENT_USER_EDIT_CLAIMS = "users-errors.current-user-edit-claims",
 }

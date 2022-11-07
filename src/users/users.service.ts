@@ -583,14 +583,14 @@ export class UsersService {
     // Check if new email address is in use
     if ( userBody.email && userBody.email !== user.email ) {
       const duplicateEmail = await this.userRepository.findOne( { where: { id: Not( id ), email: userBody.email } } );
-      if ( duplicateEmail ) throw new BadRequestException( i18n.t( UsersErrorsLocal.EMAIL_IN_USE), 'EMAIL_IN_USE' );
+      if ( duplicateEmail ) throw new BadRequestException( i18n.t( UsersErrorsLocal.EMAIL_IN_USE ), 'EMAIL_IN_USE' );
       user.emailVerified = false;
     }
 
     // Check if new mobile phone is in use
     if ( userBody.mobilePhone && userBody.mobilePhone !== user.mobilePhone ) {
       const duplicateMobilePhone = await this.userRepository.findOne( { where: { id: Not( id ), mobilePhone: userBody.mobilePhone } } );
-      if ( duplicateMobilePhone ) throw new BadRequestException( i18n.t( UsersErrorsLocal.MOBILE_PHONE_IN_USE), 'MOBILE_IN_USE' );
+      if ( duplicateMobilePhone ) throw new BadRequestException( i18n.t( UsersErrorsLocal.MOBILE_PHONE_IN_USE ), 'MOBILE_IN_USE' );
       user.mobilePhoneVerified = false;
     }
 
@@ -864,17 +864,12 @@ export class UsersService {
   }
 
   // Update user claims
-  async updateUserClaims ( userId: string, body: UpdateUserClaimsDto, i18n: I18nContext ): Promise<User> {
+  async updateUserClaims ( userId: string, body: UpdateUserClaimsDto, i18n: I18nContext, currentUser: IJwtStrategyUser ): Promise<User> {
     const user = await this.findOne( userId, i18n );
-    const adminClaim = await this.claimRepository.findOne( { where: { name: PermissionsEnum.ADMIN } } );
-    if ( user.claims?.length ) {
-      // Check for the only admin claim not to be removed
-      const isUserAdmin = await this.userRepository.findOne( { relations: { claims: true }, where: { id: user.id, claims: { id: adminClaim.id } } } );
-      const adminCount = await this.userRepository.count( { relations: { claims: true }, where: { claims: { id: adminClaim.id } } } );
-      if ( adminCount <= 1 && isUserAdmin && !body.claimIds.includes( adminClaim.id ) ) {
-        throw new BadRequestException( i18n.t( UsersErrorsLocal.ONLY_ADMIN ) );
-      }
+    if ( currentUser.userId === userId ) {
+      throw new BadRequestException( i18n.t( UsersErrorsLocal.CURRENT_USER_EDIT_CLAIMS ), 'SELF_CLAIM_EDIT_ERR' );
     }
+    const adminClaim = await this.claimRepository.findOne( { where: { name: PermissionsEnum.ADMIN } } );
 
     const claims = await this.claimRepository.find( { where: { id: In( body.claimIds ) } } );
     user.claims = claims;

@@ -17,5 +17,6 @@
   "email-verification-code-limit": "New verification code cannot be generated until next {time} seconds",
   "account-activation-by-email": "Please enter the activation token that has been sent to your email address to activate your user account",
   "current-new-password-same": "Your current and new password are identical. Please enter a new password.",
-  "current-user-delete": "You cannot delete current user"
+  "current-user-delete": "You cannot delete current user",
+  "current-user-edit-claims": "You are not allowed to edit your own claims"
 }
