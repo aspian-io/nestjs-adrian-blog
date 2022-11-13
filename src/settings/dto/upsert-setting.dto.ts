@@ -5,10 +5,6 @@ import { SettingsKeyEnum } from "../types/settings-key.enum";
 import { SettingsServiceEnum } from "../types/settings-service.enum";
 
 export class UpsertSettingDto {
-  @IsUUID( "all", { message: CommonErrorsLocale.VALIDATOR_IS_UUID } )
-  @IsOptional()
-  id?: string;
-
   @IsIn( Object.values( SettingsKeyEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN ) } )
   key: SettingsKeyEnum;
 

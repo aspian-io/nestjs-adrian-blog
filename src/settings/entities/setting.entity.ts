@@ -6,7 +6,7 @@ import { SettingsServiceEnum } from "../types/settings-service.enum";
 
 @Entity()
 export class Setting extends BaseMinimalEntity {
-  @Column()
+  @Column( { unique: true } )
   key: SettingsKeyEnum;
 
   @Column( { nullable: true } )

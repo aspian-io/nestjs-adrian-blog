@@ -138,15 +138,15 @@ import { IncomingMessage } from 'http';
       inject: [ ConfigService ],
       useFactory: async ( configService: ConfigService ) => ( {
         transport: {
-          server: '',
-          // host: configService.getOrThrow( EnvEnum.MAILER_HOST ),
-          // port: configService.getOrThrow( EnvEnum.MAILER_PORT ),
-          ignoreTLS: true,
-          requireTLS: false,
-          secure: false,
+          // server: '',
+          host: configService.getOrThrow( EnvEnum.MAILER_HOST ),
+          port: configService.getOrThrow( EnvEnum.MAILER_PORT ),
+          // ignoreTLS: true,
+          // requireTLS: false,
+          // secure: false,
           auth: {
-            // user: ( await nodemailer.createTestAccount() ).user,
-            // pass: ( await nodemailer.createTestAccount() ).pass,
+            user: ( await nodemailer.createTestAccount() ).user,
+            pass: ( await nodemailer.createTestAccount() ).pass,
           },
         },
         defaults: {

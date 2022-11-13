@@ -1,4 +1,4 @@
-import { Controller, Get, Body, Patch, Param, Query, UseGuards, CacheTTL } from '@nestjs/common';
+import { Controller, Get, Body, Patch, Param, Query, UseGuards, CacheTTL, Delete } from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { I18n, I18nContext } from 'nestjs-i18n';
 import { IMetadataDecorator, Metadata } from 'src/common/decorators/metadata.decorator';
@@ -30,9 +30,17 @@ export class SettingsController {
   @Patch( 'upsert' )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.SETTING_EDIT )
   upsert (
-    @Body() upsertSettingDto: UpsertSettingDto,
-    @I18n() i18n: I18nContext,
+    @Body() upsertSettingsArray: UpsertSettingDto[],
     @Metadata() metadata: IMetadataDecorator ) {
-    return this.settingsService.upsert( upsertSettingDto, i18n, metadata );
+    const upsertPromises = upsertSettingsArray.map( us => {
+      return this.settingsService.upsert( us, metadata );
+    } );
+    return Promise.all( upsertPromises );
+  }
+
+  @Delete( 'permanent-delete/:settingKey' )
+  @RequirePermission( PermissionsEnum.ADMIN )
+  remove ( @I18n() i18n: I18nContext, @Param( 'settingKey' ) settingKey: SettingsKeyEnum ) {
+    return this.settingsService.remove( i18n, settingKey );
   }
 }

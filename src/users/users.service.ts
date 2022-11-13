@@ -706,7 +706,7 @@ export class UsersService {
     const siteSupportEmail = ( await this.settingsService.findOne( SettingsKeyEnum.SITE_SUPPORT_EMAIL ) ).value;
 
     if ( customTemplate ) {
-      const compiledTemplate = Handlebars.compile( customTemplate );
+      const compiledTemplate = Handlebars.compile( customTemplate.content );
       const html = compiledTemplate( {
         websiteName,
         token: result.emailVerificationToken,
@@ -907,7 +907,7 @@ export class UsersService {
     const siteSupportEmail = ( await this.settingsService.findOne( SettingsKeyEnum.SITE_SUPPORT_EMAIL ) ).value;
 
     if ( customTemplate ) {
-      const compiledTemplate = Handlebars.compile( customTemplate );
+      const compiledTemplate = Handlebars.compile( customTemplate.content );
       const html = compiledTemplate( {
         websiteName,
         websiteUrl
@@ -971,7 +971,7 @@ export class UsersService {
     const siteSupportEmail = ( await this.settingsService.findOne( SettingsKeyEnum.SITE_SUPPORT_EMAIL ) ).value;
 
     if ( customTemplate ) {
-      const compiledTemplate = Handlebars.compile( customTemplate );
+      const compiledTemplate = Handlebars.compile( customTemplate.content );
       const html = compiledTemplate( {
         websiteName,
         token: result.emailVerificationToken,
@@ -1102,8 +1102,9 @@ export class UsersService {
     const isUserOnlyAdmin = await this.isOnlyAdmin( id );
     if ( isUserOnlyAdmin ) throw new BadRequestException( i18n.t( UsersErrorsLocal.ONLY_ADMIN ) );
 
+    const result = await this.userRepository.softRemove( user );
     await this.cacheManager.reset();
-    return this.userRepository.softRemove( user );
+    return result;
   }
 
   // Recover a soft-removed user
@@ -1127,8 +1128,9 @@ export class UsersService {
     const user = await this.userRepository.findOne( { where: { id }, withDeleted: true } );
     if ( !user ) throw new NotFoundLocalizedException( i18n, UsersInfoLocale.TERM_USER );
 
+    const result = await this.userRepository.recover( user );
     await this.cacheManager.reset();
-    return this.userRepository.recover( user );
+    return result;
   }
 
   // Remove a user permanently
@@ -1142,8 +1144,9 @@ export class UsersService {
     const isUserOnlyAdmin = await this.isOnlyAdmin( id );
     if ( isUserOnlyAdmin ) throw new BadRequestException( i18n.t( UsersErrorsLocal.ONLY_ADMIN ) );
 
+    const result = await this.userRepository.remove( user );
     await this.cacheManager.reset();
-    return this.userRepository.remove( user );
+    return result;
   }
 
   // Find All Claims
