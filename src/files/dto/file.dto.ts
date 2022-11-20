@@ -25,6 +25,8 @@ export class FileDto {
   originalImage?: FileDto;
 
   @Expose()
-  @Type( () => FileDto )
-  videoThumbnail?: FileDto;
+  thumbnail?: string;
+
+  @Expose()
+  imageAlt?: string;
 }

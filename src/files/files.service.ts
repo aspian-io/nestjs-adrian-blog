@@ -7,7 +7,7 @@ import * as sharp from 'sharp';
 import * as path from 'path';
 import { InjectRepository } from '@nestjs/typeorm';
 import { File, FilePolicyEnum, FileSectionEnum, FileStatus, ImageSizeCategories } from './entities/file.entity';
-import { Between, In, Repository } from 'typeorm';
+import { Between, In, IsNull, Repository } from 'typeorm';
 import { I18nContext } from 'nestjs-i18n';
 import { IMetadataDecorator } from 'src/common/decorators/metadata.decorator';
 import { InjectQueue } from '@nestjs/bull';
@@ -28,6 +28,7 @@ import { S3 as S3Type } from "aws-sdk";
 import { EnvEnum } from 'src/env.enum';
 import { FilterPaginationUtil, IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
 import { FilesErrorsLocale } from 'src/i18n/locale-keys/files/errors.locale';
+import { SettingsServiceEnum } from 'src/settings/types/settings-service.enum';
 
 @Injectable()
 export class FilesService {
@@ -47,7 +48,7 @@ export class FilesService {
       throw new BadRequestException( i18n.t( FilesErrorsLocale.DUPLICATE_FILE ) );
     }
 
-    let status = this.isFileTypeAllowed( createFileDto.type, [ 'image/*' ] )
+    let status = this.isFileTypeAllowed( createFileDto.type, [ 'image/*' ] ) && !createFileDto.type.includes( 'svg' )
       ? FileStatus.IN_PROGRESS
       : FileStatus.READY;
 
@@ -73,6 +74,7 @@ export class FilesService {
       savedFile.section !== FileSectionEnum.SITE_LOGO
       && savedFile.section !== FileSectionEnum.BRAND_LOGO
       && this.isFileTypeAllowed( savedFile.type, [ 'image/*' ] )
+      && !savedFile.type.includes( 'svg' )
     ) {
       await this.imageResizerQueue.add( FileJobs.IMAGE_RESIZER, { imageId: savedFile.id } );
     }
@@ -89,7 +91,6 @@ export class FilesService {
       relations: {
         originalImage: true,
         generatedImageChildren: true,
-        videoThumbnail: true
       },
       where: {
         filename: query[ 'searchBy.filename' ],
@@ -101,6 +102,7 @@ export class FilesService {
         status: query[ 'filterBy.status' ]?.length ? In( query[ 'filterBy.status' ] ) : undefined,
         section: query[ 'filterBy.section' ]?.length ? In( query[ 'filterBy.section' ] ) : undefined,
         imageSizeCategory: query[ 'filterBy.imageSizeCategory' ]?.length ? In( query[ 'filterBy.imageSizeCategory' ] ) : undefined,
+        originalImage: IsNull(),
         createdAt: query[ 'filterBy.createdAt' ]?.length
           ? Between( query[ 'filterBy.createdAt' ][ 0 ], query[ 'filterBy.createdAt' ][ 1 ] ) : undefined,
         updatedAt: query[ 'filterBy.updatedAt' ]?.length
@@ -131,7 +133,6 @@ export class FilesService {
       relations: {
         generatedImageChildren: true,
         originalImage: true,
-        videoThumbnail: true,
       }
     } );
 
@@ -151,18 +152,9 @@ export class FilesService {
     } );
     if ( !file ) throw new NotFoundLocalizedException( i18n, FilesInfoLocale.TERM_FILE );
 
-    // Update section of parent and children consequently if section changed
-    if ( updateFileDto.section && updateFileDto.section !== file.section ) {
-      if ( file.originalImage ) {
-        file.originalImage.section = updateFileDto.section;
-        await this.fileRepository.save( file.originalImage );
-      }
-
-      if ( file.generatedImageChildren.length ) {
-        await Promise.all( file.generatedImageChildren.map( async ch => {
-          ch.section = updateFileDto.section;
-          await this.fileRepository.save( ch );
-        } ) );
+    if ( updateFileDto.imageAlt !== file.imageAlt ) {
+      if ( file.generatedImageChildren?.length > 0 ) {
+        file.generatedImageChildren.forEach( ch => ch.imageAlt = updateFileDto.imageAlt );
       }
     }
 
@@ -215,6 +207,15 @@ export class FilesService {
     } );
     if ( !file ) throw new NotFoundLocalizedException( i18n, FilesInfoLocale.TERM_FILE );
 
+    const watermarkImgIdSetting = await this.settingsService.findOneOrNull( SettingsKeyEnum.FILE_WATERMARK_IMAGE_ID );
+    if ( watermarkImgIdSetting?.value === id ) {
+      await this.settingsService.upsert( {
+        key: SettingsKeyEnum.FILE_WATERMARK_IMAGE_ID,
+        value: '',
+        service: SettingsServiceEnum.FILES
+      } );
+    }
+
     if ( file.originalImage ) {
       await this.fileRepository.softRemove( file.originalImage );
     }
@@ -233,6 +234,14 @@ export class FilesService {
 
   // Bulk soft remove
   async bulkSoftRemove ( i18n: I18nContext, ids: string[] ) {
+    const watermarkImgIdSetting = await this.settingsService.findOneOrNull( SettingsKeyEnum.FILE_WATERMARK_IMAGE_ID );
+    if ( watermarkImgIdSetting?.value && ids.includes( watermarkImgIdSetting?.value ) ) {
+      await this.settingsService.upsert( {
+        key: SettingsKeyEnum.FILE_WATERMARK_IMAGE_ID,
+        value: '',
+        service: SettingsServiceEnum.FILES
+      } );
+    }
     return Promise.all(
       ids.map( async id => {
         return this.softRemove( i18n, id );
@@ -289,6 +298,15 @@ export class FilesService {
     } );
     if ( !file ) throw new NotFoundLocalizedException( i18n, FilesInfoLocale.TERM_FILE );
 
+    const watermarkImgIdSetting = await this.settingsService.findOneOrNull( SettingsKeyEnum.FILE_WATERMARK_IMAGE_ID );
+    if ( watermarkImgIdSetting?.value === id ) {
+      await this.settingsService.upsert( {
+        key: SettingsKeyEnum.FILE_WATERMARK_IMAGE_ID,
+        value: '',
+        service: SettingsServiceEnum.FILES
+      } );
+    }
+
     if ( file.originalImage ) {
       await Promise.all(
         file.originalImage.generatedImageChildren.map( async ch => {
@@ -333,6 +351,15 @@ export class FilesService {
 
   // Bulk remove permanently
   async bulkRemove ( i18n: I18nContext, ids: string[] ) {
+    const watermarkImgIdSetting = await this.settingsService.findOneOrNull( SettingsKeyEnum.FILE_WATERMARK_IMAGE_ID );
+    if ( watermarkImgIdSetting?.value && ids.includes( watermarkImgIdSetting?.value ) ) {
+      await this.settingsService.upsert( {
+        key: SettingsKeyEnum.FILE_WATERMARK_IMAGE_ID,
+        value: '',
+        service: SettingsServiceEnum.FILES
+      } );
+    }
+
     return Promise.all(
       ids.map( async id => {
         return this.remove( i18n, id );
@@ -346,7 +373,7 @@ export class FilesService {
     const image = await this.fileRepository.findOne( { where: { id: imageId } } );
     if ( !image ) throw new NotFoundException( "Image not found" );
     // Get image sizes and filenames suffixes
-    const imageSizesAndSuffixes = Object.keys( ImageSizeCategories )
+    const imageSizesAndSuffixes = Object.values( ImageSizeCategories )
       .filter( isc => isc !== ImageSizeCategories.ORIGINAL )
       .map( isc => {
         if ( isc !== ImageSizeCategories.ORIGINAL ) {
@@ -513,6 +540,7 @@ export class FilesService {
                 policy: image.policy,
                 section: image.section,
                 status: FileStatus.READY,
+                imageAlt: image.imageAlt,
                 size: ( await resizedImage.metadata() ).size,
                 type: 'image/jpeg'
               } );
@@ -554,6 +582,7 @@ export class FilesService {
               policy: image.policy,
               section: image.section,
               status: FileStatus.READY,
+              imageAlt: image.imageAlt,
               size: ( await resizedImage.metadata() ).size,
               type: 'image/jpeg'
             } );
@@ -603,6 +632,7 @@ export class FilesService {
             policy: image.policy,
             section: image.section,
             status: FileStatus.READY,
+            imageAlt: image.imageAlt,
             size: ( await resizedImage.metadata() ).size,
             type: 'image/jpeg'
           } );
@@ -712,11 +742,9 @@ export class FilesService {
 
   // Check filetype based on its mimetype by using wildcards 
   isFileTypeAllowed ( mimeType: string, allowedTypes: string[] ): boolean {
-    for ( let i = 0; i < allowedTypes.length; i++ ) {
-      const isMatched = this.matchRules( mimeType, allowedTypes[ i ] );
-      if ( isMatched ) return true;
+    if ( allowedTypes.length > 0 ) {
+      return allowedTypes.some( t => this.matchRules( mimeType, t ) );
     }
-
     return false;
   };
 
@@ -724,6 +752,7 @@ export class FilesService {
   private readonly defaultAllowedTypes = [
     'video/*',
     'image/*',
+    'audio/*',
     'application/pdf',
     'application/epub+zip',
     'application/msword',
@@ -741,6 +770,8 @@ export class FilesService {
   // Path generator for uploading file through uppy companion
   pathGeneratorBySection ( section: FileSectionEnum ) {
     switch ( section ) {
+      case FileSectionEnum.GENERAL:
+        return 'general';
       case FileSectionEnum.BLOG:
         return 'blog';
       case FileSectionEnum.BRAND_LOGO:
@@ -786,7 +817,8 @@ export class FilesService {
     }
     const rawFileName = path.parse( metadata.name ).name;
     const fileExt = path.parse( metadata.name ).ext;
-    const rootFolderName = metadata.access === FilePolicyEnum.PRIVATE
+
+    const rootFolderName = metadata.acl === FilePolicyEnum.PRIVATE
       ? "private"
       : "public";
     // Sanitizing 
@@ -795,7 +827,7 @@ export class FilesService {
     const isTypeAllowed = this.isFileTypeAllowed( metadata.type, allowedMimeTypes );
     if ( !isTypeAllowed ) {
       console.log( "File type not allowed" );
-      throw new BadRequestException( { code: 4002, message: "File type not allowed" } );
+      throw new BadRequestException( { code: 4002, message: "4002 - File type not allowed" } );
     }
     // Compute full filename
     const fullFileName = `${ rootFolderName }/${ this.pathGeneratorBySection( metadata.section ) }/${ sanitizedFileName }_${ Date.now() }${ fileExt }`;

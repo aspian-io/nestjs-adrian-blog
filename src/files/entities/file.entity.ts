@@ -21,7 +21,7 @@ export enum FileSectionEnum {
 export enum ImageSizeCategories {
   SIZE_75 = "SIZE_75",
   SIZE_160 = "SIZE_160",
-  SIZE_240 = "SIZE_320",
+  SIZE_320 = "SIZE_320",
   SIZE_480 = "SIZE_480",
   SIZE_640 = "SIZE_640",
   SIZE_800 = "SIZE_800",
@@ -68,7 +68,9 @@ export class File extends BaseMinimalEntity {
   @OneToMany( () => File, ( file ) => file.originalImage )
   generatedImageChildren: File[];
 
-  @OneToOne( () => File )
-  @JoinColumn()
-  videoThumbnail: File;
+  @Column( { nullable: true } )
+  thumbnail?: string;
+
+  @Column( { nullable: true } )
+  imageAlt?: string;
 }

@@ -12,7 +12,11 @@ export class UpdateFileDto {
   @IsOptional()
   filename: string;
 
-  @IsIn( Object.values( FileSectionEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN ) } )
+  @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @IsOptional()
-  section: FileSectionEnum;
+  thumbnail?: string;
+
+  @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
+  @IsOptional()
+  imageAlt?: string;
 }

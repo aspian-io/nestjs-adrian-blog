@@ -1,7 +1,7 @@
 import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 import { i18nValidationMessage } from "nestjs-i18n";
 import { CommonErrorsLocale } from "src/i18n/locale-keys/common/errors.locale";
-import { FilePolicyEnum, FileSectionEnum, FileStatus, ImageSizeCategories } from "../entities/file.entity";
+import { FilePolicyEnum, FileSectionEnum } from "../entities/file.entity";
 
 export class CreateFileDto {
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
@@ -19,6 +19,10 @@ export class CreateFileDto {
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   type: string;
+
+  @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
+  @IsOptional()
+  imageAlt?: string;
 
   @IsNumber( {}, { message: CommonErrorsLocale.VALIDATOR_IS_NUMBER } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )

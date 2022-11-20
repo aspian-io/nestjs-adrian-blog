@@ -49,14 +49,14 @@ export class SettingsService {
   }
 
   // Upsert a setting
-  async upsert ( upsertSettingDto: UpsertSettingDto, metadata: IMetadataDecorator ) {
+  async upsert ( upsertSettingDto: UpsertSettingDto, metadata?: IMetadataDecorator ) {
     const foundSettingByKey = await this.repo.findOne( { where: { key: upsertSettingDto.key, service: upsertSettingDto.service } } );
 
     if ( foundSettingByKey ) {
       foundSettingByKey.value = upsertSettingDto.value;
-      foundSettingByKey.updatedBy = { id: metadata.user.id } as User;
-      foundSettingByKey.ipAddress = metadata.ipAddress;
-      foundSettingByKey.userAgent = metadata.userAgent;
+      foundSettingByKey.updatedBy = metadata ? { id: metadata.user.id } as User : undefined;
+      foundSettingByKey.ipAddress = metadata ? metadata.ipAddress : 'SYSTEM';
+      foundSettingByKey.userAgent = metadata ? metadata.userAgent : 'SYSTEM';
       const updateResult = await this.repo.save( foundSettingByKey );
       await this.cacheManager.reset();
       return updateResult;
