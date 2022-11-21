@@ -49,7 +49,7 @@ export class Post extends BaseEntity {
   @Index( 'post-slug-idx' )
   slug: string;
 
-  @ManyToOne( () => File )
+  @ManyToOne( () => File, { onDelete: 'SET NULL' } )
   featuredImage?: File;
 
   @Column()
