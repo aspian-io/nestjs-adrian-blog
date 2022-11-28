@@ -22,6 +22,7 @@
     "is-in": "Field value must be an item from {constraints.0}",
     "is-array": "Field value must be an array",
     "array-min-length": "Array min length needs to be at least {constraints.0} element",
-    "is-boolean": "Field value must be a boolean"
+    "is-boolean": "Field value must be a boolean",
+    "is-slug": "Uppercase letters, lowercase letters, hyphens and numbers are allowed"
   }
 }

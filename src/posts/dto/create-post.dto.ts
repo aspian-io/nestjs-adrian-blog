@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsArray, IsBoolean, IsDate, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from "class-validator";
+import { IsArray, IsBoolean, IsDate, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Matches, MaxLength } from "class-validator";
 import { i18nValidationMessage } from "nestjs-i18n";
 import { CommonErrorsLocale } from "src/i18n/locale-keys/common/errors.locale";
 import { PostStatusEnum, PostTypeEnum, PostVisibilityEnum } from "../entities/post.entity";
@@ -23,6 +23,7 @@ export class CreatePostDto {
   content?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
+  @Matches( /^[a-z0-9]+(?:-[a-z0-9]+)*$/, { message: CommonErrorsLocale.VALIDATOR_IS_SLUG } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   slug: string;
 

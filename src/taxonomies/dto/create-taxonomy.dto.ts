@@ -1,4 +1,4 @@
-import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, Matches } from "class-validator";
 import { i18nValidationMessage } from "nestjs-i18n";
 import { CommonErrorsLocale } from "src/i18n/locale-keys/common/errors.locale";
 import { TaxonomyTypeEnum } from "../entities/taxonomy.entity";
@@ -29,10 +29,11 @@ export class CreateTaxonomyDto {
   term: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
+  @Matches( /^[a-z0-9]+(?:-[a-z0-9]+)*$/, { message: CommonErrorsLocale.VALIDATOR_IS_SLUG } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   slug: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @IsOptional()
-  featuredImageId?: string;
+  featuredImage?: string;
 }

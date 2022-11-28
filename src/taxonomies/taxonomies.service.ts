@@ -3,21 +3,25 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Cache } from 'cache-manager';
 import { I18nContext } from 'nestjs-i18n';
 import { IMetadataDecorator } from 'src/common/decorators/metadata.decorator';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { NotFoundLocalizedException } from 'src/common/exceptions/not-found-localized.exception';
 import { FilterPaginationUtil, IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
-import { File } from 'src/files/entities/file.entity';
 import { TaxonomiesErrorsLocale } from 'src/i18n/locale-keys/taxonomies/errors.locale';
 import { TaxonomiesInfoLocale } from 'src/i18n/locale-keys/taxonomies/info.locale';
-import { Not, Repository } from 'typeorm';
+import { FindOptionsWhere, In, IsNull, Not, Repository } from 'typeorm';
 import { CreateTaxonomyDto } from './dto/create-taxonomy.dto';
 import { TaxonomiesListQueryDto } from './dto/taxonomy-list-query.dto';
 import { UpdateTaxonomyDto } from './dto/update-taxonomy.dto';
 import { TaxonomySlugsHistory } from './entities/taxonomy-slug.entity';
 import { Taxonomy, TaxonomyTypeEnum } from './entities/taxonomy.entity';
-import { ITaxonomyReturnFindBySlug } from './types/service.type';
+import { ITaxonomyReturnFindBySlug, TaxonomyErrorsEnum, TaxonomyErrorsInternalCodeEnum } from './types/service.type';
 
 @Injectable()
 export class TaxonomiesService {
+  // Allowed level of taxonomies subitems
+  // Before apply any changes to this number first you should adjust findOne and findAll method in this service
+  private readonly allowedSubitemLevel: number = 5;
+
   constructor (
     @InjectRepository( Taxonomy ) private readonly taxonomyRepository: Repository<Taxonomy>,
     @InjectRepository( TaxonomySlugsHistory ) private readonly taxonomySlugsHistoryRepository: Repository<TaxonomySlugsHistory>,
@@ -37,11 +41,17 @@ export class TaxonomiesService {
     // Check for taxonomy's slug duplication
     await this.checkTaxonomySlugDuplication( type, slug, i18n );
 
+    const parent = createTaxonomyDto.parentId ? await this.findOne( createTaxonomyDto.parentId, i18n ) : null;
+    const childLevel = parent ? parent.childLevel + 1 : 0;
+
+    if ( childLevel > this.allowedSubitemLevel )
+      throw new BadRequestException( i18n.t( TaxonomiesErrorsLocale.FORBIDDEN_CHILD_LEVEL, { args: { levelNumber: this.allowedSubitemLevel } } ) );
+
     // Create taxonomy
     const taxonomy = this.taxonomyRepository.create( {
       ...createTaxonomyDto,
-      featuredImage: { id: createTaxonomyDto.featuredImageId },
-      parent: { id: createTaxonomyDto.parentId },
+      parent,
+      childLevel,
       ipAddress: metadata.ipAddress,
       userAgent: metadata.userAgent,
     } );
@@ -57,16 +67,32 @@ export class TaxonomiesService {
     const { page, limit } = query;
     const { skip, take } = FilterPaginationUtil.takeSkipGenerator( limit, page );
 
+    const where: FindOptionsWhere<Taxonomy> = {
+      type,
+      term: query[ 'searchBy.term' ],
+      description: query[ 'searchBy.description' ],
+      slug: query[ 'searchBy.slug' ],
+    };
+
+    if ( !query[ 'searchBy.term' ] && !query[ 'searchBy.description' ] && !query[ 'searchBy.slug' ] ) where.parent = IsNull();
+
     // Get the result from database
     const [ items, totalItems ] = await this.taxonomyRepository.findAndCount( {
       relations: {
         parent: true,
+        // Based on allowed subitems number (5 children)
+        children: {
+          children: {
+            children: {
+              children: {
+                children: true
+              }
+            }
+          }
+        },
+        slugsHistory: true
       },
-      where: {
-        type,
-        term: query[ 'searchBy.term' ],
-        description: query[ 'searchBy.description' ],
-      },
+      where,
       order: {
         term: query[ 'orderBy.term' ],
         description: query[ 'orderBy.description' ],
@@ -88,7 +114,16 @@ export class TaxonomiesService {
       where: { id },
       relations: {
         parent: true,
-        featuredImage: true,
+        // Based on allowed subitems number (5 children)
+        children: {
+          children: {
+            children: {
+              children: {
+                children: true
+              }
+            }
+          }
+        },
         slugsHistory: true
       },
       withDeleted
@@ -102,7 +137,16 @@ export class TaxonomiesService {
   async findBySlug ( slug: string, i18n: I18nContext, type?: TaxonomyTypeEnum ): Promise<ITaxonomyReturnFindBySlug> {
     const taxonomy = await this.taxonomyRepository.findOne( {
       relations: {
-        featuredImage: true,
+        // Based on allowed subitems number (5 children)
+        children: {
+          children: {
+            children: {
+              children: {
+                children: true
+              }
+            }
+          }
+        },
         parent: true,
         slugsHistory: true
       },
@@ -114,7 +158,6 @@ export class TaxonomiesService {
     if ( !taxonomy ) {
       const taxonomyWithOldSlug = await this.taxonomyRepository.findOne( {
         relations: {
-          featuredImage: true,
           parent: true,
           slugsHistory: true
         },
@@ -143,12 +186,13 @@ export class TaxonomiesService {
     // Check for taxonomy duplication
     const duplicateTaxonomy = await this.taxonomyRepository.findOne( {
       where: {
+        id: Not( taxonomy.id ),
         type: taxonomy.type,
         term: updateTaxonomyDto.term
       }
     } );
     // Throw taxonomy duplication error
-    if ( duplicateTaxonomy ) throw new BadRequestException( i18n.t( TaxonomiesErrorsLocale.DUPLICATE_TAXONOMY ) );
+    if ( duplicateTaxonomy ) throw new BadRequestException( i18n.t( TaxonomiesErrorsLocale.DUPLICATE_TAXONOMY, { args: { levelNumber: 5 } } ) );
 
     // Check for slug duplication
     const duplicateTaxonomySlug = await this.taxonomyRepository.findOne( {
@@ -162,18 +206,29 @@ export class TaxonomiesService {
       throw new BadRequestException( i18n.t( TaxonomiesErrorsLocale.DUPLICATE_TAXONOMY_SLUG ) );
     }
 
+    if ( updateTaxonomyDto.slug !== taxonomy.slug ) {
+      const slugHistory = this.taxonomySlugsHistoryRepository.create( {
+        slug: taxonomy.slug,
+        taxonomy: { id: taxonomy.id },
+        ipAddress: metadata.ipAddress,
+        userAgent: metadata.userAgent
+      } );
+
+      taxonomy.slugsHistory = [ ...taxonomy.slugsHistory, slugHistory ];
+    }
+
     // Assign update dto to original taxonomy object
     Object.assign( taxonomy, updateTaxonomyDto );
 
-    updateTaxonomyDto?.parentId
-      ? taxonomy.parent = { id: updateTaxonomyDto.parentId } as Taxonomy
-      : taxonomy.parent = null;
+    const parent = updateTaxonomyDto?.parentId ? await this.findOne( updateTaxonomyDto.parentId, i18n ) : null;
 
-    if ( updateTaxonomyDto?.featuredImageId ) {
-      updateTaxonomyDto?.featuredImageId
-        ? taxonomy.featuredImage = { id: updateTaxonomyDto.featuredImageId } as File
-        : taxonomy.featuredImage = null;
-    }
+    taxonomy.parent = parent ? parent : taxonomy.parent;
+    const childLevel = parent ? parent.childLevel + 1 : 0;
+
+    if ( childLevel > this.allowedSubitemLevel )
+      throw new BadRequestException( i18n.t( TaxonomiesErrorsLocale.FORBIDDEN_CHILD_LEVEL, { args: { levelNumber: this.allowedSubitemLevel } } ) );
+
+    taxonomy.childLevel = childLevel;
 
     taxonomy.ipAddress = metadata.ipAddress;
     taxonomy.userAgent = metadata.userAgent;
@@ -189,7 +244,9 @@ export class TaxonomiesService {
     const slug = await this.taxonomySlugsHistoryRepository.findOne( { where: { id: slugId } } );
     if ( !slug ) throw new NotFoundLocalizedException( i18n, TaxonomiesInfoLocale.TERM_TAXONOMY_OLD_SLUG );
 
-    return this.taxonomySlugsHistoryRepository.remove( slug );
+    const result = await this.taxonomySlugsHistoryRepository.remove( slug );
+    await this.cacheManager.reset();
+    return result;
   }
 
   // Soft remove a taxonomy
@@ -201,11 +258,60 @@ export class TaxonomiesService {
     return result;
   }
 
+  // Soft remove taxonomies
+  async softRemoveAll ( ids: string[] ): Promise<Taxonomy[]> {
+    const taxonomies = await this.taxonomyRepository.find( { where: { id: In( ids ) } } );
+
+    const result = await this.taxonomyRepository.softRemove( taxonomies );
+    await this.cacheManager.reset();
+    return result;
+  }
+
+  // Find all soft-removed items
+  async softRemovedFindAll ( query: PaginationDto ): Promise<IListResultGenerator<Taxonomy>> {
+    const { page, limit } = query;
+    const { skip, take } = FilterPaginationUtil.takeSkipGenerator( limit, page );
+
+    const [ items, totalItems ] = await this.taxonomyRepository.findAndCount( {
+      relations: {
+        parent: true,
+        // Based on allowed subitems number (5 children)
+        children: {
+          children: {
+            children: {
+              children: {
+                children: true
+              }
+            }
+          }
+        },
+        slugsHistory: true
+      },
+      withDeleted: true,
+      where: { deletedAt: Not( IsNull() ) },
+      order: { deletedAt: { direction: 'DESC' } },
+      take,
+      skip
+    } );
+
+    return FilterPaginationUtil.resultGenerator( items, totalItems, limit, page );
+  }
+
   // Recover a soft-removed taxonomy
   async recover ( id: string, i18n: I18nContext ): Promise<Taxonomy> {
     const taxonomy = await this.findOne( id, i18n, true );
 
     const result = await this.taxonomyRepository.recover( taxonomy );
+    await this.cacheManager.reset();
+
+    return result;
+  }
+
+  // Recover soft-removed taxonomies
+  async recoverAll ( ids: string[] ): Promise<Taxonomy[]> {
+    const taxonomies = await this.taxonomyRepository.find( { where: { id: In( ids ) }, withDeleted: true } );
+
+    const result = await this.taxonomyRepository.recover( taxonomies );
     await this.cacheManager.reset();
 
     return result;
@@ -219,6 +325,27 @@ export class TaxonomiesService {
     await this.cacheManager.reset();
 
     return result;
+  }
+
+  // Remove taxonomies permanently
+  async removeAll ( ids: string[] ): Promise<Taxonomy[]> {
+    const taxonomies = await this.taxonomyRepository.find( { where: { id: In( ids ) }, withDeleted: true } );
+
+    const result = await this.taxonomyRepository.remove( taxonomies );
+    await this.cacheManager.reset();
+
+    return result;
+  }
+
+  // Empty trash
+  async emptyTrash (): Promise<void> {
+    const softDeletedTaxonomies = await this.taxonomyRepository.find( {
+      where: { deletedAt: Not( IsNull() ) },
+      withDeleted: true
+    } );
+
+    await this.taxonomyRepository.remove( softDeletedTaxonomies );
+    await this.cacheManager.reset();
   }
 
 
@@ -238,7 +365,12 @@ export class TaxonomiesService {
       }
     } );
     // Throw taxonomy duplication error
-    if ( duplicateTaxonomy ) throw new BadRequestException( i18n.t( TaxonomiesErrorsLocale.DUPLICATE_TAXONOMY ) );
+    if ( duplicateTaxonomy ) throw new BadRequestException( {
+      statusCode: 400,
+      internalCode: TaxonomyErrorsInternalCodeEnum.DUPLICATE_TAXONOMY,
+      message: i18n.t( TaxonomiesErrorsLocale.DUPLICATE_TAXONOMY ),
+      error: TaxonomyErrorsEnum.DUPLICATE_TAXONOMY
+    } );
   }
 
   // Check taxonomy slug duplication
@@ -251,7 +383,12 @@ export class TaxonomiesService {
       }
     } );
     // Throw slug duplication error
-    if ( duplicateSlug ) throw new BadRequestException( i18n.t( TaxonomiesErrorsLocale.DUPLICATE_TAXONOMY_SLUG ) );
+    if ( duplicateSlug ) throw new BadRequestException( {
+      statusCode: 400,
+      internalCode: TaxonomyErrorsInternalCodeEnum.DUPLICATE_SLUG,
+      message: i18n.t( TaxonomiesErrorsLocale.DUPLICATE_TAXONOMY_SLUG ),
+      error: TaxonomyErrorsEnum.DUPLICATE_SLUG
+    } );
   }
 
   /********************************************************************************************/

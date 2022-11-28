@@ -1107,7 +1107,7 @@ export class UsersService {
     return result;
   }
 
-  // Recover a soft-removed user
+  // Find all soft-removed items
   async softRemovedFindAll ( query: PaginationDto ): Promise<IListResultGenerator<User>> {
     const { page, limit } = query;
     const { skip, take } = FilterPaginationUtil.takeSkipGenerator( limit, page );
@@ -1147,6 +1147,17 @@ export class UsersService {
     const result = await this.userRepository.remove( user );
     await this.cacheManager.reset();
     return result;
+  }
+
+  // Empty trash
+  async emptyTrash (): Promise<void> {
+    const softDeletedUsers = await this.userRepository.find( {
+      where: { deletedAt: Not( IsNull() ) },
+      withDeleted: true
+    } );
+
+    await this.userRepository.remove( softDeletedUsers );
+    await this.cacheManager.reset();
   }
 
   // Find All Claims

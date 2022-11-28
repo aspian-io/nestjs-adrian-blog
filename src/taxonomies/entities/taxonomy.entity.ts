@@ -21,8 +21,14 @@ export class Taxonomy extends BaseMinimalEntity {
   @Column( { default: 0 } )
   order?: number;
 
-  @ManyToOne( () => Taxonomy )
+  @ManyToOne( ( type ) => Taxonomy, ( taxonomy ) => taxonomy.children, { onDelete: 'CASCADE' } )
   parent?: Taxonomy;
+
+  @OneToMany( ( type ) => Taxonomy, ( taxonomy ) => taxonomy.parent )
+  children: Taxonomy[];
+
+  @Column( { default: 0 } )
+  childLevel?: number;
 
   @Column( { nullable: true } )
   description: string | null;
@@ -34,8 +40,8 @@ export class Taxonomy extends BaseMinimalEntity {
   @Index( 'taxonomy-slug-idx' )
   slug: string;
 
-  @ManyToOne( () => File )
-  featuredImage?: File;
+  @Column( { nullable: true } )
+  featuredImage?: string;
 
   @OneToMany( () => TaxonomySlugsHistory, ( slug ) => slug.taxonomy, { cascade: true } )
   slugsHistory: TaxonomySlugsHistory[];

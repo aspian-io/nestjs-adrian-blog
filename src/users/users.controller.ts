@@ -569,6 +569,13 @@ export class UsersController {
     return this.usersService.remove( i18n, id, user );
   }
 
+  @Delete( 'admin/users/empty-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_DELETE )
+  adminEmptyTrash (): Promise<void> {
+    return this.usersService.emptyTrash();
+  }
+
   // Claims List
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN )

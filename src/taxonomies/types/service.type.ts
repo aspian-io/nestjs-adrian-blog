@@ -7,3 +7,13 @@ export interface ITaxonomyReturnFindBySlug {
     status: number;
   };
 }
+
+export enum TaxonomyErrorsEnum {
+  DUPLICATE_TAXONOMY = 'Duplicate Taxonomy',
+  DUPLICATE_SLUG = 'Duplicate Slug',
+}
+
+export enum TaxonomyErrorsInternalCodeEnum {
+  DUPLICATE_TAXONOMY = 4001,
+  DUPLICATE_SLUG = 4002,
+}

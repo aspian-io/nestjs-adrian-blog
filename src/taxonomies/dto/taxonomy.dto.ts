@@ -3,7 +3,7 @@ import { FileDto } from "src/files/dto/file.dto";
 
 export class TaxonomyDto {
   @Expose()
-  href: string;
+  href?: string;
 
   @Expose()
   order?: number;
@@ -11,6 +11,13 @@ export class TaxonomyDto {
   @Expose()
   @Type( () => TaxonomyDto )
   parent?: TaxonomyDto;
+
+  @Expose()
+  @Type( () => TaxonomyDto )
+  children?: TaxonomyDto[];
+
+  @Expose()
+  childLevel?: number;
 
   @Expose()
   term: string;
@@ -22,6 +29,5 @@ export class TaxonomyDto {
   slug: string;
 
   @Expose()
-  @Type( () => FileDto )
-  featuredImage?: FileDto;
+  featuredImage?: string;
 }

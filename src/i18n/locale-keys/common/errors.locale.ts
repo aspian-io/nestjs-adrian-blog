@@ -22,4 +22,5 @@ export enum CommonErrorsLocale {
   VALIDATOR_IS_ARRAY = "common-errors.class-validator.is-array",
   VALIDATOR_ARRAY_MIN_LENGTH = "common-errors.class-validator.array-min-length",
   VALIDATOR_IS_BOOLEAN = "common-errors.class-validator.is-boolean",
+  VALIDATOR_IS_SLUG = "common-errors.class-validator.is-slug",
 }

@@ -14,6 +14,7 @@ import { IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { TaxonomyDto } from './dto/taxonomy.dto';
 import { Response } from 'express';
+import { TaxonomySlugsHistory } from './entities/taxonomy-slug.entity';
 
 @Controller()
 export class TaxonomiesController {
@@ -132,6 +133,13 @@ export class TaxonomiesController {
     return this.taxonomiesService.softRemove( id, i18n );
   }
 
+  @Delete( 'admin/taxonomies/soft-delete-all' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
+  adminSoftRemoveAll ( @Body( 'ids' ) ids: string[] ): Promise<Taxonomy[]> {
+    return this.taxonomiesService.softRemoveAll( ids );
+  }
+
   @Patch( 'admin/taxonomies/recover/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
@@ -139,10 +147,45 @@ export class TaxonomiesController {
     return this.taxonomiesService.recover( id, i18n );
   }
 
+  @Patch( 'admin/taxonomies/recover-all' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
+  adminRecoverAll ( @Body( 'ids' ) ids: string[] ): Promise<Taxonomy[]> {
+    return this.taxonomiesService.recoverAll( ids );
+  }
+
+  @Get( 'admin/taxonomies/soft-deleted/trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
+  softRemovedFindAll ( @Query() query: TaxonomiesListQueryDto ): Promise<IListResultGenerator<Taxonomy>> {
+    return this.taxonomiesService.softRemovedFindAll( query );
+  }
+
   @Delete( 'admin/taxonomies/permanent-delete/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
   adminRemove ( @Param( 'id' ) id: string, @I18n() i18n: I18nContext ): Promise<Taxonomy> {
     return this.taxonomiesService.remove( id, i18n );
+  }
+
+  @Delete( 'admin/taxonomies/permanent-delete-all' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
+  adminRemoveAll ( @Body( 'ids' ) ids: string[] ): Promise<Taxonomy[]> {
+    return this.taxonomiesService.removeAll( ids );
+  }
+
+  @Delete( 'admin/taxonomies/empty-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
+  adminEmptyTrash (): Promise<void> {
+    return this.taxonomiesService.emptyTrash();
+  }
+
+  @Delete( 'admin/taxonomies/slug-history/:id' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
+  adminRemoveOldSlug ( @Param( 'id' ) id: string, @I18n() i18n: I18nContext ): Promise<TaxonomySlugsHistory> {
+    return this.taxonomiesService.removeOldSlug( id, i18n );
   }
 }

@@ -1,4 +1,5 @@
 {
   "duplicate-taxonomy": "دسته‌بندی تکراری قابل ذخیره‌سازی نمی باشد",
-  "duplicate-taxonomy-slug": "نامک تکراری قابل ذخیره‌سازی نمی باشد"
+  "duplicate-taxonomy-slug": "نامک تکراری قابل ذخیره‌سازی نمی باشد",
+  "forbidden-child-level": "امکان ایجاد زیردسته بیش از عمق {levelNumber} سطح وجود ندارد"
 }

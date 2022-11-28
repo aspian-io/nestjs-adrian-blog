@@ -13,6 +13,10 @@ export class TaxonomiesListQueryDto {
   @IsOptional()
   "searchBy.description"?: string;
 
+  @Transform( ( { value } ) => QueryStringUtil.extractSearchString( value ) )
+  @IsOptional()
+  "searchBy.slug"?: string;
+
   @Transform( ( { value } ) => QueryStringUtil.extractCommaSeparatedDateRange( value ) )
   @IsOptional()
   "filterBy.createdAt"?: Date[];

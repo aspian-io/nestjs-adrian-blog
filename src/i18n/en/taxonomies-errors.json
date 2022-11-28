@@ -1,4 +1,5 @@
 {
   "duplicate-taxonomy": "Duplicate taxonomy cannot be saved",
-  "duplicate-taxonomy-slug": "Duplicate slug cannot be saved"
+  "duplicate-taxonomy-slug": "Duplicate slug cannot be saved",
+  "forbidden-child-level": "Subitems deeper than {levelNumber} level is not allowed"
 }

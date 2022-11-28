@@ -447,7 +447,7 @@ export class FilesService {
 
       // Make watermark fit and usable by resizing it if needed
       const finalWatermark = watermarkWidth > ( sharpImgWidth * watermarkToImageRatio )
-        ? await watermarkImg.resize( sharpImgWidth * watermarkToImageRatio ).toBuffer()
+        ? await watermarkImg.resize( Math.ceil(sharpImgWidth * watermarkToImageRatio) ).toBuffer()
         : await watermarkImg.toBuffer();
 
       const finalWatermarkMeta = await sharp( finalWatermark ).metadata();
