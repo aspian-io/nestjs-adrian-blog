@@ -268,7 +268,7 @@ export class TaxonomiesService {
   }
 
   // Find all soft-removed items
-  async softRemovedFindAll ( query: PaginationDto ): Promise<IListResultGenerator<Taxonomy>> {
+  async softRemovedFindAll ( query: PaginationDto, type: TaxonomyTypeEnum ): Promise<IListResultGenerator<Taxonomy>> {
     const { page, limit } = query;
     const { skip, take } = FilterPaginationUtil.takeSkipGenerator( limit, page );
 
@@ -288,7 +288,7 @@ export class TaxonomiesService {
         slugsHistory: true
       },
       withDeleted: true,
-      where: { deletedAt: Not( IsNull() ) },
+      where: { deletedAt: Not( IsNull() ), type },
       order: { deletedAt: { direction: 'DESC' } },
       take,
       skip

@@ -154,11 +154,25 @@ export class TaxonomiesController {
     return this.taxonomiesService.recoverAll( ids );
   }
 
-  @Get( 'admin/taxonomies/soft-deleted/trash' )
+  @Get( 'admin/taxonomies/soft-deleted/categories-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
-  softRemovedFindAll ( @Query() query: TaxonomiesListQueryDto ): Promise<IListResultGenerator<Taxonomy>> {
-    return this.taxonomiesService.softRemovedFindAll( query );
+  softRemovedFindAllCategoriesTrash ( @Query() query: TaxonomiesListQueryDto ): Promise<IListResultGenerator<Taxonomy>> {
+    return this.taxonomiesService.softRemovedFindAll( query, TaxonomyTypeEnum.CATEGORY );
+  }
+
+  @Get( 'admin/taxonomies/soft-deleted/tags-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
+  softRemovedFindAllTagsTrash ( @Query() query: TaxonomiesListQueryDto ): Promise<IListResultGenerator<Taxonomy>> {
+    return this.taxonomiesService.softRemovedFindAll( query, TaxonomyTypeEnum.TAG );
+  }
+
+  @Get( 'admin/taxonomies/soft-deleted/menus-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
+  softRemovedFindAllMenusTrash ( @Query() query: TaxonomiesListQueryDto ): Promise<IListResultGenerator<Taxonomy>> {
+    return this.taxonomiesService.softRemovedFindAll( query, TaxonomyTypeEnum.MENU );
   }
 
   @Delete( 'admin/taxonomies/permanent-delete/:id' )
