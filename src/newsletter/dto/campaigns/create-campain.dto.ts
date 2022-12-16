@@ -1,8 +1,6 @@
 import { Type } from "class-transformer";
-import { IsBoolean, IsDate, IsIn, IsNotEmpty, IsOptional, IsString, IsUUID } from "class-validator";
-import { i18nValidationMessage } from "nestjs-i18n";
+import { IsBoolean, IsDate, IsNotEmpty, IsOptional, IsString } from "class-validator";
 import { CommonErrorsLocale } from "src/i18n/locale-keys/common/errors.locale";
-import { SendingIntervalEnum, SendingTypeEnum } from "src/newsletter/entities/newsletter-campaign.entity";
 
 export class NewsletterCreateCampaignDto {
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )

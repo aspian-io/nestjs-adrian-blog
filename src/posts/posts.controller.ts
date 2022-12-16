@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Put, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Res } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -16,6 +16,7 @@ import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { PostDto } from './dto/user/post.dto';
 import { PostListDto } from './dto/user/post-list.dto';
 import { Response } from 'express';
+import { PostsJobsQueryDto } from './dto/posts-jobs-query.dto';
 
 @Controller()
 export class PostsController {
@@ -201,6 +202,69 @@ export class PostsController {
     return this.postsService.softRemove( id, i18n );
   }
 
+  @Delete( 'admin/posts/soft-delete-all' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  adminSoftRemoveAll ( @Body( 'ids' ) ids: string[] ): Promise<PostEntity[]> {
+    return this.postsService.softRemoveAll( ids );
+  }
+
+  @Get( 'admin/posts/soft-deleted/blogs-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  softRemovedFindAllBlogsTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
+    return this.postsService.softRemovedFindAll( query, PostTypeEnum.BLOG );
+  }
+
+  @Get( 'admin/posts/soft-deleted/banners-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  softRemovedFindAllBannersTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
+    return this.postsService.softRemovedFindAll( query, PostTypeEnum.BANNER );
+  }
+
+  @Get( 'admin/posts/soft-deleted/email-templates-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  softRemovedFindAllEmailTemplatesTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
+    return this.postsService.softRemovedFindAll( query, PostTypeEnum.EMAIL_TEMPLATE );
+  }
+
+  @Get( 'admin/posts/soft-deleted/news-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  softRemovedFindAllNewsTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
+    return this.postsService.softRemovedFindAll( query, PostTypeEnum.NEWS );
+  }
+
+  @Get( 'admin/posts/soft-deleted/newsletter-headers-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  softRemovedFindAllNewsletterHeadersTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
+    return this.postsService.softRemovedFindAll( query, PostTypeEnum.NEWSLETTER_HEADER_TEMPLATE );
+  }
+
+  @Get( 'admin/posts/soft-deleted/newsletter-bodies-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  softRemovedFindAllNewsletterBodiesTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
+    return this.postsService.softRemovedFindAll( query, PostTypeEnum.NEWSLETTER_BODY_TEMPLATE );
+  }
+
+  @Get( 'admin/posts/soft-deleted/newsletter-footers-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  softRemovedFindAllNewsletterFootersTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
+    return this.postsService.softRemovedFindAll( query, PostTypeEnum.NEWSLETTER_FOOTER_TEMPLATE );
+  }
+
+  @Get( 'admin/posts/soft-deleted/pages-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  softRemovedFindAllPagesTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
+    return this.postsService.softRemovedFindAll( query, PostTypeEnum.PAGE );
+  }
+
   @Patch( 'admin/posts/recover/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -208,10 +272,101 @@ export class PostsController {
     return this.postsService.recover( id, i18n );
   }
 
+  @Patch( 'admin/posts/recover-all' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  adminRecoverAll ( @Body( 'ids' ) ids: string[] ): Promise<PostEntity[]> {
+    return this.postsService.recoverAll( ids );
+  }
+
   @Delete( 'admin/posts/permanent-delete/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
   adminRemove ( @Param( 'id' ) id: string, @I18n() i18n: I18nContext ): Promise<PostEntity> {
     return this.postsService.remove( id, i18n );
+  }
+
+  @Delete( 'admin/posts/permanent-delete-all' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  adminRemoveAll ( @Body( 'ids' ) ids: string[] ): Promise<PostEntity[]> {
+    return this.postsService.removeAll( ids );
+  }
+
+  @Delete( 'admin/posts/empty-blogs-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  adminEmptyBlogsTrash (): Promise<void> {
+    return this.postsService.emptyTrash( PostTypeEnum.BLOG );
+  }
+
+  @Delete( 'admin/posts/empty-banners-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  adminEmptyBannersTrash (): Promise<void> {
+    return this.postsService.emptyTrash( PostTypeEnum.BANNER );
+  }
+
+  @Delete( 'admin/posts/empty-email-templates-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  adminEmptyEmailTemplatesTrash (): Promise<void> {
+    return this.postsService.emptyTrash( PostTypeEnum.EMAIL_TEMPLATE );
+  }
+
+  @Delete( 'admin/posts/empty-news-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  adminEmptyNewsTrash (): Promise<void> {
+    return this.postsService.emptyTrash( PostTypeEnum.NEWS );
+  }
+
+  @Delete( 'admin/posts/empty-newsletter-headers-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  adminEmptyNewsletterHeadersTrash (): Promise<void> {
+    return this.postsService.emptyTrash( PostTypeEnum.NEWSLETTER_BODY_TEMPLATE );
+  }
+
+  @Delete( 'admin/posts/empty-newsletter-bodies-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  adminEmptyNewsletterBodiesTrash (): Promise<void> {
+    return this.postsService.emptyTrash( PostTypeEnum.NEWSLETTER_BODY_TEMPLATE );
+  }
+
+  @Delete( 'admin/posts/empty-newsletter-footers-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  adminEmptyNewsletterFootersTrash (): Promise<void> {
+    return this.postsService.emptyTrash( PostTypeEnum.NEWSLETTER_FOOTER_TEMPLATE );
+  }
+
+  @Delete( 'admin/posts/empty-pages-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  adminEmptyPagesTrash (): Promise<void> {
+    return this.postsService.emptyTrash( PostTypeEnum.PAGE );
+  }
+
+  @Get( 'admin/posts/posts-jobs/delayed' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
+  findAllDelayedJobs ( @Query() jobsPaginationDto: PostsJobsQueryDto ) {
+    return this.postsService.findAllDelayedJobs( jobsPaginationDto );
+  }
+
+  @Get( 'admin/posts/posts-jobs/completed' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
+  findAllCompletedJobs ( @Query() jobsPaginationDto: PostsJobsQueryDto ) {
+    return this.postsService.findAllCompletedJobs( jobsPaginationDto );
+  }
+
+  @Delete( 'admin/posts/posts-jobs/delete/:id' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  removeJob ( @Param( 'id' ) id: string, @I18n() i18n: I18nContext ) {
+    return this.postsService.removeJob( id, i18n );
   }
 }

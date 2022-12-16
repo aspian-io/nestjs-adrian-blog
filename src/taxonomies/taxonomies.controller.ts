@@ -189,11 +189,25 @@ export class TaxonomiesController {
     return this.taxonomiesService.removeAll( ids );
   }
 
-  @Delete( 'admin/taxonomies/empty-trash' )
+  @Delete( 'admin/taxonomies/empty-categories-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
-  adminEmptyTrash (): Promise<void> {
-    return this.taxonomiesService.emptyTrash();
+  adminEmptyCategoriesTrash (): Promise<void> {
+    return this.taxonomiesService.emptyTrash(TaxonomyTypeEnum.CATEGORY);
+  }
+
+  @Delete( 'admin/taxonomies/empty-tags-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
+  adminEmptyTagsTrash (): Promise<void> {
+    return this.taxonomiesService.emptyTrash(TaxonomyTypeEnum.TAG);
+  }
+
+  @Delete( 'admin/taxonomies/empty-menus-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
+  adminEmptyMenusTrash (): Promise<void> {
+    return this.taxonomiesService.emptyTrash(TaxonomyTypeEnum.MENU);
   }
 
   @Delete( 'admin/taxonomies/slug-history/:id' )

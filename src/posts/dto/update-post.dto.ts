@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsDate, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { CommonErrorsLocale } from 'src/i18n/locale-keys/common/errors.locale';
+import { PostSlugsHistory } from '../entities/post-slug.entity';
 import { PostStatusEnum, PostVisibilityEnum } from '../entities/post.entity';
 
 export class UpdatePostDto {
@@ -76,4 +77,8 @@ export class UpdatePostDto {
   @IsUUID( 'all', { message: CommonErrorsLocale.VALIDATOR_IS_UUID } )
   @IsOptional()
   featuredImageId?: string;
+
+  @Type( () => PostSlugsHistory )
+  @IsOptional()
+  slugsHistory: PostSlugsHistory[];
 }

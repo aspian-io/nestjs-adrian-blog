@@ -16,6 +16,10 @@ export class PostsQueryListDto {
 
   @Transform( ( { value } ) => QueryStringUtil.extractSearchString( value ) )
   @IsOptional()
+  "searchBy.parentTitle"?: string;
+
+  @Transform( ( { value } ) => QueryStringUtil.extractSearchString( value ) )
+  @IsOptional()
   "searchBy.content"?: string;
 
   @Transform( ( { value } ) => QueryStringUtil.extractSearchString( value ) )
@@ -24,7 +28,7 @@ export class PostsQueryListDto {
 
   @Transform( ( { value } ) => QueryStringUtil.trim( value ) )
   @IsOptional()
-  "filterBy.category"?: string;
+  "searchBy.category"?: string;
 
   @Transform( ( { value } ) => QueryStringUtil.trim( value ) )
   @IsOptional()
@@ -37,6 +41,10 @@ export class PostsQueryListDto {
   @Transform( ( { value } ) => QueryStringUtil.trim( value ) )
   @IsOptional()
   "filterBy.tagSlug"?: string;
+
+  @Transform( ( { value } ) => QueryStringUtil.toNumber( value ) )
+  @IsOptional()
+  "filterBy.commentsNumGte"?: number;
 
   @Transform( ( { value } ) => QueryStringUtil.toNumber( value ) )
   @IsOptional()
@@ -86,10 +94,6 @@ export class PostsQueryListDto {
   @IsOptional()
   "filterBy.isPinned"?: boolean;
 
-  @Transform( ( { value } ) => QueryStringUtil.trim( value ) )
-  @IsOptional()
-  "filterBy.parentTitle"?: string;
-
   @Transform( ( { value } ) => QueryStringUtil.extractCommaSeparatedStrings( value ) )
   @IsOptional()
   "filterBy.categoryTerms"?: string[];
@@ -117,6 +121,10 @@ export class PostsQueryListDto {
   @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
   @IsOptional()
   "orderBy.viewCount"?: OrderType;
+
+  @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
+  @IsOptional()
+  "orderBy.commentsNum"?: OrderType;
 
   @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
   @IsOptional()

@@ -17,7 +17,7 @@ import { SubscribersListQueryDto } from './dto/subscription/subscribers-list-que
 import { SubscriptionTokenDto } from './dto/subscription/user/subscription-token.dto';
 import { UnsubscribeReqDto } from './dto/subscription/user/unsubscribe-req.dto';
 import { UnsubscribeDto } from './dto/subscription/user/unsubscribe.dto';
-import { NewsletterCampaign, SendingIntervalEnum, SendingTypeEnum } from './entities/newsletter-campaign.entity';
+import { NewsletterCampaign } from './entities/newsletter-campaign.entity';
 import { NewsletterSubscriber } from './entities/newsletter-subscriber.entity';
 import { ISubscriptionEmailPayload } from './queues/consumers/subscription-token.consumer';
 import { NewsletterJobs } from './queues/jobs.enum';
@@ -263,7 +263,8 @@ export class NewsletterService {
         emailSubject: result.emailSubject,
         content: result.content,
         sendToSubscribers: result.sendToSubscribers,
-        sendToUsers: result.sendToUsers
+        sendToUsers: result.sendToUsers,
+        sendingTime: result.sendingTime
       },
       {
         delay: result.sendingTime.getTime() - Date.now()
@@ -356,7 +357,8 @@ export class NewsletterService {
           emailSubject: result.emailSubject,
           content: result.content,
           sendToSubscribers: result.sendToSubscribers,
-          sendToUsers: result.sendToUsers
+          sendToUsers: result.sendToUsers,
+          sendingTime: result.sendingTime
         },
         {
           delay: result.sendingTime.getTime() - Date.now()

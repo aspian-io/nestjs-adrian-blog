@@ -1,10 +1,11 @@
 import { InjectQueue } from '@nestjs/bull';
 import { BadRequestException, CACHE_MANAGER, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Queue } from 'bull';
+import { Job, JobId, Queue } from 'bull';
 import { Cache } from 'cache-manager';
 import { I18nContext } from 'nestjs-i18n';
 import { IMetadataDecorator } from 'src/common/decorators/metadata.decorator';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { NotFoundLocalizedException } from 'src/common/exceptions/not-found-localized.exception';
 import { FilterPaginationUtil, IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
 import { File } from 'src/files/entities/file.entity';
@@ -15,6 +16,7 @@ import { User } from 'src/users/entities/user.entity';
 import { Between, FindOptionsOrder, FindOptionsWhere, In, IsNull, MoreThanOrEqual, Not, Repository } from 'typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
 import { PostsQueryListDto } from './dto/post-query-list.dto';
+import { PostsJobsQueryDto } from './dto/posts-jobs-query.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { BookmarksListQueryDto } from './dto/user/bookmarks-list-query.dto';
 import { UserBlogsListDto } from './dto/user/user-blog-list.dto';
@@ -23,7 +25,7 @@ import { Post, PostStatusEnum, PostTypeEnum, PostVisibilityEnum } from './entiti
 import { IScheduledPostPayload } from './queues/consumers/scheduled-post.consumer';
 import { PostJobs } from './queues/jobs.enum';
 import { PostQueues } from './queues/queues.enum';
-import { IPostReturnFindBySlug } from './types/service.type';
+import { IPostReturnFindBySlug, PostErrorsEnum, PostErrorsInternalCodeEnum, PostsDelayedJobs } from './types/service.type';
 
 @Injectable()
 export class PostsService {
@@ -45,20 +47,31 @@ export class PostsService {
       where: { slug: createPostDto.slug, post: { type: createPostDto.type } }
     } );
     // Throw slug duplication error
-    if ( duplicatePost || duplicateSlugHistory ) throw new BadRequestException( i18n.t( PostsErrorsLocale.DUPLICATE_POST_SLUG ) );
+    if ( duplicatePost || duplicateSlugHistory ) {
+      throw new BadRequestException( {
+        statusCode: 400,
+        internalCode: PostErrorsInternalCodeEnum.DUPLICATE_SLUG,
+        message: i18n.t( PostsErrorsLocale.DUPLICATE_POST_SLUG ),
+        error: PostErrorsEnum.DUPLICATE_SLUG
+      } );
+    }
 
     let postStatus = createPostDto?.scheduledToPublish ? PostStatusEnum.FUTURE : createPostDto.status;
 
-    if ( createPostDto.parentId ) {
-      const parent = await this.postRepository.findOne( { where: { id: createPostDto.parentId } } );
-      if ( !parent ) throw new NotFoundLocalizedException( i18n, PostsInfoLocale.TERM_PARENT_POST );
-      postStatus = parent.status;
+    const parent = createPostDto.parentId ? await this.findOne( createPostDto.parentId, i18n ) : null;
+    let ancestor: Post = null;
+    if ( parent ) {
+      ancestor = parent?.ancestor ? parent.ancestor : parent;
     }
+
     const post = this.postRepository.create( {
       ...createPostDto,
+      scheduledToPublish: createPostDto.status === PostStatusEnum.FUTURE ? createPostDto?.scheduledToPublish : null,
+      scheduledToArchive: createPostDto.status === PostStatusEnum.FUTURE ? createPostDto?.scheduledToArchive : null,
       featuredImage: { id: createPostDto?.featuredImageId },
-      status: postStatus,
-      parent: { id: createPostDto?.parentId },
+      status: createPostDto?.parentId ? PostStatusEnum.INHERIT : postStatus,
+      parent,
+      ancestor,
       taxonomies: [ ...new Set( createPostDto.taxonomiesIds ) ].map( tid => ( { id: tid } ) ),
       attachments: [ ...new Set( createPostDto.attachmentsIds ) ].map( aid => ( { id: aid } ) ),
       createdBy: { id: metadata?.user?.id },
@@ -89,10 +102,13 @@ export class PostsService {
       title: query[ 'searchBy.title' ],
       subtitle: query[ 'searchBy.subtitle' ],
       content: query[ 'searchBy.content' ],
+      parent: {
+        title: query[ 'searchBy.parentTitle' ]
+      },
       slug: query[ 'searchBy.slug' ],
       taxonomies: [
-        query[ 'filterBy.category' ] && { type: TaxonomyTypeEnum.CATEGORY, term: query[ 'filterBy.category' ] },
-        query[ 'filterBy.tag' ] && { type: TaxonomyTypeEnum.TAG, term: query[ 'filterBy.tag' ] },
+        query[ 'searchBy.category' ] && { type: TaxonomyTypeEnum.CATEGORY, term: query[ 'searchBy.category' ] },
+        query[ 'searchBy.tag' ] && { type: TaxonomyTypeEnum.TAG, term: query[ 'searchBy.tag' ] },
       ],
       visibility: query[ 'filterBy.visibility' ],
       status: query[ 'filterBy.status' ]?.length
@@ -117,6 +133,14 @@ export class PostsService {
       }
     };
 
+    // Add view count number filter
+    if ( query[ 'filterBy.viewCountGte' ] ) {
+      where.viewCount = MoreThanOrEqual( query[ 'filterBy.viewCountGte' ] );
+    }
+    // Add comments number filter
+    if ( query[ 'filterBy.commentsNumGte' ] ) {
+      where.commentsNum = MoreThanOrEqual( query[ 'filterBy.commentsNumGte' ] );
+    }
     // Add likes number filter
     if ( query[ 'filterBy.likesNumGte' ] ) {
       where.likesNum = MoreThanOrEqual( query[ 'filterBy.likesNumGte' ] );
@@ -125,18 +149,12 @@ export class PostsService {
     if ( query[ 'filterBy.bookmarksNumGte' ] ) {
       where.bookmarksNum = MoreThanOrEqual( query[ 'filterBy.bookmarksNumGte' ] );
     }
-    // Add parent title filter
-    if ( query[ 'filterBy.parentTitle' ] ) {
-      where.parent = {
-        title: query[ 'filterBy.parentTitle' ]
-      };
-    }
     // Add category terms filter
     if ( query[ 'filterBy.categoryTerms' ]?.length ) {
-      where.taxonomies[ 0 ] = {
+      where.taxonomies = [ {
         type: TaxonomyTypeEnum.CATEGORY,
         term: In( query[ 'filterBy.categoryTerms' ] )
-      };
+      } ];
     }
     // Add tag terms filter
     if ( query[ 'filterBy.tagTerms' ]?.length ) {
@@ -168,15 +186,16 @@ export class PostsService {
 
     // TypeORM order object for admin
     const order: FindOptionsOrder<Post> = {
+      title: query[ 'orderBy.title' ],
+      subtitle: query[ 'orderBy.subtitle' ],
       viewCount: query[ 'orderBy.viewCount' ],
+      commentsNum: query[ 'orderBy.commentsNum' ],
       likesNum: query[ 'orderBy.likesNum' ],
       bookmarksNum: query[ 'orderBy.bookmarksNum' ],
       createdAt: query[ 'orderBy.createdAt' ],
       updatedAt: query[ 'orderBy.updatedAt' ],
       ipAddress: query[ 'orderBy.ipAddress' ],
       userAgent: query[ 'orderBy.userAgent' ],
-      title: query[ 'orderBy.title' ],
-      subtitle: query[ 'orderBy.subtitle' ],
     };
 
     // TypeORM where array for user (no admin)
@@ -185,7 +204,15 @@ export class PostsService {
         type,
         title: query?.search,
         visibility: PostVisibilityEnum.PUBLIC,
-        status: PostStatusEnum.PUBLISH,
+        status: In( [ PostStatusEnum.PUBLISH, PostStatusEnum.INHERIT ] ),
+        ancestor: [
+          {
+            id: IsNull(),
+          },
+          {
+            status: PostStatusEnum.PUBLISH,
+          }
+        ],
         taxonomies: [
           query[ 'filterBy.category' ] && { type: TaxonomyTypeEnum.CATEGORY, term: query[ 'filterBy.category' ] },
           query[ 'filterBy.tag' ] && { type: TaxonomyTypeEnum.TAG, term: query[ 'filterBy.tag' ] },
@@ -195,7 +222,15 @@ export class PostsService {
         type,
         subtitle: query?.search,
         visibility: PostVisibilityEnum.PUBLIC,
-        status: PostStatusEnum.PUBLISH,
+        status: In( [ PostStatusEnum.PUBLISH, PostStatusEnum.INHERIT ] ),
+        ancestor: [
+          {
+            id: IsNull(),
+          },
+          {
+            status: PostStatusEnum.PUBLISH,
+          }
+        ],
         taxonomies: [
           query[ 'filterBy.category' ] && { type: TaxonomyTypeEnum.CATEGORY, term: query[ 'filterBy.category' ] },
           query[ 'filterBy.tag' ] && { type: TaxonomyTypeEnum.TAG, term: query[ 'filterBy.tag' ] },
@@ -205,17 +240,26 @@ export class PostsService {
         type,
         content: query?.search,
         visibility: PostVisibilityEnum.PUBLIC,
-        status: PostStatusEnum.PUBLISH,
+        status: In( [ PostStatusEnum.PUBLISH, PostStatusEnum.INHERIT ] ),
+        ancestor: [
+          {
+            id: IsNull(),
+          },
+          {
+            status: PostStatusEnum.PUBLISH,
+          }
+        ],
         taxonomies: [
           query[ 'filterBy.category' ] && { type: TaxonomyTypeEnum.CATEGORY, term: query[ 'filterBy.category' ] },
           query[ 'filterBy.tag' ] && { type: TaxonomyTypeEnum.TAG, term: query[ 'filterBy.tag' ] },
         ]
-      }
+      },
     ];
 
     // TypeORM order object for user (no admin)
     const notAdminOrder: FindOptionsOrder<Post> = {
       viewCount: query[ 'orderBy.viewCount' ],
+      commentsNum: query[ 'orderBy.commentsNum' ],
       likesNum: query[ 'orderBy.likesNum' ],
       bookmarksNum: query[ 'orderBy.bookmarksNum' ],
       createdAt: query[ 'orderBy.createdAt' ],
@@ -224,11 +268,13 @@ export class PostsService {
     // Get the result from database
     const [ items, totalItems ] = await this.postRepository.findAndCount( {
       relations: {
+        ancestor: true,
         attachments: true,
         createdBy: true,
         updatedBy: true,
         featuredImage: true,
         parent: true,
+        child: true,
         taxonomies: true
       },
       where: admin ? where : notAdminWhere,
@@ -270,9 +316,10 @@ export class PostsService {
   async findOne ( id: string, i18n?: I18nContext, withDeleted: boolean = false ): Promise<Post> {
     const post = await this.postRepository.findOne( {
       relations: {
-        featuredImage: true,
+        ancestor: true,
+        featuredImage: { generatedImageChildren: true },
         taxonomies: true,
-        attachments: true,
+        attachments: { generatedImageChildren: true },
         bookmarks: true,
         likes: true,
         parent: true,
@@ -296,9 +343,10 @@ export class PostsService {
   async findOneOrNull ( id: string, i18n?: I18nContext, withDeleted: boolean = false ): Promise<Post> {
     return this.postRepository.findOne( {
       relations: {
-        featuredImage: true,
+        ancestor: true,
+        featuredImage: { generatedImageChildren: true },
         taxonomies: true,
-        attachments: true,
+        attachments: { generatedImageChildren: true },
         bookmarks: true,
         likes: true,
         parent: true,
@@ -321,18 +369,30 @@ export class PostsService {
       type
     };
 
-    const notAdminWhere: FindOptionsWhere<Post> = {
-      status: PostStatusEnum.PUBLISH,
-      visibility: PostVisibilityEnum.PUBLIC,
-      slug,
-      type
-    };
+    const notAdminWhere: FindOptionsWhere<Post> | FindOptionsWhere<Post>[] = [
+      {
+        status: PostStatusEnum.PUBLISH,
+        visibility: PostVisibilityEnum.PUBLIC,
+        slug,
+        type
+      },
+      {
+        status: PostStatusEnum.INHERIT,
+        ancestor: {
+          status: PostStatusEnum.PUBLISH
+        },
+        visibility: PostVisibilityEnum.PUBLIC,
+        slug,
+        type,
+      }
+    ];
 
     const post = await this.postRepository.findOne( {
       relations: {
-        featuredImage: true,
+        ancestor: true,
+        featuredImage: { generatedImageChildren: true },
         taxonomies: true,
-        attachments: true,
+        attachments: { generatedImageChildren: true },
         child: true,
         parent: true,
         createdBy: true,
@@ -357,9 +417,10 @@ export class PostsService {
 
       const postWithOldSlug = await this.postRepository.findOne( {
         relations: {
-          featuredImage: true,
+          ancestor: true,
+          featuredImage: { generatedImageChildren: true },
           taxonomies: true,
-          attachments: true,
+          attachments: { generatedImageChildren: true },
           child: true,
           parent: true,
           createdBy: true,
@@ -394,11 +455,18 @@ export class PostsService {
       where: { slug: updatePostDto.slug, post: { id: Not( post.id ), type: post.type } }
     } );
     // Throw slug duplication error
-    if ( duplicatePost || duplicateSlugHistory ) throw new BadRequestException( i18n.t( PostsErrorsLocale.DUPLICATE_POST_SLUG ) );
+    if ( duplicatePost || duplicateSlugHistory ) {
+      throw new BadRequestException( {
+        statusCode: 400,
+        internalCode: PostErrorsInternalCodeEnum.DUPLICATE_SLUG,
+        message: i18n.t( PostsErrorsLocale.DUPLICATE_POST_SLUG ),
+        error: PostErrorsEnum.DUPLICATE_SLUG
+      } );
+    }
 
     // Store old slugs for redirection
     if ( updatePostDto.slug != post.slug && updatePostDto.storeOldSlugToRedirect ) {
-      post.slugsHistory.push( {
+      updatePostDto.slugsHistory.push( {
         slug: post.slug,
         ipAddress: metadata.ipAddress,
         userAgent: metadata.userAgent
@@ -407,8 +475,8 @@ export class PostsService {
 
     Object.assign( post, updatePostDto );
 
-    updatePostDto?.featuredImageId
-      ? post.featuredImage = { id: updatePostDto.featuredImageId } as File
+    post.featuredImage = updatePostDto?.featuredImageId
+      ? { id: updatePostDto.featuredImageId } as File
       : null;
 
     post.taxonomies = updatePostDto?.taxonomiesIds?.length
@@ -419,13 +487,17 @@ export class PostsService {
       ? updatePostDto?.attachmentsIds.map( aid => ( { id: aid } ) ) as File[]
       : [];
 
-    if ( updatePostDto?.scheduledToPublish ) post.status = PostStatusEnum.FUTURE;
+    post.scheduledToPublish = updatePostDto.status === PostStatusEnum.FUTURE ? updatePostDto?.scheduledToPublish : null;
+    post.scheduledToArchive = updatePostDto.status === PostStatusEnum.FUTURE ? updatePostDto?.scheduledToArchive : null;
 
     if ( updatePostDto?.parentId ) {
       const parent = await this.postRepository.findOne( { where: { id: updatePostDto.parentId } } );
       if ( !parent ) throw new NotFoundLocalizedException( i18n, PostsInfoLocale.TERM_PARENT_POST );
       post.parent = parent;
-      post.status = parent.status;
+      post.status = PostStatusEnum.INHERIT;
+      post.ancestor = parent?.ancestor ? parent.ancestor : parent;
+    } else {
+      post.parent = null;
     }
 
     post.updatedBy = { id: metadata?.user?.id } as User;
@@ -519,11 +591,49 @@ export class PostsService {
     return result;
   }
 
+  // Soft remove posts
+  async softRemoveAll ( ids: string[] ): Promise<Post[]> {
+    const posts = await this.postRepository.find( { where: { id: In( ids ) } } );
+
+    const result = await this.postRepository.softRemove( posts );
+    await this.cacheManager.reset();
+    return result;
+  }
+
+  // Find all soft-removed items
+  async softRemovedFindAll ( query: PaginationDto, type: PostTypeEnum ): Promise<IListResultGenerator<Post>> {
+    const { page, limit } = query;
+    const { skip, take } = FilterPaginationUtil.takeSkipGenerator( limit, page );
+
+    const [ items, totalItems ] = await this.postRepository.findAndCount( {
+      relations: {
+        parent: true,
+      },
+      withDeleted: true,
+      where: { deletedAt: Not( IsNull() ), type },
+      order: { deletedAt: { direction: 'DESC' } },
+      take,
+      skip
+    } );
+
+    return FilterPaginationUtil.resultGenerator( items, totalItems, limit, page );
+  }
+
   // Recover soft-removed post
   async recover ( id: string, i18n: I18nContext ) {
     const post = await this.findOne( id, i18n, true );
 
     const result = await this.postRepository.recover( post );
+    await this.cacheManager.reset();
+
+    return result;
+  }
+
+  // Recover soft-removed posts
+  async recoverAll ( ids: string[] ): Promise<Post[]> {
+    const posts = await this.postRepository.find( { where: { id: In( ids ) }, withDeleted: true } );
+
+    const result = await this.postRepository.recover( posts );
     await this.cacheManager.reset();
 
     return result;
@@ -539,6 +649,57 @@ export class PostsService {
     return result;
   }
 
+  // Remove posts permanently
+  async removeAll ( ids: string[] ): Promise<Post[]> {
+    const posts = await this.postRepository.find( { where: { id: In( ids ) }, withDeleted: true } );
+
+    const result = await this.postRepository.remove( posts );
+    await this.cacheManager.reset();
+
+    return result;
+  }
+
+  // Empty trash
+  async emptyTrash ( type: PostTypeEnum ): Promise<void> {
+    const softDeletedPosts = await this.postRepository.find( {
+      where: { deletedAt: Not( IsNull() ), type },
+      withDeleted: true
+    } );
+
+    await this.postRepository.remove( softDeletedPosts );
+    await this.cacheManager.reset();
+  }
+
+  // Find all delayed jobs
+  async findAllDelayedJobs ( postsJobsPaginationDto: PostsJobsQueryDto )
+    : Promise<IListResultGenerator<PostsDelayedJobs>> {
+    const { page, limit } = postsJobsPaginationDto;
+    let delayed = await this.scheduledPostQueue.getDelayed();
+    if ( postsJobsPaginationDto.type ) {
+      delayed = delayed.filter( d => d.data.type === postsJobsPaginationDto.type );
+    }
+    return this.sortAndPaginatePostsJobs( delayed, page, limit );
+  }
+
+  // Find all completed jobs
+  async findAllCompletedJobs ( postsJobsPaginationDto: PostsJobsQueryDto )
+    : Promise<IListResultGenerator<PostsDelayedJobs>> {
+    const { page, limit } = postsJobsPaginationDto;
+    let completedJobs = await this.scheduledPostQueue.getCompleted();
+    if ( postsJobsPaginationDto.type ) {
+      completedJobs = completedJobs.filter( d => d.data.type === postsJobsPaginationDto.type );
+    }
+    return this.sortAndPaginatePostsJobs( completedJobs, page, limit );
+  }
+
+  // Remove a job
+  async removeJob ( jobId: JobId, i18n: I18nContext ): Promise<Job<IScheduledPostPayload>> {
+    const job = await this.scheduledPostQueue.getJob( jobId );
+    if ( !job ) throw new NotFoundLocalizedException( i18n, PostsInfoLocale.TERM_POST_JOB );
+    await job.remove();
+    return job;
+  }
+
 
   /********************************************************************************************/
   /********************************** Helper Methods ******************************************/
@@ -547,17 +708,69 @@ export class PostsService {
 
   // Add scheduled post jobs to queue
   async addScheduledPostJobToQueue ( post: Post ) {
-    // Schedule to publish if schedule date exists
-    if ( post?.scheduledToPublish ) {
-      const delay = post.scheduledToPublish.getTime() - Date.now();
-      await this.scheduledPostQueue.add( PostJobs.SCHEDULED_POST_TO_PUBLISH, { id: post.id }, { delay } );
-    }
+    if ( post.status === PostStatusEnum.FUTURE ) {
+      // Schedule to publish if schedule date exists
+      if ( post?.scheduledToPublish ) {
+        const delay = post.scheduledToPublish.getTime() - Date.now();
+        await this.scheduledPostQueue.add( PostJobs.SCHEDULED_POST_TO_PUBLISH, { id: post.id, type: post.type, title: post.title, slug: post.slug, scheduledToPublish: post.scheduledToPublish, scheduledToArchive: post.scheduledToArchive }, { delay } );
+      }
 
-    // Schedule to archive if schedule date exists
-    if ( post?.scheduledToArchive ) {
-      const delay = post.scheduledToArchive.getTime() - Date.now();
-      await this.scheduledPostQueue.add( PostJobs.SCHEDULED_POST_TO_ARCHIVE, { id: post.id }, { delay } );
+      // Schedule to archive if schedule date exists
+      if ( post?.scheduledToArchive ) {
+        const delay = post.scheduledToArchive.getTime() - Date.now();
+        await this.scheduledPostQueue.add( PostJobs.SCHEDULED_POST_TO_ARCHIVE, { id: post.id, type: post.type, title: post.title, slug: post.slug, scheduledToPublish: post.scheduledToPublish, scheduledToArchive: post.scheduledToArchive }, { delay } );
+      }
     }
+  }
+
+  /**
+   * Sort and paginate posts queued jobs
+   * @param jobs - Bull jobs of the type {@link IScheduledPostPayload}
+   * @param page - Number of current page
+   * @param size - Items per page
+   * @returns Sorted and paginated posts jobs
+   */
+  sortAndPaginatePostsJobs ( jobs: Job<IScheduledPostPayload>[], page: number = 1, size: number = 10 )
+    : IListResultGenerator<PostsDelayedJobs> {
+    jobs.sort( ( a, b ) => parseInt( b.id.toString() ) - parseInt( a.id.toString() ) );
+
+    const total = jobs.length;
+    const totalPages = Math.ceil( total / size );
+
+    let pageVal = 1;
+    if ( page < 1 ) { pageVal = 1; }
+    else if ( page > totalPages ) { pageVal = totalPages > 0 ? totalPages : 1; }
+    else { pageVal = page ? page : 1; }
+
+    let sizeVal = 10;
+    if ( size < 1 ) { sizeVal = 10; }
+    else if ( size > 100 ) { sizeVal = 100; }
+    else { sizeVal = size ? size : 10; }
+
+    const startIndex = ( pageVal - 1 ) * sizeVal;
+    const endIndex = startIndex + sizeVal;
+    const jobsSlice = jobs.slice( startIndex, endIndex );
+    const currentPageResultsNumber = jobsSlice.length;
+
+    const data = jobsSlice.map( j => {
+      return {
+        jobId: j.id,
+        title: j.data.title,
+        slug: j.data.slug,
+        type: j.data.type
+      };
+    } );
+
+    return {
+      meta: {
+        totalPages,
+        currentPage: pageVal,
+        itemCount: currentPageResultsNumber,
+        totalItems: total,
+        itemsPerPage: sizeVal,
+      },
+      items: data
+    };
   }
 
   /********************************************************************************************/

@@ -69,7 +69,7 @@
     "sanitize-html": "^2.7.1",
     "sharp": "^0.30.7",
     "string-sanitizer": "^2.0.2",
-    "typeorm": "^0.3.7"
+    "typeorm": "^0.3.11"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",

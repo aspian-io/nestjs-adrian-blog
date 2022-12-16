@@ -338,9 +338,9 @@ export class TaxonomiesService {
   }
 
   // Empty trash
-  async emptyTrash (): Promise<void> {
+  async emptyTrash (type: TaxonomyTypeEnum): Promise<void> {
     const softDeletedTaxonomies = await this.taxonomyRepository.find( {
-      where: { deletedAt: Not( IsNull() ) },
+      where: { deletedAt: Not( IsNull() ), type },
       withDeleted: true
     } );
 

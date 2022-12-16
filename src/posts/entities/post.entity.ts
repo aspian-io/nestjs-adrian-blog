@@ -79,6 +79,9 @@ export class Post extends BaseEntity {
   @Column( { default: 0 } )
   order?: number;
 
+  @ManyToOne( () => Post )
+  ancestor: Post;
+
   @OneToOne( () => Post, ( post ) => post.parent )
   child: Post;
 

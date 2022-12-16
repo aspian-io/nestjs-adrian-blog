@@ -19,6 +19,7 @@ export interface ICampaignPayload {
   content: string;
   sendToSubscribers: boolean;
   sendToUsers: boolean;
+  sendingTime: Date;
 }
 
 @Processor( NewsletterQueues.CAMPAIGN )

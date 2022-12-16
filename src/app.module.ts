@@ -117,7 +117,7 @@ import { IncomingMessage } from 'http';
         database: configService.getOrThrow<string>( EnvEnum.DB_NAME ),
         autoLoadEntities: true,
         synchronize: configService.getOrThrow( EnvEnum.NODE_ENV ) === 'development',
-        //logging: true
+        // logging: true
       } )
     } ),
     S3Module.forRootAsync( {

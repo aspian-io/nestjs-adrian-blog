@@ -1,13 +1,18 @@
 import { Process, Processor } from "@nestjs/bull";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Job } from "bull";
-import { Post, PostStatusEnum } from "src/posts/entities/post.entity";
+import { Post, PostStatusEnum, PostTypeEnum } from "src/posts/entities/post.entity";
 import { Repository } from "typeorm";
 import { PostJobs } from "../jobs.enum";
 import { PostQueues } from "../queues.enum";
 
 export interface IScheduledPostPayload {
   id: string;
+  title: string;
+  slug: string;
+  type: PostTypeEnum;
+  scheduledToPublish: Date;
+  scheduledToArchive: Date;
 }
 
 @Processor( PostQueues.SCHEDULED_POSTS )
