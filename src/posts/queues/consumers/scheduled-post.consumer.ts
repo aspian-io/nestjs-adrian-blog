@@ -11,8 +11,8 @@ export interface IScheduledPostPayload {
   title: string;
   slug: string;
   type: PostTypeEnum;
-  scheduledToPublish: Date;
-  scheduledToArchive: Date;
+  scheduledToPublish?: Date;
+  scheduledToArchive?: Date;
 }
 
 @Processor( PostQueues.SCHEDULED_POSTS )

@@ -473,6 +473,19 @@ export class PostsService {
       } as PostSlugsHistory );
     }
 
+    const futureStatusChanged = post.status === PostStatusEnum.FUTURE && updatePostDto.status !== PostStatusEnum.FUTURE;
+    const publishDateChanged = post.scheduledToPublish && post.scheduledToPublish !== updatePostDto.scheduledToPublish;
+    const archiveDateChanged = post.scheduledToArchive && post.scheduledToArchive !== updatePostDto.scheduledToArchive;
+
+    if ( futureStatusChanged || publishDateChanged || archiveDateChanged ) {
+      const delayedJobs = await this.scheduledPostQueue.getDelayed();
+      const jobsToDelete = delayedJobs.filter( j => j.data.id === post.id );
+      if ( jobsToDelete && jobsToDelete.length > 0 ) {
+        const deletePromises = jobsToDelete.map( j => j.remove() );
+        await Promise.all( deletePromises );
+      }
+    }
+
     Object.assign( post, updatePostDto );
 
     post.featuredImage = updatePostDto?.featuredImageId
@@ -712,13 +725,13 @@ export class PostsService {
       // Schedule to publish if schedule date exists
       if ( post?.scheduledToPublish ) {
         const delay = post.scheduledToPublish.getTime() - Date.now();
-        await this.scheduledPostQueue.add( PostJobs.SCHEDULED_POST_TO_PUBLISH, { id: post.id, type: post.type, title: post.title, slug: post.slug, scheduledToPublish: post.scheduledToPublish, scheduledToArchive: post.scheduledToArchive }, { delay } );
+        await this.scheduledPostQueue.add( PostJobs.SCHEDULED_POST_TO_PUBLISH, { id: post.id, type: post.type, title: post.title, slug: post.slug, scheduledToPublish: post.scheduledToPublish }, { delay } );
       }
 
       // Schedule to archive if schedule date exists
       if ( post?.scheduledToArchive ) {
         const delay = post.scheduledToArchive.getTime() - Date.now();
-        await this.scheduledPostQueue.add( PostJobs.SCHEDULED_POST_TO_ARCHIVE, { id: post.id, type: post.type, title: post.title, slug: post.slug, scheduledToPublish: post.scheduledToPublish, scheduledToArchive: post.scheduledToArchive }, { delay } );
+        await this.scheduledPostQueue.add( PostJobs.SCHEDULED_POST_TO_ARCHIVE, { id: post.id, type: post.type, title: post.title, slug: post.slug, scheduledToArchive: post.scheduledToArchive }, { delay } );
       }
     }
   }
@@ -757,7 +770,9 @@ export class PostsService {
         jobId: j.id,
         title: j.data.title,
         slug: j.data.slug,
-        type: j.data.type
+        type: j.data.type,
+        scheduledToPublish: j.data.scheduledToPublish,
+        scheduledToArchive: j.data.scheduledToArchive
       };
     } );
 

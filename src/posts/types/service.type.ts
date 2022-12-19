@@ -24,4 +24,6 @@ export interface PostsDelayedJobs {
   title: string;
   slug: string;
   type: PostTypeEnum;
+  scheduledToPublish: Date;
+  scheduledToArchive: Date;
 }
