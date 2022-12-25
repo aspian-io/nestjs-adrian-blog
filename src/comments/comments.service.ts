@@ -1,19 +1,17 @@
-import { BadRequestException, CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
+import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SettingsService } from 'src/settings/settings.service';
-import { Between, FindOptionsWhere, In, MoreThanOrEqual, Repository } from 'typeorm';
+import { Between, FindOptionsWhere, In, IsNull, MoreThanOrEqual, Not, Repository } from 'typeorm';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { Comment } from './entities/comment.entity';
 import * as sanitizeHtml from 'sanitize-html';
 import { SettingsKeyEnum } from 'src/settings/types/settings-key.enum';
-import { EnvEnum } from 'src/env.enum';
 import { ICommentSanitizerResult } from './types/service.type';
 import { I18nContext } from 'nestjs-i18n';
 import { NotFoundLocalizedException } from 'src/common/exceptions/not-found-localized.exception';
 import { CommentsInfoLocale } from 'src/i18n/locale-keys/comments/info.locale';
-import { CommentsErrorsLocale } from 'src/i18n/locale-keys/comments/errors.locale';
 import { IMetadataDecorator } from 'src/common/decorators/metadata.decorator';
 import { Cache } from 'cache-manager';
 import { PermissionsEnum } from 'src/common/security/permissions.enum';
@@ -21,6 +19,7 @@ import { User } from 'src/users/entities/user.entity';
 import { CommentQueryListDto } from './dto/comment-query-list.dto';
 import { FilterPaginationUtil, IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
 import { PostsService } from 'src/posts/posts.service';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class CommentsService {
@@ -37,7 +36,6 @@ export class CommentsService {
     createCommentDto: CreateCommentDto,
     i18n: I18nContext,
     metadata: IMetadataDecorator ): Promise<Comment> {
-    const allowedReplyLevel = +this.configService.getOrThrow( EnvEnum.COMMENT_REPLY_ALLOWED_LEVEL );
 
     const {
       sanitizedTitle,
@@ -53,23 +51,18 @@ export class CommentsService {
       ? await this.findOne( createCommentDto.parentId, i18n )
       : null;
 
-    const isReplyLevelAllowed = parentComment
-      ? ( parentComment.replyLevel + 1 ) <= allowedReplyLevel
-      : true;
-    if ( !isReplyLevelAllowed ) throw new BadRequestException( i18n.t( CommentsErrorsLocale.REPLY_NOT_ALLOWED ) );
-    const isReplyAllowedForCurrentComment = parentComment
-      ? ( parentComment.replyLevel + 1 ) < allowedReplyLevel
-      : true;
-    const currentReplyLevel = parentComment ? ( parentComment.replyLevel + 1 ) : 0;
+    let ancestor: Comment | null = null;
+    if ( parentComment && parentComment.ancestor ) ancestor = parentComment.ancestor;
+    if ( parentComment && !parentComment.ancestor ) ancestor = parentComment;
 
     const comment = this.commentRepository.create( {
       title: sanitizedTitle,
       content: sanitizedContent,
+      ancestor,
       parent: parentComment,
       isApproved: isAdmin ? true : isApproved,
-      replyLevel: currentReplyLevel,
-      isReplyAllowed: isReplyAllowedForCurrentComment,
       post,
+      seen: isAdmin,
       createdBy: { id: metadata.user.id },
       ipAddress: metadata.ipAddress,
       userAgent: metadata.userAgent
@@ -83,7 +76,7 @@ export class CommentsService {
   }
 
   // Find all comments
-  async findAll ( query: CommentQueryListDto, postId?: string ): Promise<IListResultGenerator<Comment>> {
+  async findAll ( query: CommentQueryListDto, postId?: string, onlyApproved: boolean = false ): Promise<IListResultGenerator<Comment>> {
     const { page, limit } = query;
     const { skip, take } = FilterPaginationUtil.takeSkipGenerator( limit, page );
 
@@ -103,17 +96,28 @@ export class CommentsService {
     if ( postId ) {
       where.post = { id: postId };
     }
+    // Add post title filter
+    if ( query[ 'filterBy.postTitle' ] ) {
+      where.post = {
+        title: query[ 'filterBy.postTitle' ]
+      };
+    }
     // Add isApproved filter
-    if ( query[ 'filterBy.isApproved' ] ) {
+    if ( !onlyApproved ) {
       where.isApproved = query[ 'filterBy.isApproved' ];
     }
-    // Add is replyAllowed filter
-    if ( query[ 'filterBy.isReplyAllowed' ] ) {
-      where.isReplyAllowed = query[ 'filterBy.isReplyAllowed' ];
-    }
+
+    where.seen = query[ 'filterBy.seen' ];
+    // Only approved comments
+    if ( onlyApproved ) where.isApproved = true;
+
     // Add likes number filter
     if ( query[ 'filterBy.likesNumGte' ] ) {
       where.likesNum = MoreThanOrEqual( query[ 'filterBy.likesNumGte' ] );
+    }
+    // Add dislikes number filter
+    if ( query[ 'filterBy.dislikesNumGte' ] ) {
+      where.likesNum = MoreThanOrEqual( query[ 'filterBy.dislikesNumGte' ] );
     }
     // Add createdBy filter
     if ( query[ 'filterBy.createdBy' ] ) {
@@ -133,11 +137,17 @@ export class CommentsService {
     // Get the result from database
     const [ items, totalItems ] = await this.commentRepository.findAndCount( {
       loadRelationIds: {
-        relations: [ 'parent', 'post' ]
+        relations: [ 'ancestor', 'parent' ]
       },
       relations: {
+        post: true,
         createdBy: true,
         updatedBy: true
+      },
+      select: {
+        post: { title: true, subtitle: true, slug: true },
+        createdBy: { id: true, firstName: true, lastName: true, avatar: true, avatarSource: true, role: true },
+        updatedBy: { id: true, firstName: true, lastName: true, avatar: true, avatarSource: true, role: true },
       },
       where,
       order: {
@@ -145,7 +155,8 @@ export class CommentsService {
         content: query[ 'orderBy.content' ],
         isApproved: query[ 'orderBy.isApproved' ],
         likesNum: query[ 'orderBy.likesNum' ],
-        isReplyAllowed: query[ 'orderBy.isReplyAllowed' ],
+        dislikesNum: query[ 'orderBy.dislikesNum' ],
+        seen: query[ 'orderBy.seen' ],
         createdAt: query[ 'orderBy.createdAt' ],
         updatedAt: query[ 'orderBy.updatedAt' ],
         ipAddress: query[ 'orderBy.ipAddress' ],
@@ -158,20 +169,81 @@ export class CommentsService {
     return FilterPaginationUtil.resultGenerator( items, totalItems, limit, page );
   }
 
+  // Find all replies of a specific comment
+  async findAllCommentReplies (
+    parentId: string,
+    metadata: IMetadataDecorator
+  ): Promise<Comment[]> {
+    const replies = await this.commentRepository.find( {
+      relations: {
+        createdBy: true,
+        updatedBy: true,
+      },
+      where: {
+        createdBy: {
+          id: metadata.user.id
+        },
+        parent: { id: parentId }
+      },
+      order: { createdAt: { direction: 'ASC' } }
+    } );
+
+    return replies;
+  }
+
+  // Count Unseen Comments
+  async countUnseen (): Promise<{ unseenNum: number; }> {
+    const unseenNum = await this.commentRepository.count( { where: { seen: false } } );
+    return { unseenNum };
+  }
+
   // Find a comment
   async findOne ( id: string, i18n: I18nContext, withDeleted: boolean = false ): Promise<Comment> {
     const comment = await this.commentRepository.findOne( {
       where: { id },
       relations: {
+        post: true,
+        ancestor: { createdBy: true, updatedBy: true },
+        parent: { createdBy: true, updatedBy: true },
         createdBy: true,
         updatedBy: true,
       },
-      loadRelationIds: {
-        relations: [ 'parent', 'post' ]
+      select: {
+        post: { id: true, title: true, subtitle: true, slug: true },
+        createdBy: { id: true, email: true, firstName: true, lastName: true, avatar: true, avatarSource: true, role: true },
+        updatedBy: { id: true, email: true, firstName: true, lastName: true, avatar: true, avatarSource: true, role: true },
+        ancestor: {
+          id: true,
+          title: true,
+          content: true,
+          post: { title: true, subtitle: true, slug: true },
+          createdBy: { id: true, email: true, firstName: true, lastName: true, avatar: true, avatarSource: true, role: true },
+          createdAt: true,
+          likesNum: true,
+          dislikesNum: true,
+          updatedBy: { id: true, email: true, firstName: true, lastName: true, avatar: true, avatarSource: true, role: true },
+          updatedAt: true
+        },
+        parent: {
+          id: true,
+          title: true,
+          content: true,
+          post: { title: true, subtitle: true, slug: true },
+          createdBy: { id: true, email: true, firstName: true, lastName: true, avatar: true, avatarSource: true, role: true },
+          createdAt: true,
+          likesNum: true,
+          dislikesNum: true,
+          updatedBy: { id: true, email: true, firstName: true, lastName: true, avatar: true, avatarSource: true, role: true },
+          updatedAt: true
+        }
       },
       withDeleted
     } );
     if ( !comment ) throw new NotFoundLocalizedException( i18n, CommentsInfoLocale.TERM_COMMENT );
+
+    comment.seen = true;
+    await this.commentRepository.save( comment );
+    await this.cacheManager.reset();
 
     return comment;
   }
@@ -192,6 +264,26 @@ export class CommentsService {
     comment.updatedBy = { id: metadata.user.id } as User;
     comment.ipAddress = metadata.ipAddress;
     comment.userAgent = metadata.userAgent;
+
+    const result = await this.commentRepository.save( comment );
+    await this.cacheManager.reset();
+    return result;
+  }
+
+  // Approve comment
+  async approve ( id: string, i18n: I18nContext ) {
+    const comment = await this.findOne( id, i18n );
+    comment.isApproved = true;
+
+    const result = await this.commentRepository.save( comment );
+    await this.cacheManager.reset();
+    return result;
+  }
+
+  // Reject comment
+  async reject ( id: string, i18n: I18nContext ) {
+    const comment = await this.findOne( id, i18n );
+    comment.isApproved = false;
 
     const result = await this.commentRepository.save( comment );
     await this.cacheManager.reset();
@@ -268,12 +360,58 @@ export class CommentsService {
     return result;
   }
 
+  // Soft remove comments
+  async softRemoveAll ( ids: string[], i18n: I18nContext ): Promise<Comment[]> {
+    const comments = await this.commentRepository.find( { relations: { post: true }, where: { id: In( ids ) } } );
+    for ( let comment of comments ) {
+      const post = await this.postsService.findOne( comment.post.id, i18n );
+      await this.postsService.decreasePostCommentsNum( post );
+    }
+
+    const result = await this.commentRepository.softRemove( comments );
+    await this.cacheManager.reset();
+    return result;
+  }
+
+  // Find all soft-removed items
+  async softRemovedFindAll ( query: PaginationDto ): Promise<IListResultGenerator<Comment>> {
+    const { page, limit } = query;
+    const { skip, take } = FilterPaginationUtil.takeSkipGenerator( limit, page );
+
+    const [ items, totalItems ] = await this.commentRepository.findAndCount( {
+      relations: {
+        parent: true,
+        post: true
+      },
+      withDeleted: true,
+      where: { deletedAt: Not( IsNull() ) },
+      order: { deletedAt: { direction: 'DESC' } },
+      take,
+      skip
+    } );
+
+    return FilterPaginationUtil.resultGenerator( items, totalItems, limit, page );
+  }
+
   // Recover a soft-removed comment
   async recover ( id: string, i18n: I18nContext ): Promise<Comment> {
     const comment = await this.findOne( id, i18n, true );
     const post = await this.postsService.findOne( comment.post.id, i18n );
     const result = await this.commentRepository.recover( comment );
     await this.postsService.increasePostCommentsNum( post );
+    await this.cacheManager.reset();
+    return result;
+  }
+
+  // Recover soft-removed comments
+  async recoverAll ( ids: string[], i18n: I18nContext ): Promise<Comment[]> {
+    const comments = await this.commentRepository.find( { where: { id: In( ids ) }, withDeleted: true } );
+    const result = await this.commentRepository.recover( comments );
+    for ( let comment of comments ) {
+      const post = await this.postsService.findOne( comment.post.id, i18n );
+      await this.postsService.increasePostCommentsNum( post );
+    }
+
     await this.cacheManager.reset();
     return result;
   }
@@ -288,6 +426,38 @@ export class CommentsService {
     return result;
   }
 
+  // Remove comments permanently
+  async removeAll ( ids: string[], i18n: I18nContext ): Promise<Comment[]> {
+    const comments = await this.commentRepository.find( { where: { id: In( ids ) }, withDeleted: true } );
+    for ( let comment of comments ) {
+      const post = await this.postsService.findOne( comment.post.id, i18n );
+      await this.postsService.decreasePostCommentsNum( post );
+    }
+
+    const result = await this.commentRepository.remove( comments );
+    await this.cacheManager.reset();
+
+    return result;
+  }
+
+  // Empty trash
+  async emptyTrash ( i18n: I18nContext ): Promise<void> {
+    const softDeletedComments = await this.commentRepository.find( {
+      relations: {
+        post: true
+      },
+      where: { deletedAt: Not( IsNull() ) },
+      withDeleted: true
+    } );
+    for ( let comment of softDeletedComments ) {
+      const post = await this.postsService.findOne( comment.post.id, i18n );
+      await this.postsService.decreasePostCommentsNum( post );
+    }
+
+    await this.commentRepository.remove( softDeletedComments );
+    await this.cacheManager.reset();
+  }
+
   /********************************************************************************************/
   /********************************** Helper Methods ******************************************/
   /*********************************** Start Region *******************************************/
@@ -296,14 +466,14 @@ export class CommentsService {
   // Sanitize comments titles and contents
   async commentSanitizer ( title: string, content: string ): Promise<ICommentSanitizerResult> {
     const sanitizeHtmlOptions = {
-      allowedTags: [ 'b', 'i', 'em', 'strong', 'a' ],
+      allowedTags: [ 'b', 's', 'i', 'em', 'strong', 'a', 'ul', 'li', 'ol' ],
       allowedAttributes: {
         'a': [ 'href' ]
       },
       allowedIframeHostnames: []
     };
 
-    let sanitizedTitle = sanitizeHtml( title, sanitizeHtmlOptions );
+    let sanitizedTitle = title ? sanitizeHtml( title, sanitizeHtmlOptions ) : null;
     let sanitizedContent = sanitizeHtml( content, sanitizeHtmlOptions );
     let isApproved = ( await this.settingsService.findOne( SettingsKeyEnum.COMMENT_IS_APPROVED ) )
       .value === "true";
@@ -314,7 +484,7 @@ export class CommentsService {
       .value === "true";
 
     forbiddenExps.map( exp => {
-      const titleForbidden = sanitizedTitle.includes( exp );
+      const titleForbidden = sanitizedTitle?.includes( exp );
       const contentForbidden = sanitizedContent.includes( exp );
       if ( titleForbidden || contentForbidden ) {
         if ( isApproved && suspendIfForbidden ) {

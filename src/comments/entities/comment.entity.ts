@@ -5,8 +5,8 @@ import { Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany } from "typ
 
 @Entity()
 export class Comment extends BaseMinimalEntity {
-  @Column()
-  title: string;
+  @Column( { nullable: true } )
+  title?: string;
 
   @Column()
   content: string;
@@ -28,14 +28,20 @@ export class Comment extends BaseMinimalEntity {
   @Column()
   isApproved: boolean;
 
-  @Column()
-  replyLevel: number;
+  @Column( { default: false } )
+  seen?: boolean;
 
-  @Column()
-  isReplyAllowed: boolean;
+  @ManyToOne( () => Comment, ( comment ) => comment.ancestorChildren, { onDelete: 'CASCADE' } )
+  ancestor?: Comment;
 
-  @ManyToOne( () => Comment )
+  @OneToMany( () => Comment, ( comment ) => comment.ancestor )
+  ancestorChildren?: Comment[];
+
+  @ManyToOne( () => Comment, ( comment ) => comment.children, { onDelete: 'CASCADE' } )
   parent?: Comment;
+
+  @OneToMany( () => Comment, ( comment ) => comment.parent )
+  children?: Comment[];
 
   @ManyToOne( () => Post, { onDelete: 'CASCADE' } )
   post: Post;

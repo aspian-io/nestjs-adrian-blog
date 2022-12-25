@@ -46,6 +46,6 @@ async function bootstrap () {
   const server = await app.listen( 3001 );
 
   // Uppy companion socket
-  companion.socket( server );
+  companion.socket( server as any );
 }
 bootstrap();

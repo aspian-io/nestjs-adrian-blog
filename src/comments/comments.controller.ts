@@ -1,8 +1,10 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, BadRequestException, Query } from '@nestjs/common';
 import { I18n, I18nContext } from 'nestjs-i18n';
 import { IMetadataDecorator, Metadata } from 'src/common/decorators/metadata.decorator';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { PermissionsEnum } from 'src/common/security/permissions.enum';
+import { IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
 import { CommentsErrorsLocale } from 'src/i18n/locale-keys/comments/errors.locale';
 import { SettingsService } from 'src/settings/settings.service';
 import { SettingsKeyEnum } from 'src/settings/types/settings-key.enum';
@@ -63,14 +65,37 @@ export class CommentsController {
   @Get( 'comments/:postId' )
   @Serialize( UserCommentsListDto )
   findAll ( @Param( 'postId' ) postId: string, @Query() query: UserCommentQueryListDto ) {
-    return this.commentsService.findAll( query, postId );
+    return this.commentsService.findAll( query, postId, true );
   }
 
   /**************************** ADMIN REGION ***********************************/
 
+  @UseGuards( JwtAuthGuard )
+  @Post( 'admin/comments' )
+  async adminCreate (
+    @Body() createCommentDto: CreateCommentDto,
+    @I18n() i18n: I18nContext,
+    @Metadata() metadata: IMetadataDecorator ): Promise<Comment> {
+    return this.commentsService.create( createCommentDto, i18n, metadata );
+  }
+
   @Get( 'admin/comments' )
-  adminFindAll ( @Query() query: CommentQueryListDto ) {
+  adminFindAll ( @Query() query: CommentQueryListDto ): Promise<IListResultGenerator<Comment>> {
     return this.commentsService.findAll( query );
+  }
+
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_READ )
+  @Get( 'admin/comments/replies/:parentId' )
+  adminFindAllCommentReplies ( @Param( 'parentId' ) parentId: string, @Metadata() metadata: IMetadataDecorator ): Promise<Comment[]> {
+    return this.commentsService.findAllCommentReplies( parentId, metadata );
+  }
+
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_READ )
+  @Get( 'admin/comments/unseen' )
+  adminUnseenCommentsNum (): Promise<{ unseenNum: number; }> {
+    return this.commentsService.countUnseen();
   }
 
   @UseGuards( JwtAuthGuard, PermissionsGuard )
@@ -92,10 +117,35 @@ export class CommentsController {
   }
 
   @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_EDIT )
+  @Patch( 'admin/comments/approve/:id' )
+  adminApprove (
+    @Param( 'id' ) id: string,
+    @I18n() i18n: I18nContext ): Promise<Comment> {
+    return this.commentsService.approve( id, i18n );
+  }
+
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_EDIT )
+  @Patch( 'admin/comments/reject/:id' )
+  adminDisapprove (
+    @Param( 'id' ) id: string,
+    @I18n() i18n: I18nContext ): Promise<Comment> {
+    return this.commentsService.reject( id, i18n );
+  }
+
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )
   @Delete( 'admin/comments/soft-delete/:id' )
   adminSoftRemove ( @Param( 'id' ) id: string, @I18n() i18n: I18nContext ) {
     return this.commentsService.softRemove( id, i18n );
+  }
+
+  @Delete( 'admin/comments/soft-delete-all' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )
+  adminSoftRemoveAll ( @Body( 'ids' ) ids: string[], @I18n() i18n: I18nContext ): Promise<Comment[]> {
+    return this.commentsService.softRemoveAll( ids, i18n );
   }
 
   @UseGuards( JwtAuthGuard, PermissionsGuard )
@@ -105,10 +155,38 @@ export class CommentsController {
     return this.commentsService.recover( id, i18n );
   }
 
+  @Patch( 'admin/comments/recover-all' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )
+  adminRecoverAll ( @Body( 'ids' ) ids: string[], @I18n() i18n: I18nContext ): Promise<Comment[]> {
+    return this.commentsService.recoverAll( ids, i18n );
+  }
+
+  @Get( 'admin/comments/soft-deleted/trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )
+  softRemovedFindAll ( @Query() query: PaginationDto ): Promise<IListResultGenerator<Comment>> {
+    return this.commentsService.softRemovedFindAll( query );
+  }
+
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )
   @Delete( 'admin/comments/permanent-delete/:id' )
   adminRemove ( @Param( 'id' ) id: string, @I18n() i18n: I18nContext ) {
     return this.commentsService.remove( id, i18n );
+  }
+
+  @Delete( 'admin/comments/permanent-delete-all' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )
+  adminRemoveAll ( @Body( 'ids' ) ids: string[], @I18n() i18n: I18nContext ): Promise<Comment[]> {
+    return this.commentsService.removeAll( ids, i18n );
+  }
+
+  @Delete( 'admin/comments/empty-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )
+  adminEmptyTrash ( @I18n() i18n: I18nContext ): Promise<void> {
+    return this.commentsService.emptyTrash( i18n );
   }
 }

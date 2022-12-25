@@ -36,7 +36,7 @@ export class User extends BaseMinimalEntity {
 
   @AfterLoad()
   private getEmailVerificationTokenExpired () {
-    this.isEmailVerificationTokenExpired = this.emailVerificationTokenExpiresAt.getTime() < Date.now();
+    this.isEmailVerificationTokenExpired = this.emailVerificationTokenExpiresAt?.getTime() < Date.now();
   }
 
   @Column()
@@ -92,7 +92,7 @@ export class User extends BaseMinimalEntity {
 
   @AfterLoad()
   private getMobilePhoneVerificationTokenExpired () {
-    this.isMobilePhoneVerificationTokenExpired = this.mobilePhoneVerificationTokenExpiresAt.getTime() < Date.now();
+    this.isMobilePhoneVerificationTokenExpired = this.mobilePhoneVerificationTokenExpiresAt?.getTime() < Date.now();
   }
 
   @Column( { default: false } )

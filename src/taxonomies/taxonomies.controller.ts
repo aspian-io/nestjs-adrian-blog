@@ -15,6 +15,7 @@ import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { TaxonomyDto } from './dto/taxonomy.dto';
 import { Response } from 'express';
 import { TaxonomySlugsHistory } from './entities/taxonomy-slug.entity';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Controller()
 export class TaxonomiesController {
@@ -157,21 +158,21 @@ export class TaxonomiesController {
   @Get( 'admin/taxonomies/soft-deleted/categories-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
-  softRemovedFindAllCategoriesTrash ( @Query() query: TaxonomiesListQueryDto ): Promise<IListResultGenerator<Taxonomy>> {
+  softRemovedFindAllCategoriesTrash ( @Query() query: PaginationDto ): Promise<IListResultGenerator<Taxonomy>> {
     return this.taxonomiesService.softRemovedFindAll( query, TaxonomyTypeEnum.CATEGORY );
   }
 
   @Get( 'admin/taxonomies/soft-deleted/tags-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
-  softRemovedFindAllTagsTrash ( @Query() query: TaxonomiesListQueryDto ): Promise<IListResultGenerator<Taxonomy>> {
+  softRemovedFindAllTagsTrash ( @Query() query: PaginationDto ): Promise<IListResultGenerator<Taxonomy>> {
     return this.taxonomiesService.softRemovedFindAll( query, TaxonomyTypeEnum.TAG );
   }
 
   @Get( 'admin/taxonomies/soft-deleted/menus-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
-  softRemovedFindAllMenusTrash ( @Query() query: TaxonomiesListQueryDto ): Promise<IListResultGenerator<Taxonomy>> {
+  softRemovedFindAllMenusTrash ( @Query() query: PaginationDto ): Promise<IListResultGenerator<Taxonomy>> {
     return this.taxonomiesService.softRemovedFindAll( query, TaxonomyTypeEnum.MENU );
   }
 

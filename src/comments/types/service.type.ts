@@ -1,5 +1,5 @@
 export interface ICommentSanitizerResult {
-  sanitizedTitle: string;
+  sanitizedTitle: string | null;
   sanitizedContent: string;
   isApproved: boolean;
 }

@@ -14,9 +14,17 @@ export class CommentQueryListDto {
   @IsOptional()
   "searchBy.content"?: FindOperator<string>;
 
+  @Transform( ( { value } ) => QueryStringUtil.extractSearchString( value ) )
+  @IsOptional()
+  "filterBy.postTitle"?: FindOperator<string>;
+
   @Transform( ( { value } ) => QueryStringUtil.toNumber( value ) )
   @IsOptional()
   "filterBy.likesNumGte"?: number;
+
+  @Transform( ( { value } ) => QueryStringUtil.toNumber( value ) )
+  @IsOptional()
+  "filterBy.dislikesNumGte"?: number;
 
   @Transform( ( { value } ) => QueryStringUtil.toBoolean( value ) )
   @IsOptional()
@@ -24,7 +32,7 @@ export class CommentQueryListDto {
 
   @Transform( ( { value } ) => QueryStringUtil.toBoolean( value ) )
   @IsOptional()
-  "filterBy.isReplyAllowed"?: boolean;
+  "filterBy.seen"?: boolean;
 
   @Transform( ( { value } ) => QueryStringUtil.extractCommaSeparatedDateRange( value ) )
   @IsOptional()
@@ -56,7 +64,15 @@ export class CommentQueryListDto {
 
   @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
   @IsOptional()
+  "orderBy.seen"?: OrderType;
+
+  @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
+  @IsOptional()
   "orderBy.likesNum"?: OrderType;
+
+  @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
+  @IsOptional()
+  "orderBy.dislikesNum"?: OrderType;
 
   @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
   @IsOptional()

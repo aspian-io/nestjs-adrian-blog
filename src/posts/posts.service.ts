@@ -532,9 +532,10 @@ export class PostsService {
   }
 
   // Decreasing comments number by one
-  decreasePostCommentsNum ( post: Post ): Promise<Post> {
+  decreasePostCommentsNum ( post: Post, decreaseNumber: number = 1 ): Promise<Post> {
     if ( post.commentsNum > 0 ) {
-      post.commentsNum -= 1;
+      post.commentsNum -= decreaseNumber;
+      if ( post.commentsNum < 0 ) post.commentsNum = 0;
       return this.postRepository.save( post );
     }
     return;
