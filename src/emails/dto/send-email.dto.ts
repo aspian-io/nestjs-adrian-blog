@@ -3,12 +3,7 @@ import { IsIn, IsNotEmpty, IsOptional, IsString } from "class-validator";
 import { i18nValidationMessage } from "nestjs-i18n";
 import { QueryStringUtil } from "src/common/utils/query-string.utils";
 import { CommonErrorsLocale } from "src/i18n/locale-keys/common/errors.locale";
-
-export enum EmailPriorityEnum {
-  HIGH = "high",
-  LOW = "low",
-  NORMAL = "normal"
-}
+import { EmailPriorityEnum } from "../entities/email.entity";
 
 export class SendEmailDto {
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
@@ -42,6 +37,10 @@ export class SendEmailDto {
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   html: string;
+
+  @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
+  @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
+  templateDesign: string;
 }
 
 

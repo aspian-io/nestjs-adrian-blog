@@ -24,6 +24,10 @@ export class NewsletterCreateCampaignDto {
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   content: string;
 
+  @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
+  @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
+  templateDesign: string;
+
   @IsBoolean( { message: CommonErrorsLocale.VALIDATOR_IS_BOOLEAN } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   sendToSubscribers: boolean;

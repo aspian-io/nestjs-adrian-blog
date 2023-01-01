@@ -5,38 +5,22 @@ import { FindOperator } from "typeorm";
 
 type OrderType = 'ASC' | 'DESC';
 
-export class SubscribersListQueryDto {
+export class EmailListQueryDto {
   @Transform( ( { value } ) => QueryStringUtil.extractSearchString( value ) )
   @IsOptional()
-  "searchBy.name"?: FindOperator<string>;
+  "searchBy.from"?: FindOperator<string>;
 
   @Transform( ( { value } ) => QueryStringUtil.extractSearchString( value ) )
   @IsOptional()
-  "searchBy.email"?: FindOperator<string>;
+  "searchBy.to"?: FindOperator<string>;
 
-  @Transform( ( { value } ) => QueryStringUtil.toBoolean( value ) )
+  @Transform( ( { value } ) => QueryStringUtil.extractSearchString( value ) )
   @IsOptional()
-  "filterBy.approved"?: boolean;
-
-  @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
-  @IsOptional()
-  "orderBy.name"?: OrderType;
-
-  @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
-  @IsOptional()
-  "orderBy.email"?: OrderType;
-
-  @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
-  @IsOptional()
-  "orderBy.approved"?: OrderType;
+  "searchBy.subject"?: FindOperator<string>;
 
   @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
   @IsOptional()
   "orderBy.createdAt"?: OrderType;
-
-  @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
-  @IsOptional()
-  "orderBy.updatedAt"?: OrderType;
 
   @Transform( ( { value } ) => QueryStringUtil.extractPage( value ) )
   @IsOptional()

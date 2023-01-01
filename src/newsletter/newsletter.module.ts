@@ -10,6 +10,7 @@ import { SubscriptionTokenJobsConsumer } from './queues/consumers/subscription-t
 import { PostsModule } from 'src/posts/posts.module';
 import { CampaignJobsConsumer } from './queues/consumers/campaign.consumer';
 import { UsersModule } from 'src/users/users.module';
+import { FilesModule } from 'src/files/files.module';
 
 @Module( {
   imports: [
@@ -22,6 +23,7 @@ import { UsersModule } from 'src/users/users.module';
       { name: NewsletterQueues.CAMPAIGN }
     ),
     PostsModule,
+    FilesModule,
     UsersModule
   ],
   controllers: [ NewsletterController ],

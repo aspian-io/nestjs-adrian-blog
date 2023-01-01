@@ -710,7 +710,8 @@ export class UsersService {
       const html = compiledTemplate( {
         websiteName,
         token: result.emailVerificationToken,
-        websiteUrl
+        websiteUrl,
+        year: new Date().getFullYear()
       } );
       return this.mailerService.sendMail( {
         from: siteSupportEmail,
@@ -910,7 +911,8 @@ export class UsersService {
       const compiledTemplate = Handlebars.compile( customTemplate.content );
       const html = compiledTemplate( {
         websiteName,
-        websiteUrl
+        websiteUrl,
+        year: new Date().getFullYear()
       } );
       await this.mailerService.sendMail( {
         from: siteSupportEmail,
@@ -975,7 +977,8 @@ export class UsersService {
       const html = compiledTemplate( {
         websiteName,
         token: result.emailVerificationToken,
-        websiteUrl
+        websiteUrl,
+        year: new Date().getFullYear()
       } );
       return this.mailerService.sendMail( {
         from: siteSupportEmail,

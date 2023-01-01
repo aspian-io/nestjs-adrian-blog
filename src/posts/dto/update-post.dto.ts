@@ -66,6 +66,10 @@ export class UpdatePostDto {
   content?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
+  @IsOptional()
+  templateDesign?: string;
+
+  @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
   @Matches( /^[a-z0-9]+(?:-[a-z0-9]+)*$/, { message: CommonErrorsLocale.VALIDATOR_IS_SLUG } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   slug: string;

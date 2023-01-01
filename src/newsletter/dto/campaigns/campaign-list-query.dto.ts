@@ -1,7 +1,6 @@
 import { Transform } from "class-transformer";
 import { IsOptional } from "class-validator";
 import { QueryStringUtil } from "src/common/utils/query-string.utils";
-import { SendingIntervalEnum, SendingTypeEnum } from "src/newsletter/entities/newsletter-campaign.entity";
 import { FindOperator } from "typeorm";
 
 type OrderType = 'ASC' | 'DESC';
@@ -27,6 +26,14 @@ export class NewsletterCampaignListQueryDto {
   @IsOptional()
   "filterBy.sendingTime"?: Date[];
 
+  @Transform( ( { value } ) => QueryStringUtil.toBoolean( value ) )
+  @IsOptional()
+  "filterBy.sendToSubscribers"?: boolean;
+
+  @Transform( ( { value } ) => QueryStringUtil.toBoolean( value ) )
+  @IsOptional()
+  "filterBy.sendToUsers"?: boolean;
+
   @Transform( ( { value } ) => QueryStringUtil.extractCommaSeparatedDateRange( value ) )
   @IsOptional()
   "filterBy.createdAt"?: Date[];
@@ -50,6 +57,14 @@ export class NewsletterCampaignListQueryDto {
   @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
   @IsOptional()
   "orderBy.sendingTime"?: OrderType;
+
+  @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
+  @IsOptional()
+  "orderBy.sendToSubscribers"?: OrderType;
+
+  @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
+  @IsOptional()
+  "orderBy.sendToUsers"?: OrderType;
 
   @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
   @IsOptional()

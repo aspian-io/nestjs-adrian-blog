@@ -27,7 +27,7 @@ import { EnvEnum } from 'src/env.enum';
     UppyAuthMiddleware,
     ImageResizerJobConsumer
   ],
-  exports: [ TypeOrmModule ]
+  exports: [ TypeOrmModule, FilesService ]
 } )
 export class FilesModule implements NestModule {
   constructor (

@@ -1,7 +1,6 @@
 import { MailerService } from "@nestjs-modules/mailer";
 import { Process, Processor } from "@nestjs/bull";
 import { Job } from "bull";
-import { NewsletterService } from "src/newsletter/newsletter.service";
 import { PostsService } from "src/posts/posts.service";
 import { SettingsService } from "src/settings/settings.service";
 import { SettingsKeyEnum } from "src/settings/types/settings-key.enum";
@@ -53,6 +52,9 @@ export class SubscriptionTokenJobsConsumer {
     email: string,
     token: number
   ) {
+    const company = ( await this.settingsService.findOne( SettingsKeyEnum.NEWSLETTER_COMPANY ) )?.value;
+    const copyright = ( await this.settingsService.findOne( SettingsKeyEnum.NEWSLETTER_COPYRIGHT ) )?.value;
+    const address = ( await this.settingsService.findOne( SettingsKeyEnum.NEWSLETTER_ADDRESS ) )?.value;
     const customTemplateId = ( await this.settingsService.findOneOrNull( customTemplateIdToFind ) )?.value;
     const customTemplate = customTemplateId ? await this.postsService.findOne( customTemplateId ) : null;
     const websiteName = ( await this.settingsService.findOne( SettingsKeyEnum.SITE_NAME ) ).value;
@@ -64,7 +66,12 @@ export class SubscriptionTokenJobsConsumer {
       const html = compiledTemplate( {
         websiteName,
         token,
-        websiteUrl
+        websiteUrl,
+        email,
+        company,
+        copyright,
+        address,
+        year: new Date().getFullYear()
       } );
       return this.mailerService.sendMail( {
         from: siteSupportEmail,

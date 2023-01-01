@@ -35,6 +35,8 @@ export enum PermissionsEnum {
   COMMENT_DELETE = "comment_d",
   // Emails
   EMAIL_SEND = "mail_send",
+  EMAIL_READ = "mail_read",
+  EMAIL_DELETE = "mail_delete",
   // Newsletter
   NEWSLETTER_READ = "newsletter_r",
   NEWSLETTER_CREATE = "newsletter_w",

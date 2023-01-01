@@ -134,32 +134,18 @@ export class PostsController {
     return this.postsService.findAll( query, PostTypeEnum.EMAIL_TEMPLATE );
   }
 
+  @Get( 'admin/posts/newsletter-templates' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
+  adminFindAllNewsletterTemplates ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
+    return this.postsService.findAll( query, PostTypeEnum.NEWSLETTER_TEMPLATE );
+  }
+
   @Get( 'admin/posts/news' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
   adminFindAllNews ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
     return this.postsService.findAll( query, PostTypeEnum.NEWS );
-  }
-
-  @Get( 'admin/posts/newsletter-headers' )
-  @UseGuards( JwtAuthGuard, PermissionsGuard )
-  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
-  adminFindAllNewsletterHeaders ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
-    return this.postsService.findAll( query, PostTypeEnum.NEWSLETTER_HEADER_TEMPLATE );
-  }
-
-  @Get( 'admin/posts/newsletter-bodies' )
-  @UseGuards( JwtAuthGuard, PermissionsGuard )
-  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
-  adminFindAllNewsletterBodies ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
-    return this.postsService.findAll( query, PostTypeEnum.NEWSLETTER_BODY_TEMPLATE );
-  }
-
-  @Get( 'admin/posts/newsletter-footers' )
-  @UseGuards( JwtAuthGuard, PermissionsGuard )
-  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
-  adminFindAllNewsletterFooters ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
-    return this.postsService.findAll( query, PostTypeEnum.NEWSLETTER_FOOTER_TEMPLATE );
   }
 
   @Get( 'admin/posts/pages' )
@@ -230,32 +216,18 @@ export class PostsController {
     return this.postsService.softRemovedFindAll( query, PostTypeEnum.EMAIL_TEMPLATE );
   }
 
+  @Get( 'admin/posts/soft-deleted/newsletter-templates-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  softRemovedFindAllNewsletterTemplatesTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
+    return this.postsService.softRemovedFindAll( query, PostTypeEnum.NEWSLETTER_TEMPLATE );
+  }
+
   @Get( 'admin/posts/soft-deleted/news-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
   softRemovedFindAllNewsTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
     return this.postsService.softRemovedFindAll( query, PostTypeEnum.NEWS );
-  }
-
-  @Get( 'admin/posts/soft-deleted/newsletter-headers-trash' )
-  @UseGuards( JwtAuthGuard, PermissionsGuard )
-  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
-  softRemovedFindAllNewsletterHeadersTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
-    return this.postsService.softRemovedFindAll( query, PostTypeEnum.NEWSLETTER_HEADER_TEMPLATE );
-  }
-
-  @Get( 'admin/posts/soft-deleted/newsletter-bodies-trash' )
-  @UseGuards( JwtAuthGuard, PermissionsGuard )
-  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
-  softRemovedFindAllNewsletterBodiesTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
-    return this.postsService.softRemovedFindAll( query, PostTypeEnum.NEWSLETTER_BODY_TEMPLATE );
-  }
-
-  @Get( 'admin/posts/soft-deleted/newsletter-footers-trash' )
-  @UseGuards( JwtAuthGuard, PermissionsGuard )
-  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
-  softRemovedFindAllNewsletterFootersTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
-    return this.postsService.softRemovedFindAll( query, PostTypeEnum.NEWSLETTER_FOOTER_TEMPLATE );
   }
 
   @Get( 'admin/posts/soft-deleted/pages-trash' )
@@ -314,32 +286,19 @@ export class PostsController {
     return this.postsService.emptyTrash( PostTypeEnum.EMAIL_TEMPLATE );
   }
 
+  @Delete( 'admin/posts/empty-newsletter-templates-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  adminEmptyNewsletterTemplatesTrash (): Promise<void> {
+    return this.postsService.emptyTrash( PostTypeEnum.NEWSLETTER_TEMPLATE );
+  }
+
+
   @Delete( 'admin/posts/empty-news-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
   adminEmptyNewsTrash (): Promise<void> {
     return this.postsService.emptyTrash( PostTypeEnum.NEWS );
-  }
-
-  @Delete( 'admin/posts/empty-newsletter-headers-trash' )
-  @UseGuards( JwtAuthGuard, PermissionsGuard )
-  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
-  adminEmptyNewsletterHeadersTrash (): Promise<void> {
-    return this.postsService.emptyTrash( PostTypeEnum.NEWSLETTER_BODY_TEMPLATE );
-  }
-
-  @Delete( 'admin/posts/empty-newsletter-bodies-trash' )
-  @UseGuards( JwtAuthGuard, PermissionsGuard )
-  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
-  adminEmptyNewsletterBodiesTrash (): Promise<void> {
-    return this.postsService.emptyTrash( PostTypeEnum.NEWSLETTER_BODY_TEMPLATE );
-  }
-
-  @Delete( 'admin/posts/empty-newsletter-footers-trash' )
-  @UseGuards( JwtAuthGuard, PermissionsGuard )
-  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
-  adminEmptyNewsletterFootersTrash (): Promise<void> {
-    return this.postsService.emptyTrash( PostTypeEnum.NEWSLETTER_FOOTER_TEMPLATE );
   }
 
   @Delete( 'admin/posts/empty-pages-trash' )

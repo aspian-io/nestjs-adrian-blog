@@ -1,4 +1,3 @@
-import { MailerService } from '@nestjs-modules/mailer';
 import { InjectQueue } from '@nestjs/bull';
 import { BadRequestException, CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,8 +10,7 @@ import { NewsletterErrorsLocale } from 'src/i18n/locale-keys/newsletter/errors.l
 import { NewsletterInfoLocale } from 'src/i18n/locale-keys/newsletter/info.locale';
 import { SettingsService } from 'src/settings/settings.service';
 import { SettingsKeyEnum } from 'src/settings/types/settings-key.enum';
-import { Between, FindOptionsWhere, In, MoreThanOrEqual, Repository } from 'typeorm';
-import { CreateSubscriberDto } from './dto/subscription/user/create-subscriber.dto';
+import { Between, FindOptionsWhere, In, IsNull, MoreThanOrEqual, Not, Repository } from 'typeorm';
 import { SubscribersListQueryDto } from './dto/subscription/subscribers-list-query.dto';
 import { SubscriptionTokenDto } from './dto/subscription/user/subscription-token.dto';
 import { UnsubscribeReqDto } from './dto/subscription/user/unsubscribe-req.dto';
@@ -30,6 +28,15 @@ import { NewsletterUpdateCampaignDto } from './dto/campaigns/update-campaign.dto
 import { ICampaignPayload } from './queues/consumers/campaign.consumer';
 import { NewsletterDelayedCampaignsJobs } from './types/service.type';
 import { NewsletterCampaignJobsPaginationDto } from './dto/campaigns/campaign-jobs-pagination.dto';
+import { AdminCreateSubscriberDto } from './dto/subscription/admin-create-subscriber.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { FilesService } from 'src/files/files.service';
+import { File, FilePolicyEnum, FileSectionEnum } from 'src/files/entities/file.entity';
+import * as path from 'path';
+import { sanitize } from 'string-sanitizer';
+import { ConfigService } from '@nestjs/config';
+import { InjectS3, S3 } from 'nestjs-s3';
+import { EnvEnum } from 'src/env.enum';
 
 @Injectable()
 export class NewsletterService {
@@ -38,24 +45,26 @@ export class NewsletterService {
     @InjectRepository( NewsletterSubscriber ) private readonly subscriberRepo: Repository<NewsletterSubscriber>,
     @InjectQueue( NewsletterQueues.SUBSCRIPTION_EMAIL ) private readonly subscriptionQueue: Queue<ISubscriptionEmailPayload>,
     @InjectQueue( NewsletterQueues.CAMPAIGN ) private readonly campaignQueue: Queue<ICampaignPayload>,
+    private readonly filesService: FilesService,
     private readonly settingsService: SettingsService,
-    private readonly mailerService: MailerService,
+    private readonly configService: ConfigService,
+    @InjectS3() private readonly s3: S3,
     @Inject( CACHE_MANAGER ) private readonly cacheManager: Cache
   ) { }
 
   //*********************************** Subscribers Region *************************************//
 
   // Subscribe
-  async subscribe ( createSubscriberDto: CreateSubscriberDto, i18n: I18nContext ) {
+  async subscribe ( createSubscriberDto: AdminCreateSubscriberDto, i18n: I18nContext ) {
     const expTimeInMins = +( await this.settingsService.findOne( SettingsKeyEnum.NEWSLETTER_SUBSCRIPTION_TOKEN_EXP_IN_MINS ) ).value ?? 2;
     const tokenExpiresAt = new Date( Date.now() + ( expTimeInMins * 60_000 ) );
 
     const duplicate = await this.subscriberRepo.findOne( {
       where: { email: createSubscriberDto.email }
     } );
-    console.log( "DUPLICATE" );
+
     if ( duplicate ) {
-      console.log( "DUPLICATE IS APPROVED? ", duplicate.approved );
+
       if ( duplicate.approved ) throw new BadRequestException( i18n.t( NewsletterErrorsLocale.ALREADY_SUBSCRIBED ) );
 
       const oneMinAfterNow = Date.now() + 60_000;
@@ -84,10 +93,12 @@ export class NewsletterService {
     const result = await this.subscriberRepo.save( subscriber );
     await this.cacheManager.reset();
 
-    await this.subscriptionQueue.add(
-      NewsletterJobs.SUBSCRIBE_EMAIL,
-      { email: subscriber.email, token: subscriber.token }
-    );
+    if ( !createSubscriberDto.approved ) {
+      await this.subscriptionQueue.add(
+        NewsletterJobs.SUBSCRIBE_EMAIL,
+        { email: subscriber.email, token: subscriber.token }
+      );
+    }
 
     return result;
   }
@@ -200,6 +211,7 @@ export class NewsletterService {
       order: {
         name: query[ 'orderBy.name' ],
         email: query[ 'orderBy.email' ],
+        approved: query[ 'orderBy.approved' ],
         createdAt: query[ 'orderBy.createdAt' ],
         updatedAt: query[ 'orderBy.updatedAt' ]
       },
@@ -218,6 +230,29 @@ export class NewsletterService {
     return result;
   }
 
+  async softRemoveAllSubscribers ( ids: string[] ): Promise<NewsletterSubscriber[]> {
+    const subscribers = await this.subscriberRepo.find( { where: { id: In( ids ) } } );
+
+    const result = await this.subscriberRepo.softRemove( subscribers );
+    await this.cacheManager.reset();
+    return result;
+  }
+
+  async softRemovedSubscribersFindAll ( query: PaginationDto ): Promise<IListResultGenerator<NewsletterSubscriber>> {
+    const { page, limit } = query;
+    const { skip, take } = FilterPaginationUtil.takeSkipGenerator( limit, page );
+
+    const [ items, totalItems ] = await this.subscriberRepo.findAndCount( {
+      withDeleted: true,
+      where: { deletedAt: Not( IsNull() ) },
+      order: { deletedAt: { direction: 'DESC' } },
+      take,
+      skip
+    } );
+
+    return FilterPaginationUtil.resultGenerator( items, totalItems, limit, page );
+  }
+
   async recoverSubscriber ( id: string, i18n: I18nContext ) {
     const subscriber = await this.findOneSubscriberById( id, i18n, true );
     const result = await this.subscriberRepo.recover( subscriber );
@@ -232,6 +267,25 @@ export class NewsletterService {
     await this.cacheManager.reset();
 
     return result;
+  }
+
+  async removeSubscribersAll ( ids: string[] ): Promise<NewsletterSubscriber[]> {
+    const subscribers = await this.subscriberRepo.find( { where: { id: In( ids ) }, withDeleted: true } );
+
+    const result = await this.subscriberRepo.remove( subscribers );
+    await this.cacheManager.reset();
+
+    return result;
+  }
+
+  async emptySubscribersTrash (): Promise<void> {
+    const softDeletedSubscribers = await this.subscriberRepo.find( {
+      where: { deletedAt: Not( IsNull() ) },
+      withDeleted: true
+    } );
+
+    await this.subscriberRepo.remove( softDeletedSubscribers );
+    await this.cacheManager.reset();
   }
 
   //*********************************** Campaigns Region *************************************//
@@ -282,6 +336,8 @@ export class NewsletterService {
       name: query[ 'searchBy.name' ],
       description: query[ 'searchBy.description' ],
       emailSubject: query[ 'searchBy.emailSubject' ],
+      sendToSubscribers: query[ 'filterBy.sendToSubscribers' ],
+      sendToUsers: query[ 'filterBy.sendToUsers' ],
       sendingTime: query[ 'filterBy.sendingTime' ]?.length
         ? Between( query[ 'filterBy.sendingTime' ][ 0 ], query[ 'filterBy.sendingTime' ][ 1 ] )
         : undefined,
@@ -306,6 +362,8 @@ export class NewsletterService {
         description: query[ 'orderBy.description' ],
         emailSubject: query[ 'orderBy.emailSubject' ],
         sendingTime: query[ 'orderBy.sendingTime' ],
+        sendToSubscribers: query[ 'orderBy.sendToSubscribers' ],
+        sendToUsers: query[ 'orderBy.sendToUsers' ],
         createdAt: query[ 'orderBy.createdAt' ],
         updatedAt: query[ 'orderBy.updatedAt' ]
       },
@@ -349,6 +407,13 @@ export class NewsletterService {
     await this.cacheManager.reset();
 
     if ( updateCampaignDto.sendingTime !== campaign.sendingTime ) {
+      const delayedJobs = await this.campaignQueue.getDelayed();
+      const jobsToDelete = delayedJobs.filter( j => j.data.id === campaign.id );
+      if ( jobsToDelete && jobsToDelete.length > 0 ) {
+        const deletePromises = jobsToDelete.map( j => j.remove() );
+        await Promise.all( deletePromises );
+      }
+
       this.campaignQueue.add(
         NewsletterJobs.CAMPAIGN,
         {
@@ -372,13 +437,54 @@ export class NewsletterService {
   // Soft remove a campaign
   async softRemoveCampaign ( id: string, i18n: I18nContext ): Promise<NewsletterCampaign> {
     const campaign = await this.findOneCampaign( id, i18n );
+
+    const delayedJobs = await this.campaignQueue.getDelayed();
+    const jobsToDelete = delayedJobs.filter( j => j.data.id === campaign.id );
+    if ( jobsToDelete && jobsToDelete.length > 0 ) {
+      const deletePromises = jobsToDelete.map( j => j.remove() );
+      await Promise.all( deletePromises );
+    }
+
     const result = await this.campaignRepo.softRemove( campaign );
     await this.cacheManager.reset();
 
     return result;
   }
 
-  // Recover a soft-removed campaign
+  async softRemoveAllCampaigns ( ids: string[] ): Promise<NewsletterCampaign[]> {
+    const campaigns = await this.campaignRepo.find( { where: { id: In( ids ) } } );
+
+    const deleteJobsPromises = campaigns.map( async c => {
+      const delayedJobs = await this.campaignQueue.getDelayed();
+      const jobsToDelete = delayedJobs.filter( j => j.data.id === c.id );
+      if ( jobsToDelete && jobsToDelete.length > 0 ) {
+        const deletePromises = jobsToDelete.map( j => j.remove() );
+        await Promise.all( deletePromises );
+      }
+    } );
+
+    await Promise.all( deleteJobsPromises );
+
+    const result = await this.campaignRepo.softRemove( campaigns );
+    await this.cacheManager.reset();
+    return result;
+  }
+
+  async softRemovedCampaignsFindAll ( query: PaginationDto ): Promise<IListResultGenerator<NewsletterCampaign>> {
+    const { page, limit } = query;
+    const { skip, take } = FilterPaginationUtil.takeSkipGenerator( limit, page );
+
+    const [ items, totalItems ] = await this.campaignRepo.findAndCount( {
+      withDeleted: true,
+      where: { deletedAt: Not( IsNull() ) },
+      order: { deletedAt: { direction: 'DESC' } },
+      take,
+      skip
+    } );
+
+    return FilterPaginationUtil.resultGenerator( items, totalItems, limit, page );
+  }
+
   async recoverCampaign ( id: string, i18n: I18nContext ): Promise<NewsletterCampaign> {
     const campaign = await this.findOneCampaign( id, i18n, true );
     const result = await this.campaignRepo.recover( campaign );
@@ -390,10 +496,59 @@ export class NewsletterService {
   // Remove a campaign permanently
   async removeCampaign ( id: string, i18n: I18nContext ): Promise<NewsletterCampaign> {
     const campaign = await this.findOneCampaign( id, i18n, true );
+
+    const delayedJobs = await this.campaignQueue.getDelayed();
+    const jobsToDelete = delayedJobs.filter( j => j.data.id === campaign.id );
+    if ( jobsToDelete && jobsToDelete.length > 0 ) {
+      const deletePromises = jobsToDelete.map( j => j.remove() );
+      await Promise.all( deletePromises );
+    }
+
     const result = await this.campaignRepo.remove( campaign );
     await this.cacheManager.reset();
 
     return result;
+  }
+
+  async removeCampaignsAll ( ids: string[] ): Promise<NewsletterCampaign[]> {
+    const campaigns = await this.campaignRepo.find( { where: { id: In( ids ) }, withDeleted: true } );
+
+    const deleteJobsPromises = campaigns.map( async c => {
+      const delayedJobs = await this.campaignQueue.getDelayed();
+      const jobsToDelete = delayedJobs.filter( j => j.data.id === c.id );
+      if ( jobsToDelete && jobsToDelete.length > 0 ) {
+        const deletePromises = jobsToDelete.map( j => j.remove() );
+        await Promise.all( deletePromises );
+      }
+    } );
+
+    await Promise.all( deleteJobsPromises );
+
+    const result = await this.campaignRepo.remove( campaigns );
+    await this.cacheManager.reset();
+
+    return result;
+  }
+
+  async emptyCampaignsTrash (): Promise<void> {
+    const softDeletedCampaigns = await this.campaignRepo.find( {
+      withDeleted: true,
+      where: { deletedAt: Not( IsNull() ) },
+    } );
+
+    const deleteJobsPromises = softDeletedCampaigns.map( async c => {
+      const delayedJobs = await this.campaignQueue.getDelayed();
+      const jobsToDelete = delayedJobs.filter( j => j.data.id === c.id );
+      if ( jobsToDelete && jobsToDelete.length > 0 ) {
+        const deletePromises = jobsToDelete.map( j => j.remove() );
+        await Promise.all( deletePromises );
+      }
+    } );
+
+    await Promise.all( deleteJobsPromises );
+
+    await this.campaignRepo.remove( softDeletedCampaigns );
+    await this.cacheManager.reset();
   }
 
   // Find all campaign delayed jobs
@@ -418,6 +573,42 @@ export class NewsletterService {
     if ( !job ) throw new NotFoundLocalizedException( i18n, NewsletterInfoLocale.TERM_CAMPAIGN_JOB );
     await job.remove();
     return job;
+  }
+
+  // Upload Image for Email Template
+  async uploadImg ( img: Express.Multer.File, i18n: I18nContext, metadata: IMetadataDecorator ): Promise<File> {
+    const rawFileName = path.parse( img.originalname ).name;
+    const fileExt = path.parse( img.originalname ).ext;
+
+    const rootFolderName = "public";
+    // Sanitizing 
+    const sanitizedFileName = sanitize.addUnderscore( rawFileName );
+    // Compute full filename
+    const fullFileName = `${ rootFolderName }/GENERAL/${ sanitizedFileName }_${ Date.now() }${ fileExt }`;
+    await this.s3.upload( {
+      Bucket: this.configService.getOrThrow( EnvEnum.S3_BUCKET ),
+      Key: fullFileName,
+      Body: img.buffer,
+      ContentType: img.mimetype,
+      ACL: "public-read",
+    } ).promise();
+
+    const file = await this.filesService.create(
+      {
+        filename: img.originalname,
+        key: fullFileName,
+        policy: FilePolicyEnum.PUBLIC_READ,
+        section: FileSectionEnum.GENERAL,
+        size: img.size, type:
+          img.mimetype,
+        imageAlt: 'Email Photo'
+      },
+      i18n,
+      metadata,
+      false
+    );
+
+    return file;
   }
 
   /********************************************************************************************/

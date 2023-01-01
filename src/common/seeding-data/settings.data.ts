@@ -42,9 +42,15 @@ export const settingsData = ( configService: ConfigService ) => [
     userAgent: "SYSTEM"
   },
   {
-    key: SettingsKeyEnum.CONTACT_AUTO_RESPONSE_EMAIL_SUBJECT,
+    key: SettingsKeyEnum.SITE_EXTRA_EMAILS,
+    value: "extra1@example.com,extra2@example.com,extra3@example.com",
+    service: SettingsServiceEnum.GENERAL,
+    userAgent: "SYSTEM"
+  },
+  {
+    key: SettingsKeyEnum.SITE_CONTACT_AUTO_RESPONSE_EMAIL_SUBJECT,
     value: "We Received Your Message",
-    service: SettingsServiceEnum.CONTACT,
+    service: SettingsServiceEnum.GENERAL,
     userAgent: "SYSTEM"
   },
   {
@@ -206,7 +212,7 @@ export const settingsData = ( configService: ConfigService ) => [
   },
   {
     key: SettingsKeyEnum.NEWSLETTER_CAN_SPAM,
-    value: "You have received this email because you have subscribed to <a href='{{homepage}}'>{{company}}</a> as {{email}}. If you no longer wish to receive emails please {{unsub}}.",
+    value: "You have received this email because you have subscribed to <a href='{{home_page}}'>{{company}}</a> as {{email}}. If you no longer wish to receive emails please {{unsub}}.",
     service: SettingsServiceEnum.NEWSLETTER,
     userAgent: "SYSTEM"
   },
@@ -223,12 +229,6 @@ export const settingsData = ( configService: ConfigService ) => [
     userAgent: "SYSTEM"
   },
   {
-    key: SettingsKeyEnum.NEWSLETTER_COMPANY_LOGO_LINK,
-    value: "www.example.com/logo-link",
-    service: SettingsServiceEnum.NEWSLETTER,
-    userAgent: "SYSTEM"
-  },
-  {
     key: SettingsKeyEnum.NEWSLETTER_COPYRIGHT,
     value: "All rights reserved, {{company}} {{year}}©",
     service: SettingsServiceEnum.NEWSLETTER,
@@ -237,6 +237,18 @@ export const settingsData = ( configService: ConfigService ) => [
   {
     key: SettingsKeyEnum.NEWSLETTER_HOMEPAGE,
     value: "http://www.example.com",
+    service: SettingsServiceEnum.NEWSLETTER,
+    userAgent: "SYSTEM"
+  },
+  {
+    key: SettingsKeyEnum.NEWSLETTER_UNSUB_PAGE,
+    value: "http://www.example.com",
+    service: SettingsServiceEnum.NEWSLETTER,
+    userAgent: "SYSTEM"
+  },
+  {
+    key: SettingsKeyEnum.NEWSLETTER_UNSUB_PAGE_LABEL,
+    value: "Unsubscribe",
     service: SettingsServiceEnum.NEWSLETTER,
     userAgent: "SYSTEM"
   },

@@ -26,9 +26,9 @@ export enum PostTypeEnum {
   NEWS = "NEWS",
   BANNER = "BANNER",
   EMAIL_TEMPLATE = "EMAIL_TEMPLATE",
-  NEWSLETTER_HEADER_TEMPLATE = "NEWSLETTER_HEADER_TEMPLATE",
-  NEWSLETTER_BODY_TEMPLATE = "NEWSLETTER_BODY_TEMPLATE",
-  NEWSLETTER_FOOTER_TEMPLATE = "NEWSLETTER_FOOTER_TEMPLATE",
+  NEWSLETTER_TEMPLATE = "NEWSLETTER_TEMPLATE",
+  AUTH_EMAIL_TEMPLATE = "AUTH_EMAIL_TEMPLATE",
+  CONTACT_EMAIL_TEMPLATE = "CONTACT_EMAIL_TEMPLATE",
 }
 
 @Entity()
@@ -44,6 +44,9 @@ export class Post extends BaseEntity {
 
   @Column( { nullable: true } )
   content: string | null;
+
+  @Column( { nullable: true } )
+  templateDesign: string | null;
 
   @Column()
   @Index( 'post-slug-idx' )

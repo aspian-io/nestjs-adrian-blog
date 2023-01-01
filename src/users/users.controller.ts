@@ -345,7 +345,7 @@ export class UsersController {
     @UploadedFile( new ParseFilePipe( {
       validators: [
         new MaxFileSizeValidator( { maxSize: 1024 * 100 } ),
-        new FileTypeValidator( { fileType: 'jpeg' } )
+        new FileTypeValidator( { fileType: /(.jpeg|.png)/ } )
       ]
     } ) ) avatar: Express.Multer.File,
     @I18n() i18n: I18nContext,
@@ -501,7 +501,7 @@ export class UsersController {
       validators: [
         new AvatarEmptyValidator(),
         new MaxFileSizeValidator( { maxSize: 1024 * 100 } ),
-        new FileTypeValidator( { fileType: 'jpeg' } )
+        new FileTypeValidator( { fileType: /(.jpeg|.png)/ } )
       ]
     } ) ) avatar: Express.Multer.File,
     @Param( 'id' ) id: string,

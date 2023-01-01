@@ -42,13 +42,13 @@ export class FilesService {
   ) { }
 
   // Create new record of uploaded file information in database
-  async create ( createFileDto: CreateFileDto, i18n: I18nContext, metadata: IMetadataDecorator ) {
+  async create ( createFileDto: CreateFileDto, i18n: I18nContext, metadata: IMetadataDecorator, resizeImg: boolean = true ) {
     const duplicate = await this.fileRepository.findOne( { where: { key: createFileDto.key } } );
     if ( duplicate ) {
       throw new BadRequestException( i18n.t( FilesErrorsLocale.DUPLICATE_FILE ) );
     }
 
-    let status = this.isFileTypeAllowed( createFileDto.type, [ 'image/*' ] ) && !createFileDto.type.includes( 'svg' )
+    let status = this.isFileTypeAllowed( createFileDto.type, [ 'image/*' ] ) && !createFileDto.type.includes( 'svg' ) && resizeImg
       ? FileStatus.IN_PROGRESS
       : FileStatus.READY;
 
@@ -75,6 +75,7 @@ export class FilesService {
       && savedFile.section !== FileSectionEnum.BRAND_LOGO
       && this.isFileTypeAllowed( savedFile.type, [ 'image/*' ] )
       && !savedFile.type.includes( 'svg' )
+      && resizeImg
     ) {
       await this.imageResizerQueue.add( FileJobs.IMAGE_RESIZER, { imageId: savedFile.id } );
     }

@@ -599,6 +599,13 @@ export class PostsService {
   async softRemove ( id: string, i18n: I18nContext ) {
     const post = await this.findOne( id, i18n, true );
 
+    const delayedJobs = await this.scheduledPostQueue.getDelayed();
+    const jobsToDelete = delayedJobs.filter( j => j.data.id === post.id );
+    if ( jobsToDelete && jobsToDelete.length > 0 ) {
+      const deletePromises = jobsToDelete.map( j => j.remove() );
+      await Promise.all( deletePromises );
+    }
+
     const result = await this.postRepository.softRemove( post );
     await this.cacheManager.reset();
 
@@ -608,6 +615,19 @@ export class PostsService {
   // Soft remove posts
   async softRemoveAll ( ids: string[] ): Promise<Post[]> {
     const posts = await this.postRepository.find( { where: { id: In( ids ) } } );
+
+    const deleteJobsPromises = posts.map( async p => {
+      if ( p.status === PostStatusEnum.FUTURE ) {
+        const delayedJobs = await this.scheduledPostQueue.getDelayed();
+        const jobsToDelete = delayedJobs.filter( j => j.data.id === p.id );
+        if ( jobsToDelete && jobsToDelete.length > 0 ) {
+          const deletePromises = jobsToDelete.map( j => j.remove() );
+          await Promise.all( deletePromises );
+        }
+      }
+    } );
+
+    await Promise.all( deleteJobsPromises );
 
     const result = await this.postRepository.softRemove( posts );
     await this.cacheManager.reset();
@@ -667,6 +687,19 @@ export class PostsService {
   async removeAll ( ids: string[] ): Promise<Post[]> {
     const posts = await this.postRepository.find( { where: { id: In( ids ) }, withDeleted: true } );
 
+    const deleteJobsPromises = posts.map( async p => {
+      if ( p.status === PostStatusEnum.FUTURE ) {
+        const delayedJobs = await this.scheduledPostQueue.getDelayed();
+        const jobsToDelete = delayedJobs.filter( j => j.data.id === p.id );
+        if ( jobsToDelete && jobsToDelete.length > 0 ) {
+          const deletePromises = jobsToDelete.map( j => j.remove() );
+          await Promise.all( deletePromises );
+        }
+      }
+    } );
+
+    await Promise.all( deleteJobsPromises );
+
     const result = await this.postRepository.remove( posts );
     await this.cacheManager.reset();
 
@@ -679,6 +712,19 @@ export class PostsService {
       where: { deletedAt: Not( IsNull() ), type },
       withDeleted: true
     } );
+
+    const deleteJobsPromises = softDeletedPosts.map( async p => {
+      if ( p.status === PostStatusEnum.FUTURE ) {
+        const delayedJobs = await this.scheduledPostQueue.getDelayed();
+        const jobsToDelete = delayedJobs.filter( j => j.data.id === p.id );
+        if ( jobsToDelete && jobsToDelete.length > 0 ) {
+          const deletePromises = jobsToDelete.map( j => j.remove() );
+          await Promise.all( deletePromises );
+        }
+      }
+    } );
+
+    await Promise.all( deleteJobsPromises );
 
     await this.postRepository.remove( softDeletedPosts );
     await this.cacheManager.reset();

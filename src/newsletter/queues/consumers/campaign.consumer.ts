@@ -11,6 +11,8 @@ import { NewsletterJobs } from "../jobs.enum";
 import { NewsletterQueues } from "../queues.enum";
 import * as Handlebars from 'handlebars';
 import { UsersService } from "src/users/users.service";
+import { CACHE_MANAGER, Inject } from "@nestjs/common";
+import { Cache } from "cache-manager";
 
 export interface ICampaignPayload {
   id: string;
@@ -27,21 +29,29 @@ export class CampaignJobsConsumer {
   constructor (
     @InjectRepository( NewsletterCampaign ) private readonly campaignRepo: Repository<NewsletterCampaign>,
     @InjectRepository( NewsletterSubscriber ) private readonly subscriberRepo: Repository<NewsletterSubscriber>,
+    @Inject( CACHE_MANAGER ) private readonly cacheManager: Cache,
     private readonly usersService: UsersService,
     private readonly settingsService: SettingsService,
     private readonly mailerService: MailerService
   ) { }
   @Process( NewsletterJobs.CAMPAIGN )
   async processCampaign ( job: Job<ICampaignPayload> ) {
+    const campaign = await this.campaignRepo.findOne( { where: { id: job.data.id } } );
+
     try {
       const compiledTemplate = Handlebars.compile( job.data.content );
       const canSpam = ( await this.settingsService.findOne( SettingsKeyEnum.NEWSLETTER_CAN_SPAM ) )?.value;
+      const unsubPage = ( await this.settingsService.findOne( SettingsKeyEnum.NEWSLETTER_UNSUB_PAGE ) )?.value ?? '#';
+      const unsubLabel = ( await this.settingsService.findOne( SettingsKeyEnum.NEWSLETTER_UNSUB_PAGE_LABEL ) )?.value ?? 'Unsubscribe';
       const company = ( await this.settingsService.findOne( SettingsKeyEnum.NEWSLETTER_COMPANY ) )?.value;
-      const companyLogo = ( await this.settingsService.findOne( SettingsKeyEnum.NEWSLETTER_COMPANY_LOGO_LINK ) )?.value;
+      const websiteName = ( await this.settingsService.findOne( SettingsKeyEnum.SITE_NAME ) ).value;
+      const websiteUrl = ( await this.settingsService.findOne( SettingsKeyEnum.SITE_URL ) ).value;
       const copyright = ( await this.settingsService.findOne( SettingsKeyEnum.NEWSLETTER_COPYRIGHT ) )?.value;
-      const homePage = ( await this.settingsService.findOne( SettingsKeyEnum.NEWSLETTER_HOMEPAGE ) )?.value;
       const address = ( await this.settingsService.findOne( SettingsKeyEnum.NEWSLETTER_ADDRESS ) )?.value;
       const from = ( await this.settingsService.findOne( SettingsKeyEnum.NEWSLETTER_SENDING_FROM ) )?.value;
+
+      const unsub = `<a href=${ unsubPage }>${ unsubLabel }</a>`;
+
       if ( job.data.sendToSubscribers ) {
         const subscribers = await this.subscriberRepo.find();
         subscribers.map( async s => {
@@ -51,10 +61,12 @@ export class CampaignJobsConsumer {
             email: s.email,
             can_spam: canSpam,
             company,
-            company_logo: companyLogo,
             copyright,
-            home_page: homePage,
+            websiteName,
+            websiteUrl,
             address,
+            unsub,
+            year: new Date().getFullYear()
           } );
 
           try {
@@ -83,10 +95,12 @@ export class CampaignJobsConsumer {
             email: u.email,
             can_spam: canSpam,
             company,
-            company_logo: companyLogo,
             copyright,
-            home_page: homePage,
+            websiteName,
+            websiteUrl,
             address,
+            unsub,
+            year: new Date().getFullYear()
           } );
 
           try {
@@ -104,6 +118,12 @@ export class CampaignJobsConsumer {
             }
           }
         } );
+      }
+
+      if ( campaign ) {
+        campaign.beenSent = true;
+        await this.campaignRepo.save( campaign );
+        await this.cacheManager.reset();
       }
 
     } catch ( error ) {
