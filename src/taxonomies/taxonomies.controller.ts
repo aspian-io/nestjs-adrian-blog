@@ -102,11 +102,11 @@ export class TaxonomiesController {
     return this.taxonomiesService.findAll( query, TaxonomyTypeEnum.MENU );
   }
 
-  @Get( 'admin/taxonomies/menu-items' )
+  @Get( 'admin/taxonomies/menu-items/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_READ )
-  adminFindAllMenuItems ( @Query() query: TaxonomiesListQueryDto ): Promise<IListResultGenerator<Taxonomy>> {
-    return this.taxonomiesService.findAll( query, TaxonomyTypeEnum.MENU_ITEM );
+  adminFindAllMenuItems ( @Param( 'id' ) id: string ): Promise<Taxonomy[]> {
+    return this.taxonomiesService.findAllMenuItems( id );
   }
 
   @Get( 'admin/taxonomies/:id' )
@@ -194,21 +194,21 @@ export class TaxonomiesController {
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
   adminEmptyCategoriesTrash (): Promise<void> {
-    return this.taxonomiesService.emptyTrash(TaxonomyTypeEnum.CATEGORY);
+    return this.taxonomiesService.emptyTrash( TaxonomyTypeEnum.CATEGORY );
   }
 
   @Delete( 'admin/taxonomies/empty-tags-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
   adminEmptyTagsTrash (): Promise<void> {
-    return this.taxonomiesService.emptyTrash(TaxonomyTypeEnum.TAG);
+    return this.taxonomiesService.emptyTrash( TaxonomyTypeEnum.TAG );
   }
 
   @Delete( 'admin/taxonomies/empty-menus-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
   adminEmptyMenusTrash (): Promise<void> {
-    return this.taxonomiesService.emptyTrash(TaxonomyTypeEnum.MENU);
+    return this.taxonomiesService.emptyTrash( TaxonomyTypeEnum.MENU );
   }
 
   @Delete( 'admin/taxonomies/slug-history/:id' )

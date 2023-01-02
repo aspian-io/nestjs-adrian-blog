@@ -108,6 +108,38 @@ export class TaxonomiesService {
     return FilterPaginationUtil.resultGenerator( items, totalItems, limit, page );
   }
 
+  // Find all menu items
+  findAllMenuItems ( menuId: string ): Promise<Taxonomy[]> {
+    return this.taxonomyRepository.find( {
+      relations: {
+        parent: true,
+        // Based on allowed subitems number (5 children)
+        children: {
+          children: {
+            children: {
+              children: {
+                children: true
+              }
+            }
+          }
+        },
+        slugsHistory: true
+      },
+      where: {
+        parent: { id: menuId },
+        type: TaxonomyTypeEnum.MENU_ITEM
+      },
+      order: {
+        order: { direction: 'ASC' },
+        children: {
+          order: {
+            direction: 'ASC',
+          }
+        }
+      },
+    } );
+  }
+
   // Find a taxonomy
   async findOne ( id: string, i18n: I18nContext, withDeleted: boolean = false ): Promise<Taxonomy> {
     const taxonomy = await this.taxonomyRepository.findOne( {
@@ -338,7 +370,7 @@ export class TaxonomiesService {
   }
 
   // Empty trash
-  async emptyTrash (type: TaxonomyTypeEnum): Promise<void> {
+  async emptyTrash ( type: TaxonomyTypeEnum ): Promise<void> {
     const softDeletedTaxonomies = await this.taxonomyRepository.find( {
       where: { deletedAt: Not( IsNull() ), type },
       withDeleted: true

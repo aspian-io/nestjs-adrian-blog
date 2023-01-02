@@ -4,5 +4,6 @@ export enum SettingsServiceEnum {
   COMMENTS = "COMMENTS",
   SMS = "SMS",
   NEWSLETTER = "NEWSLETTER",
-  GENERAL = "GENERAL"
+  MENU = "MENU",
+  GENERAL = "GENERAL",
 }
