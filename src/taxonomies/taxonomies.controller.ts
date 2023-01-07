@@ -16,10 +16,15 @@ import { TaxonomyDto } from './dto/taxonomy.dto';
 import { Response } from 'express';
 import { TaxonomySlugsHistory } from './entities/taxonomy-slug.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { SettingsService } from 'src/settings/settings.service';
+import { SettingsKeyEnum } from 'src/settings/types/settings-key.enum';
 
 @Controller()
 export class TaxonomiesController {
-  constructor ( private readonly taxonomiesService: TaxonomiesService ) { }
+  constructor (
+    private readonly taxonomiesService: TaxonomiesService,
+    private readonly settingsService: SettingsService
+  ) { }
 
   /********************** User Region ***************************/
 
@@ -66,6 +71,22 @@ export class TaxonomiesController {
       return result.taxonomy;
     }
     return result.taxonomy;
+  }
+
+  @Get( 'taxonomies/menus/primary-menu' )
+  @Serialize( TaxonomyDto )
+  async primaryMenu (): Promise<Taxonomy[]> {
+    const primaryMenu = await this.settingsService.findOneOrNull( SettingsKeyEnum.MENU_PRIMARY );
+    if ( !primaryMenu ) return [];
+    return this.taxonomiesService.findAllMenuItems( primaryMenu.value );
+  }
+
+  @Get( 'taxonomies/menus/secondary-menu' )
+  @Serialize( TaxonomyDto )
+  async secondaryMenu (): Promise<Taxonomy[]> {
+    const secondaryMenu = await this.settingsService.findOneOrNull( SettingsKeyEnum.MENU_SECONDARY );
+    if ( !secondaryMenu ) return [];
+    return this.taxonomiesService.findAllMenuItems( secondaryMenu.value );
   }
 
 
