@@ -1,5 +1,4 @@
 import { Expose, Type } from "class-transformer";
-import { FileDto } from "src/files/dto/file.dto";
 
 export class TaxonomyDto {
   @Expose()

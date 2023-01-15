@@ -12,10 +12,18 @@ import { FilesListQueryDto } from './dto/files-list-query.dto';
 import { BulkDeleteRecoverDto } from './dto/bulk-delete-recover.dto';
 import { IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
 import { File } from './entities/file.entity';
+import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { LogoFileDto } from './dto/logo-file.dto';
 
 @Controller()
 export class FilesController {
   constructor ( private readonly filesService: FilesService ) { }
+
+  @Get( 'files/get-site-logos' )
+  @Serialize( LogoFileDto )
+  getSiteLogo (): Promise<LogoFileDto[]> {
+    return this.filesService.getSiteLogos();
+  }
 
   @Post( 'admin/files' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
@@ -90,7 +98,7 @@ export class FilesController {
   @Post( 'admin/files/config-cors' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN )
-  @HttpCode(HttpStatus.OK)
+  @HttpCode( HttpStatus.OK )
   async adminConfigCORS () {
     return this.filesService.configS3CORS();
   }

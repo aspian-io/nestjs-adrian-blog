@@ -142,6 +142,40 @@ export class FilesService {
     return file;
   }
 
+  // Get site logo
+  async getSiteLogos () {
+    const logoIdSetting = await this.settingsService.findOneOrNull( SettingsKeyEnum.SITE_LOGO_ID );
+    if ( !logoIdSetting ) return null;
+
+    const overlayLogoIdSetting = await this.settingsService.findOneOrNull( SettingsKeyEnum.SITE_OVERLAY_LOGO_ID );
+    if ( !overlayLogoIdSetting ) return null;
+
+    const siteLogo = await this.fileRepository.findOne( { where: { id: logoIdSetting.value } } );
+    if ( !siteLogo ) return null;
+
+    const siteOverlayLogo = await this.fileRepository.findOne( { where: { id: overlayLogoIdSetting.value } } );
+
+    if ( siteLogo && siteOverlayLogo ) {
+      return [
+        {
+          type: SettingsKeyEnum.SITE_LOGO_ID,
+          file: siteLogo
+        },
+        {
+          type: SettingsKeyEnum.SITE_OVERLAY_LOGO_ID,
+          file: siteOverlayLogo
+        }
+      ];
+    }
+
+    return [
+      {
+        type: SettingsKeyEnum.SITE_LOGO_ID,
+        file: siteLogo
+      }
+    ];
+  }
+
   // Update uploaded file info and ACL
   async update ( id: string, updateFileDto: UpdateFileDto, i18n: I18nContext ) {
     const file = await this.fileRepository.findOne( {
@@ -448,7 +482,7 @@ export class FilesService {
 
       // Make watermark fit and usable by resizing it if needed
       const finalWatermark = watermarkWidth > ( sharpImgWidth * watermarkToImageRatio )
-        ? await watermarkImg.resize( Math.ceil(sharpImgWidth * watermarkToImageRatio) ).toBuffer()
+        ? await watermarkImg.resize( Math.ceil( sharpImgWidth * watermarkToImageRatio ) ).toBuffer()
         : await watermarkImg.toBuffer();
 
       const finalWatermarkMeta = await sharp( finalWatermark ).metadata();
