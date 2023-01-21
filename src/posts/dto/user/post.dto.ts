@@ -37,6 +37,10 @@ export class PostDto {
 
   @Expose()
   @Type( () => PostDto )
+  ancestor: PostDto;
+
+  @Expose()
+  @Type( () => PostDto )
   child: PostDto;
 
   @Expose()

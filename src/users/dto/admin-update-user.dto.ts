@@ -15,6 +15,10 @@ export class AdminUpdateUserDto extends PartialType( CreateUserDto ) {
   @IsOptional()
   isActivated?: boolean;
 
+  @IsBoolean( { message: CommonErrorsLocale.VALIDATOR_IS_BOOLEAN } )
+  @IsOptional()
+  organizationMember?: boolean;
+
   @IsDate( { message: CommonErrorsLocale.VALIDATOR_IS_DATE } )
   @Type( () => Date )
   @IsOptional()

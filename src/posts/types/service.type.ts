@@ -1,5 +1,5 @@
 import { JobId } from "bull";
-import { Post, PostTypeEnum } from "../entities/post.entity";
+import { Post, PostTypeEnum, WidgetTypeEnum } from "../entities/post.entity";
 
 // Find By Slug Return Type
 export interface IPostReturnFindBySlug {
@@ -23,7 +23,7 @@ export interface PostsDelayedJobs {
   jobId: JobId;
   title: string;
   slug: string;
-  type: PostTypeEnum;
+  type: PostTypeEnum | WidgetTypeEnum;
   scheduledToPublish: Date;
   scheduledToArchive: Date;
 }

@@ -498,7 +498,8 @@ export class UsersService {
     // Get the result from database
     const [ items, totalItems ] = await this.userRepository.findAndCount( {
       relations: {
-        claims: true
+        claims: true,
+        projects: true
       },
       where: {
         email: query[ 'searchBy.email' ],
@@ -536,6 +537,7 @@ export class UsersService {
         createdAt: query[ 'orderBy.createdAt' ],
         updatedAt: query[ 'orderBy.updatedAt' ],
         suspend: query[ 'orderBy.suspend' ],
+        organizationMember: query[ 'orderBy.organizationMember' ],
         ipAddress: query[ 'orderBy.ipAddress' ],
         userAgent: query[ 'orderBy.userAgent' ],
         firstName: query[ 'orderBy.firstName' ],
@@ -551,7 +553,7 @@ export class UsersService {
 
   // Find one user
   async findOne ( id: string, i18n: I18nContext ): Promise<User> {
-    const user = await this.userRepository.findOne( { where: { id }, relations: { claims: true } } );
+    const user = await this.userRepository.findOne( { where: { id }, relations: { claims: true, projects: true } } );
     if ( !user ) throw new NotFoundLocalizedException( i18n, UsersInfoLocale.TERM_USER );
     return user;
   }

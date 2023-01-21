@@ -154,6 +154,7 @@ export class CommentsService {
         title: query[ 'orderBy.title' ],
         content: query[ 'orderBy.content' ],
         isApproved: query[ 'orderBy.isApproved' ],
+        isSpecial: query[ 'orderBy.isSpecial' ],
         likesNum: query[ 'orderBy.likesNum' ],
         dislikesNum: query[ 'orderBy.dislikesNum' ],
         seen: query[ 'orderBy.seen' ],
@@ -274,6 +275,16 @@ export class CommentsService {
   async approve ( id: string, i18n: I18nContext ) {
     const comment = await this.findOne( id, i18n );
     comment.isApproved = true;
+
+    const result = await this.commentRepository.save( comment );
+    await this.cacheManager.reset();
+    return result;
+  }
+
+  // Set/Unset as special
+  async setUnsetSpecial ( id: string, i18n: I18nContext ) {
+    const comment = await this.findOne( id, i18n );
+    comment.isSpecial = !comment.isSpecial;
 
     const result = await this.commentRepository.save( comment );
     await this.cacheManager.reset();

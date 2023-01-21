@@ -2,7 +2,7 @@ import { Type } from "class-transformer";
 import { IsArray, IsBoolean, IsDate, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Matches, MaxLength } from "class-validator";
 import { i18nValidationMessage } from "nestjs-i18n";
 import { CommonErrorsLocale } from "src/i18n/locale-keys/common/errors.locale";
-import { PostStatusEnum, PostTypeEnum, PostVisibilityEnum } from "../entities/post.entity";
+import { PostStatusEnum, PostTypeEnum, PostVisibilityEnum, WidgetTypeEnum } from "../entities/post.entity";
 
 export class CreatePostDto {
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
@@ -57,9 +57,9 @@ export class CreatePostDto {
   @IsOptional()
   commentAllowed?: Boolean;
 
-  @IsIn( Object.values( PostTypeEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN ) } )
+  @IsIn( {...Object.values( PostTypeEnum ), ...Object.values( WidgetTypeEnum )}, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN ) } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
-  type: PostTypeEnum;
+  type: PostTypeEnum | WidgetTypeEnum;
 
   @IsBoolean( { message: CommonErrorsLocale.VALIDATOR_IS_BOOLEAN } )
   @IsOptional()
@@ -72,6 +72,10 @@ export class CreatePostDto {
   @IsUUID( 'all', { message: CommonErrorsLocale.VALIDATOR_IS_UUID } )
   @IsOptional()
   parentId?: string;
+
+  @IsUUID( 'all', { message: CommonErrorsLocale.VALIDATOR_IS_UUID } )
+  @IsOptional()
+  projectOwnerId?: string;
 
   @IsArray( { message: CommonErrorsLocale.VALIDATOR_IS_ARRAY } )
   @IsOptional()

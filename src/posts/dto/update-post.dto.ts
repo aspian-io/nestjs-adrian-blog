@@ -40,6 +40,10 @@ export class UpdatePostDto {
   @IsOptional()
   parentId?: string;
 
+  @IsUUID( 'all', { message: CommonErrorsLocale.VALIDATOR_IS_UUID } )
+  @IsOptional()
+  projectOwnerId?: string;
+
   @IsArray( { message: CommonErrorsLocale.VALIDATOR_IS_ARRAY } )
   @IsOptional()
   taxonomiesIds?: string[];

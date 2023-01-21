@@ -20,10 +20,20 @@ export enum PostStatusEnum {
   ARCHIVE = "ARCHIVE"
 }
 
+export enum WidgetTypeEnum {
+  // TEMPLATE BASED POST TYPE
+  HERO_WIDGET = "HERO_WIDGET",
+  SERVICE_WIDGET = "SERVICE_WIDGET",
+  CONTACT_WIDGET = "CONTACT_WIDGET",
+  LINKS_WIDGET = "LINKS_WIDGET",
+  NEWSLETTER_WIDGET = "NEWSLETTER_WIDGET"
+}
+
 export enum PostTypeEnum {
   BLOG = "BLOG",
   PAGE = "PAGE",
   NEWS = "NEWS",
+  PROJECT = "PROJECT",
   BANNER = "BANNER",
   EMAIL_TEMPLATE = "EMAIL_TEMPLATE",
   NEWSLETTER_TEMPLATE = "NEWSLETTER_TEMPLATE",
@@ -74,7 +84,7 @@ export class Post extends BaseEntity {
   viewCount?: number;
 
   @Column()
-  type: PostTypeEnum;
+  type: PostTypeEnum | WidgetTypeEnum;
 
   @Column( { default: false } )
   isPinned?: Boolean;
@@ -118,4 +128,7 @@ export class Post extends BaseEntity {
 
   @OneToMany( () => PostSlugsHistory, ( slug ) => slug.post, { cascade: true } )
   slugsHistory: PostSlugsHistory[];
+
+  @ManyToOne( () => User, ( user ) => user.projects, { onDelete: 'CASCADE' } )
+  projectOwner?: User;
 }

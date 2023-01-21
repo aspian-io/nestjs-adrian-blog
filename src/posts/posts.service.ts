@@ -21,7 +21,7 @@ import { UpdatePostDto } from './dto/update-post.dto';
 import { BookmarksListQueryDto } from './dto/user/bookmarks-list-query.dto';
 import { UserBlogsListDto } from './dto/user/user-blog-list.dto';
 import { PostSlugsHistory } from './entities/post-slug.entity';
-import { Post, PostStatusEnum, PostTypeEnum, PostVisibilityEnum } from './entities/post.entity';
+import { Post, PostStatusEnum, PostTypeEnum, PostVisibilityEnum, WidgetTypeEnum } from './entities/post.entity';
 import { IScheduledPostPayload } from './queues/consumers/scheduled-post.consumer';
 import { PostJobs } from './queues/jobs.enum';
 import { PostQueues } from './queues/queues.enum';
@@ -71,6 +71,7 @@ export class PostsService {
       featuredImage: { id: createPostDto?.featuredImageId },
       status: createPostDto?.parentId ? PostStatusEnum.INHERIT : postStatus,
       parent,
+      projectOwner: createPostDto?.projectOwnerId ? { id: createPostDto.projectOwnerId } : null,
       ancestor,
       taxonomies: [ ...new Set( createPostDto.taxonomiesIds ) ].map( tid => ( { id: tid } ) ),
       attachments: [ ...new Set( createPostDto.attachmentsIds ) ].map( aid => ( { id: aid } ) ),
@@ -91,6 +92,28 @@ export class PostsService {
     return result;
   }
 
+  // Find All Widgets by Type
+  findAllWidgetsByType ( type: WidgetTypeEnum ) {
+    return this.postRepository.find( {
+      relations: {
+        featuredImage: {
+          generatedImageChildren: true
+        },
+        attachments: true,
+        taxonomies: true,
+        parent: true,
+        child: true,
+        ancestor: true
+      },
+      where: {
+        type
+      },
+      order: {
+        createdAt: { direction: 'DESC' }
+      }
+    } );
+  }
+
   // Find and filter and paginate posts
   async findAll ( query: PostsQueryListDto & UserBlogsListDto, type: PostTypeEnum, admin: boolean = true ): Promise<IListResultGenerator<Post>> {
     const { page, limit } = query;
@@ -104,6 +127,9 @@ export class PostsService {
       content: query[ 'searchBy.content' ],
       parent: {
         title: query[ 'searchBy.parentTitle' ]
+      },
+      projectOwner: {
+        email: query[ 'searchBy.projectOwner' ]
       },
       slug: query[ 'searchBy.slug' ],
       taxonomies: [
@@ -275,7 +301,8 @@ export class PostsService {
         featuredImage: true,
         parent: true,
         child: true,
-        taxonomies: true
+        taxonomies: true,
+        projectOwner: true
       },
       where: admin ? where : notAdminWhere,
       order: admin ? order : notAdminOrder,
@@ -326,7 +353,8 @@ export class PostsService {
         child: true,
         createdBy: true,
         updatedBy: true,
-        slugsHistory: true
+        slugsHistory: true,
+        projectOwner: true
       },
       where: {
         id
@@ -353,7 +381,8 @@ export class PostsService {
         child: true,
         createdBy: true,
         updatedBy: true,
-        slugsHistory: true
+        slugsHistory: true,
+        projectOwner: true
       },
       where: {
         id
@@ -397,7 +426,8 @@ export class PostsService {
         parent: true,
         createdBy: true,
         updatedBy: true,
-        slugsHistory: true
+        slugsHistory: true,
+        projectOwner: true
       },
       where: admin ? where : notAdminWhere
     } );
@@ -487,6 +517,8 @@ export class PostsService {
     }
 
     Object.assign( post, updatePostDto );
+
+    if ( updatePostDto?.projectOwnerId ) post.projectOwner = { id: updatePostDto.projectOwnerId } as User;
 
     post.featuredImage = updatePostDto?.featuredImageId
       ? { id: updatePostDto.featuredImageId } as File

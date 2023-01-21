@@ -104,5 +104,15 @@ export class CreateUserDto {
   @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
   @IsOptional()
   pinterest?: string;
+
+  @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
+  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @IsOptional()
+  github?: string;
+
+  @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
+  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @IsOptional()
+  stackoverflow?: string;
 }
 

@@ -64,6 +64,10 @@ export class CommentQueryListDto {
 
   @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
   @IsOptional()
+  "orderBy.isSpecial"?: OrderType;
+
+  @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
+  @IsOptional()
   "orderBy.seen"?: OrderType;
 
   @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )

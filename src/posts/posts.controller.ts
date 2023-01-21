@@ -8,7 +8,7 @@ import { JwtAuthGuard } from 'src/users/guards/jwt.guard';
 import { PermissionsGuard } from 'src/users/guards/require-permissions.guard';
 import { RequirePermission } from 'src/users/decorators/require-permission.decorator';
 import { PermissionsEnum } from 'src/common/security/permissions.enum';
-import { Post as PostEntity, PostTypeEnum } from './entities/post.entity';
+import { Post as PostEntity, PostTypeEnum, WidgetTypeEnum } from './entities/post.entity';
 import { PostsQueryListDto } from './dto/post-query-list.dto';
 import { IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
 import { UserBlogsListDto } from './dto/user/user-blog-list.dto';
@@ -25,6 +25,12 @@ export class PostsController {
   ) { }
 
   /********************** User Region ***************************/
+
+  @Get( '/posts/widgets' )
+  @Serialize( PostDto )
+  widgetsList ( @Query( 'type' ) type: WidgetTypeEnum ) {
+    return this.postsService.findAllWidgetsByType( type );
+  }
 
   @Get( '/posts/blogs' )
   @Serialize( PostListDto )
@@ -113,6 +119,13 @@ export class PostsController {
     return this.postsService.create( createPostDto, i18n, metadata );
   }
 
+  @Get( 'admin/posts/widgets' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
+  adminFindAllWidgets ( @Query( 'type' ) type: WidgetTypeEnum ) {
+    return this.postsService.findAllWidgetsByType( type );
+  }
+
   @Get( 'admin/posts/blogs' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
@@ -153,6 +166,13 @@ export class PostsController {
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
   adminFindAllPages ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
     return this.postsService.findAll( query, PostTypeEnum.PAGE );
+  }
+
+  @Get( 'admin/posts/projects' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
+  adminFindAllProjects ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
+    return this.postsService.findAll( query, PostTypeEnum.PROJECT );
   }
 
   @Get( 'admin/posts/:id' )
@@ -237,6 +257,13 @@ export class PostsController {
     return this.postsService.softRemovedFindAll( query, PostTypeEnum.PAGE );
   }
 
+  @Get( 'admin/posts/soft-deleted/projects-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  softRemovedFindAllProjectsTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
+    return this.postsService.softRemovedFindAll( query, PostTypeEnum.PROJECT );
+  }
+
   @Patch( 'admin/posts/recover/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -306,6 +333,13 @@ export class PostsController {
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
   adminEmptyPagesTrash (): Promise<void> {
     return this.postsService.emptyTrash( PostTypeEnum.PAGE );
+  }
+
+  @Delete( 'admin/posts/empty-projects-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  adminEmptyProjectsTrash (): Promise<void> {
+    return this.postsService.emptyTrash( PostTypeEnum.PROJECT );
   }
 
   @Get( 'admin/posts/posts-jobs/delayed' )

@@ -31,6 +31,9 @@ export class Comment extends BaseMinimalEntity {
   @Column( { default: false } )
   seen?: boolean;
 
+  @Column( { default: false } )
+  isSpecial?: boolean;
+
   @ManyToOne( () => Comment, ( comment ) => comment.ancestorChildren, { onDelete: 'CASCADE' } )
   ancestor?: Comment;
 

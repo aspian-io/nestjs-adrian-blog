@@ -26,6 +26,9 @@ export class User extends BaseMinimalEntity {
   @Column( { default: false } )
   emailVerified: boolean;
 
+  @Column( { default: false } )
+  organizationMember: boolean;
+
   @Column( { nullable: true } )
   emailVerificationToken: number | null;
 
@@ -120,6 +123,12 @@ export class User extends BaseMinimalEntity {
   pinterest: string | null;
 
   @Column( { nullable: true } )
+  github: string | null;
+
+  @Column( { nullable: true } )
+  stackoverflow: string | null;
+
+  @Column( { nullable: true } )
   suspend: Date | null;
 
   @Column( { nullable: true } )
@@ -137,6 +146,9 @@ export class User extends BaseMinimalEntity {
     name: 'users_posts_bookmarks',
   } )
   bookmarks: Post[];
+
+  @OneToMany( () => Post, ( post ) => post.projectOwner, { cascade: true } )
+  projects: Post[];
 
   @RelationId( ( post: Post ) => post.bookmarks )
   bookmarkIds: string[];

@@ -109,6 +109,10 @@ export class UsersListQueryDto {
 
   @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
   @IsOptional()
+  "orderBy.organizationMember"?: OrderType;
+
+  @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
+  @IsOptional()
   "orderBy.ipAddress"?: OrderType;
 
   @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )

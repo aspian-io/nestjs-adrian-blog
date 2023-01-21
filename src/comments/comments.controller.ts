@@ -127,6 +127,15 @@ export class CommentsController {
 
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_EDIT )
+  @Patch( 'admin/comments/set-unset-special/:id' )
+  setUnsetSpecial (
+    @Param( 'id' ) id: string,
+    @I18n() i18n: I18nContext ): Promise<Comment> {
+    return this.commentsService.setUnsetSpecial( id, i18n );
+  }
+
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_EDIT )
   @Patch( 'admin/comments/reject/:id' )
   adminDisapprove (
     @Param( 'id' ) id: string,

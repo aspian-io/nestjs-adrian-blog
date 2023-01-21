@@ -20,6 +20,10 @@ export class PostsQueryListDto {
 
   @Transform( ( { value } ) => QueryStringUtil.extractSearchString( value ) )
   @IsOptional()
+  "searchBy.projectOwner"?: string;
+
+  @Transform( ( { value } ) => QueryStringUtil.extractSearchString( value ) )
+  @IsOptional()
   "searchBy.content"?: string;
 
   @Transform( ( { value } ) => QueryStringUtil.extractSearchString( value ) )
