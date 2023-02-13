@@ -19,7 +19,7 @@ async function bootstrap () {
   }
   // CORS Config
   app.enableCors( {
-    origin: "http://localhost:3000",
+    origin: [ "http://localhost:3000", "http://127.0.0.1:3000" ],
     credentials: true,
     allowedHeaders: [
       'Authorization',
@@ -28,7 +28,8 @@ async function bootstrap () {
       'Origin',
       'Content-Type',
       'Accept',
-      'uppy-auth-token'
+      'uppy-auth-token',
+      'recaptcha'
     ],
     exposedHeaders: [ "ETag" ],
     methods: [ 'get', 'post', 'put', 'PATCH', 'OPTIONS', 'delete', 'DELETE' ],

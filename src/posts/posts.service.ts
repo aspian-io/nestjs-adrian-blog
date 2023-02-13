@@ -133,7 +133,8 @@ export class PostsService {
       },
       slug: query[ 'searchBy.slug' ],
       taxonomies: [
-        query[ 'searchBy.category' ] && { type: TaxonomyTypeEnum.CATEGORY, term: query[ 'searchBy.category' ] },
+        query[ 'filterBy.category' ] && { type: TaxonomyTypeEnum.CATEGORY, term: query[ 'filterBy.category' ] },
+        query[ 'filterBy.projectCategory' ] && { type: TaxonomyTypeEnum.PROJECT_CATEGORY, term: query[ 'filterBy.projectCategory' ] },
         query[ 'searchBy.tag' ] && { type: TaxonomyTypeEnum.TAG, term: query[ 'searchBy.tag' ] },
       ],
       visibility: query[ 'filterBy.visibility' ],
@@ -184,7 +185,7 @@ export class PostsService {
     }
     // Add tag terms filter
     if ( query[ 'filterBy.tagTerms' ]?.length ) {
-      where.taxonomies[ 1 ] = {
+      where.taxonomies = {
         type: TaxonomyTypeEnum.TAG,
         term: In( query[ 'filterBy.tagTerms' ] )
       };
@@ -241,7 +242,9 @@ export class PostsService {
         ],
         taxonomies: [
           query[ 'filterBy.category' ] && { type: TaxonomyTypeEnum.CATEGORY, term: query[ 'filterBy.category' ] },
+          query[ 'filterBy.projectCategory' ] && { type: TaxonomyTypeEnum.PROJECT_CATEGORY, term: query[ 'filterBy.projectCategory' ] },
           query[ 'filterBy.tag' ] && { type: TaxonomyTypeEnum.TAG, term: query[ 'filterBy.tag' ] },
+          query[ 'filterBy.tagTerms' ] && query[ 'filterBy.tagTerms' ].length > 0 && { type: TaxonomyTypeEnum.TAG, term: In( query[ 'filterBy.tagTerms' ] ) }
         ]
       },
       {
@@ -259,7 +262,9 @@ export class PostsService {
         ],
         taxonomies: [
           query[ 'filterBy.category' ] && { type: TaxonomyTypeEnum.CATEGORY, term: query[ 'filterBy.category' ] },
+          query[ 'filterBy.projectCategory' ] && { type: TaxonomyTypeEnum.PROJECT_CATEGORY, term: query[ 'filterBy.projectCategory' ] },
           query[ 'filterBy.tag' ] && { type: TaxonomyTypeEnum.TAG, term: query[ 'filterBy.tag' ] },
+          query[ 'filterBy.tagTerms' ] && query[ 'filterBy.tagTerms' ].length > 0 && { type: TaxonomyTypeEnum.TAG, term: In( query[ 'filterBy.tagTerms' ] ) }
         ]
       },
       {
@@ -277,7 +282,9 @@ export class PostsService {
         ],
         taxonomies: [
           query[ 'filterBy.category' ] && { type: TaxonomyTypeEnum.CATEGORY, term: query[ 'filterBy.category' ] },
+          query[ 'filterBy.projectCategory' ] && { type: TaxonomyTypeEnum.PROJECT_CATEGORY, term: query[ 'filterBy.projectCategory' ] },
           query[ 'filterBy.tag' ] && { type: TaxonomyTypeEnum.TAG, term: query[ 'filterBy.tag' ] },
+          query[ 'filterBy.tagTerms' ] && query[ 'filterBy.tagTerms' ].length > 0 && { type: TaxonomyTypeEnum.TAG, term: In( query[ 'filterBy.tagTerms' ] ) }
         ]
       },
     ];
@@ -417,6 +424,9 @@ export class PostsService {
     ];
 
     const post = await this.postRepository.findOne( {
+      loadRelationIds: {
+        relations: [ 'likes', 'bookmarks' ]
+      },
       relations: {
         ancestor: true,
         featuredImage: { generatedImageChildren: true },
@@ -446,6 +456,9 @@ export class PostsService {
       };
 
       const postWithOldSlug = await this.postRepository.findOne( {
+        loadRelationIds: {
+          relations: [ 'likes', 'bookmarks' ]
+        },
         relations: {
           ancestor: true,
           featuredImage: { generatedImageChildren: true },
@@ -463,10 +476,17 @@ export class PostsService {
 
       return { post: postWithOldSlug, redirect: { status: 301 } };
     };
-    post.viewCount++;
-    await this.postRepository.save( post );
+    await this.viewCountPlusOne( post.id );
 
     return { post };
+  }
+
+  async viewCountPlusOne ( id: string ) {
+    const post = await this.findOneOrNull( id );
+    if ( post ) {
+      post.viewCount++;
+      await this.postRepository.save( post );
+    }
   }
 
   // Update a post and its related meta

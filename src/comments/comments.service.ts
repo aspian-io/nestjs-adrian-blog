@@ -20,6 +20,7 @@ import { CommentQueryListDto } from './dto/comment-query-list.dto';
 import { FilterPaginationUtil, IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
 import { PostsService } from 'src/posts/posts.service';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { PostTypeEnum } from 'src/posts/entities/post.entity';
 
 @Injectable()
 export class CommentsService {
@@ -76,7 +77,7 @@ export class CommentsService {
   }
 
   // Find all comments
-  async findAll ( query: CommentQueryListDto, postId?: string, onlyApproved: boolean = false ): Promise<IListResultGenerator<Comment>> {
+  async findAll ( query: CommentQueryListDto, postId?: string, onlyApproved: boolean = false, onlyAncestors = false ): Promise<IListResultGenerator<Comment>> {
     const { page, limit } = query;
     const { skip, take } = FilterPaginationUtil.takeSkipGenerator( limit, page );
 
@@ -84,6 +85,7 @@ export class CommentsService {
     const where: FindOptionsWhere<Comment> | FindOptionsWhere<Comment>[] = {
       title: query[ 'searchBy.title' ],
       content: query[ 'searchBy.content' ],
+      ancestor: query[ 'filterBy.onlyAncestors' ] ? IsNull() : undefined,
       createdAt: query[ 'filterBy.createdAt' ]?.length
         ? Between( query[ 'filterBy.createdAt' ][ 0 ], query[ 'filterBy.createdAt' ][ 1 ] )
         : undefined,
@@ -105,6 +107,10 @@ export class CommentsService {
     // Add isApproved filter
     if ( !onlyApproved ) {
       where.isApproved = query[ 'filterBy.isApproved' ];
+    }
+
+    if ( onlyAncestors ) {
+      where.ancestor = IsNull();
     }
 
     where.seen = query[ 'filterBy.seen' ];
@@ -137,7 +143,7 @@ export class CommentsService {
     // Get the result from database
     const [ items, totalItems ] = await this.commentRepository.findAndCount( {
       loadRelationIds: {
-        relations: [ 'ancestor', 'parent' ]
+        relations: [ 'ancestor', 'parent', 'ancestorChildren', 'likes', 'dislikes' ]
       },
       relations: {
         post: true,
@@ -145,7 +151,7 @@ export class CommentsService {
         updatedBy: true
       },
       select: {
-        post: { title: true, subtitle: true, slug: true },
+        post: { id: true, title: true, subtitle: true, slug: true },
         createdBy: { id: true, firstName: true, lastName: true, avatar: true, avatarSource: true, role: true },
         updatedBy: { id: true, firstName: true, lastName: true, avatar: true, avatarSource: true, role: true },
       },
@@ -172,24 +178,107 @@ export class CommentsService {
 
   // Find all replies of a specific comment
   async findAllCommentReplies (
+    query: PaginationDto,
+    ancestorId: string,
+  ): Promise<IListResultGenerator<Comment>> {
+    const { page, limit } = query;
+    const { skip, take } = FilterPaginationUtil.takeSkipGenerator( limit, page );
+
+    // Get the result from database
+    const [ items, totalItems ] = await this.commentRepository.findAndCount( {
+      loadRelationIds: {
+        relations: [ 'ancestor' ]
+      },
+      relations: {
+        parent: true,
+        post: true,
+        createdBy: true,
+        updatedBy: true
+      },
+      select: {
+        post: { title: true, subtitle: true, slug: true },
+        createdBy: { id: true, firstName: true, lastName: true, avatar: true, avatarSource: true, role: true },
+        updatedBy: { id: true, firstName: true, lastName: true, avatar: true, avatarSource: true, role: true },
+      },
+      where: {
+        ancestor: {
+          id: ancestorId
+        }
+      },
+      order: {
+        likesNum: {
+          direction: 'DESC'
+        },
+        createdAt: {
+          direction: 'ASC'
+        }
+      },
+      take,
+      skip
+    } );
+
+    return FilterPaginationUtil.resultGenerator( items, totalItems, limit, page );
+  }
+
+  // Find all replies of a specific comment
+  findAllCommentRepliesByParentId (
     parentId: string,
     metadata: IMetadataDecorator
   ): Promise<Comment[]> {
-    const replies = await this.commentRepository.find( {
+
+    // Get the result from database
+    return this.commentRepository.find( {
+      loadRelationIds: {
+        relations: [ 'ancestor' ]
+      },
+      relations: {
+        parent: true,
+        post: true,
+        createdBy: true,
+        updatedBy: true
+      },
+      select: {
+        post: { title: true, subtitle: true, slug: true },
+        createdBy: { id: true, firstName: true, lastName: true, avatar: true, avatarSource: true, role: true },
+        updatedBy: { id: true, firstName: true, lastName: true, avatar: true, avatarSource: true, role: true },
+      },
+      where: {
+        parent: {
+          id: parentId
+        },
+        createdBy: {
+          id: metadata.user.id
+        }
+      },
+      order: {
+        createdAt: {
+          direction: 'ASC'
+        }
+      },
+    } );
+  }
+
+  // Find all project's special comments
+  async findAllProjectsSpecialComments (): Promise<Comment[]> {
+    return this.commentRepository.find( {
       relations: {
         createdBy: true,
         updatedBy: true,
+        post: true
       },
       where: {
-        createdBy: {
-          id: metadata.user.id
+        post: {
+          type: PostTypeEnum.PROJECT,
         },
-        parent: { id: parentId }
+        isApproved: true,
+        isSpecial: true
       },
-      order: { createdAt: { direction: 'ASC' } }
+      order: {
+        createdAt: {
+          direction: 'DESC'
+        }
+      }
     } );
-
-    return replies;
   }
 
   // Count Unseen Comments

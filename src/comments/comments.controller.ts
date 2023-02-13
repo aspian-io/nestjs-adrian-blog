@@ -62,10 +62,22 @@ export class CommentsController {
     return this.commentsService.dislike( id, i18n, metadata );
   }
 
+  @Get( 'comments/projects-special-comments' )
+  @Serialize( UserCommentsDto )
+  findAllProjectsSpecialComments (): Promise<Comment[]> {
+    return this.commentsService.findAllProjectsSpecialComments();
+  }
+
   @Get( 'comments/:postId' )
   @Serialize( UserCommentsListDto )
   findAll ( @Param( 'postId' ) postId: string, @Query() query: UserCommentQueryListDto ) {
-    return this.commentsService.findAll( query, postId, true );
+    return this.commentsService.findAll( query, postId, true, true );
+  }
+
+  @Get( 'comments/replies/:ancestorId' )
+  @Serialize( UserCommentsListDto )
+  findAllCommentReplies ( @Query() query: PaginationDto, @Param( 'ancestorId' ) ancestorId: string ): Promise<IListResultGenerator<Comment>> {
+    return this.commentsService.findAllCommentReplies( query, ancestorId );
   }
 
   /**************************** ADMIN REGION ***********************************/
@@ -86,9 +98,9 @@ export class CommentsController {
 
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_READ )
-  @Get( 'admin/comments/replies/:parentId' )
-  adminFindAllCommentReplies ( @Param( 'parentId' ) parentId: string, @Metadata() metadata: IMetadataDecorator ): Promise<Comment[]> {
-    return this.commentsService.findAllCommentReplies( parentId, metadata );
+  @Get( 'admin/comments/user-replies/:parentId' )
+  adminFindAllCommentRepliesByParent ( @Param( 'parentId' ) parentId: string, @Metadata() metadata: IMetadataDecorator ): Promise<Comment[]> {
+    return this.commentsService.findAllCommentRepliesByParentId( parentId, metadata );
   }
 
   @UseGuards( JwtAuthGuard, PermissionsGuard )

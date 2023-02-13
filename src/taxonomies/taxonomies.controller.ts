@@ -18,6 +18,7 @@ import { TaxonomySlugsHistory } from './entities/taxonomy-slug.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { SettingsService } from 'src/settings/settings.service';
 import { SettingsKeyEnum } from 'src/settings/types/settings-key.enum';
+import { TaxonomyListDto } from './dto/taxonomy-list.dto';
 
 @Controller()
 export class TaxonomiesController {
@@ -41,6 +42,12 @@ export class TaxonomiesController {
       return result.taxonomy;
     }
     return result.taxonomy;
+  }
+
+  @Get( 'taxonomies/project-categories' )
+  @Serialize( TaxonomyListDto )
+  findAllProjectCategories ( @Query() query: TaxonomiesListQueryDto ): Promise<IListResultGenerator<Taxonomy>> {
+    return this.taxonomiesService.findAll( query, TaxonomyTypeEnum.PROJECT_CATEGORY );
   }
 
   @Get( 'taxonomies/categories/:slug' )
@@ -107,6 +114,13 @@ export class TaxonomiesController {
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_READ )
   adminFindAllCategories ( @Query() query: TaxonomiesListQueryDto ): Promise<IListResultGenerator<Taxonomy>> {
     return this.taxonomiesService.findAll( query, TaxonomyTypeEnum.CATEGORY );
+  }
+
+  @Get( 'admin/taxonomies/project-categories' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_READ )
+  adminFindAllProjectCategories ( @Query() query: TaxonomiesListQueryDto ): Promise<IListResultGenerator<Taxonomy>> {
+    return this.taxonomiesService.findAll( query, TaxonomyTypeEnum.PROJECT_CATEGORY );
   }
 
   @Get( 'admin/taxonomies/tags' )
@@ -183,6 +197,13 @@ export class TaxonomiesController {
     return this.taxonomiesService.softRemovedFindAll( query, TaxonomyTypeEnum.CATEGORY );
   }
 
+  @Get( 'admin/taxonomies/soft-deleted/project-categories-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
+  softRemovedFindAllProjectCategoriesTrash ( @Query() query: PaginationDto ): Promise<IListResultGenerator<Taxonomy>> {
+    return this.taxonomiesService.softRemovedFindAll( query, TaxonomyTypeEnum.PROJECT_CATEGORY );
+  }
+
   @Get( 'admin/taxonomies/soft-deleted/tags-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
@@ -216,6 +237,13 @@ export class TaxonomiesController {
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
   adminEmptyCategoriesTrash (): Promise<void> {
     return this.taxonomiesService.emptyTrash( TaxonomyTypeEnum.CATEGORY );
+  }
+
+  @Delete( 'admin/taxonomies/empty-project-categories-trash' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
+  adminEmptyProjectCategoriesTrash (): Promise<void> {
+    return this.taxonomiesService.emptyTrash( TaxonomyTypeEnum.PROJECT_CATEGORY );
   }
 
   @Delete( 'admin/taxonomies/empty-tags-trash' )

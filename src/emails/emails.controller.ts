@@ -13,6 +13,7 @@ import { File } from 'src/files/entities/file.entity';
 import { IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
 import { Email } from './entities/email.entity';
 import { EmailListQueryDto } from './dto/email-list-query.dto';
+import { Recaptcha } from '@nestlab/google-recaptcha';
 
 @Controller()
 export class EmailsController {
@@ -72,6 +73,7 @@ export class EmailsController {
 
   @Post( 'contact-us' )
   @HttpCode( HttpStatus.OK )
+  @Recaptcha( { action: 'contact' } )
   contactUs ( @Body() dto: EmailContactUsDto, @I18n() i18n: I18nContext ) {
     return this.emailsService.contactUs( dto, i18n );
   }

@@ -11,6 +11,6 @@ import { TaxonomySlugsHistory } from './entities/taxonomy-slug.entity';
   ],
   controllers: [ TaxonomiesController ],
   providers: [ TaxonomiesService ],
-  exports: [ TypeOrmModule ]
+  exports: [ TypeOrmModule, TaxonomiesService ]
 } )
 export class TaxonomiesModule { }

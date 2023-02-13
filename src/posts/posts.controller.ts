@@ -17,6 +17,7 @@ import { PostDto } from './dto/user/post.dto';
 import { PostListDto } from './dto/user/post-list.dto';
 import { Response } from 'express';
 import { PostsJobsQueryDto } from './dto/posts-jobs-query.dto';
+import { PostStatisticsDto } from './dto/user/post-statistics.dto';
 
 @Controller()
 export class PostsController {
@@ -52,6 +53,15 @@ export class PostsController {
     return result.post;
   }
 
+  @Get( '/posts/blogs/statistics/:slug' )
+  @Serialize( PostStatisticsDto )
+  async blogDetailsStatistics (
+    @Param( 'slug' ) slug: string,
+    @I18n() i18n: I18nContext ) {
+    const result = await this.postsService.findBySlug( slug, i18n, PostTypeEnum.BLOG, false );
+    return result.post;
+  }
+
   @Get( '/posts/pages' )
   @Serialize( PostListDto )
   pagesList ( @Query() query: UserBlogsListDto ) {
@@ -72,6 +82,15 @@ export class PostsController {
     return result.post;
   }
 
+  @Get( '/posts/pages/statistics/:slug' )
+  @Serialize( PostStatisticsDto )
+  async pageDetailsStatistics (
+    @Param( 'slug' ) slug: string,
+    @I18n() i18n: I18nContext ) {
+    const result = await this.postsService.findBySlug( slug, i18n, PostTypeEnum.PAGE, false );
+    return result.post;
+  }
+
   @Get( '/posts/news' )
   @Serialize( PostListDto )
   newsList ( @Query() query: UserBlogsListDto ) {
@@ -85,6 +104,35 @@ export class PostsController {
     @Param( 'slug' ) slug: string,
     @I18n() i18n: I18nContext ) {
     const result = await this.postsService.findBySlug( slug, i18n, PostTypeEnum.NEWS, false );
+    if ( result?.redirect?.status === 301 ) {
+      res.status( 301 );
+      return result.post;
+    }
+    return result.post;
+  }
+
+  @Get( '/posts/news/statistics/:slug' )
+  @Serialize( PostStatisticsDto )
+  async newsDetailsStatistics (
+    @Param( 'slug' ) slug: string,
+    @I18n() i18n: I18nContext ) {
+    const result = await this.postsService.findBySlug( slug, i18n, PostTypeEnum.NEWS, false );
+    return result.post;
+  }
+
+  @Get( '/posts/projects' )
+  @Serialize( PostListDto )
+  projectsList ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
+    return this.postsService.findAll( query, PostTypeEnum.PROJECT, false );
+  }
+
+  @Get( '/posts/projects/:slug' )
+  @Serialize( PostDto )
+  async projectsDetails (
+    @Res( { passthrough: true } ) res: Response,
+    @Param( 'slug' ) slug: string,
+    @I18n() i18n: I18nContext ) {
+    const result = await this.postsService.findBySlug( slug, i18n, PostTypeEnum.PROJECT, false );
     if ( result?.redirect?.status === 301 ) {
       res.status( 301 );
       return result.post;

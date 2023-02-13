@@ -23,6 +23,7 @@ import { NotFoundLocalizedException } from 'src/common/exceptions/not-found-loca
 import { EmailInfoLocale } from 'src/i18n/locale-keys/email/info.locale';
 import { EmailListQueryDto } from './dto/email-list-query.dto';
 import { FilterPaginationUtil, IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
+import * as Handlebars from 'handlebars';
 
 @Injectable()
 export class EmailsService {
@@ -140,7 +141,7 @@ export class EmailsService {
     const siteSupportEmail = ( await this.settingsService.findOne( SettingsKeyEnum.SITE_SUPPORT_EMAIL ) ).value;
 
     if ( customTemplate ) {
-      const compiledTemplate = Handlebars.compile( customTemplate );
+      const compiledTemplate = Handlebars.compile( customTemplate.content );
       const html = compiledTemplate( {
         websiteName,
         websiteUrl

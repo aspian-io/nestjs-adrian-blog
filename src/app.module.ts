@@ -39,7 +39,7 @@ import { IncomingMessage } from 'http';
         secretKey: configService.getOrThrow( EnvEnum.GOOGLE_RECAPTCHA_SECRET_KEY ),
         response: ( req: IncomingMessage ) => ( req.headers.recaptcha || '' ).toString(),
         skipIf: process.env.NODE_ENV !== 'production',
-        actions: [ 'register', 'login', 'subscribe' ],
+        actions: [ 'register', 'login', 'subscribe', 'contact' ],
         score: 0.6,
       } ),
       inject: [ ConfigService ],

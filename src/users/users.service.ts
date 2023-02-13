@@ -490,6 +490,18 @@ export class UsersService {
     } );
   }
 
+  // Find all members
+  findAllMembers () {
+    return this.userRepository.find( {
+      where: {
+        organizationMember: true
+      },
+      order: {
+        createdAt: { direction: 'ASC' }
+      }
+    } );
+  }
+
   // Find all users
   async findAll ( query: UsersListQueryDto ): Promise<IListResultGenerator<User>> {
     const { page, limit } = query;
@@ -553,7 +565,7 @@ export class UsersService {
 
   // Find one user
   async findOne ( id: string, i18n: I18nContext ): Promise<User> {
-    const user = await this.userRepository.findOne( { where: { id }, relations: { claims: true, projects: true } } );
+    const user = await this.userRepository.findOne( { where: { id }, relations: { claims: true, projects: { featuredImage: { generatedImageChildren: true } } } } );
     if ( !user ) throw new NotFoundLocalizedException( i18n, UsersInfoLocale.TERM_USER );
     return user;
   }

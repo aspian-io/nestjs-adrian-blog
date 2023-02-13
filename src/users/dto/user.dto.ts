@@ -1,4 +1,5 @@
-import { Expose } from "class-transformer";
+import { Expose, Type } from "class-transformer";
+import { PostDto } from "src/posts/dto/user/post.dto";
 import { AvatarSourceEnum, GenderEnum } from "../entities/user.entity";
 
 export class UserDto {
@@ -60,6 +61,10 @@ export class UserDto {
   bookmarkIds: string[];
 
   @Expose()
+  @Type( () => PostDto )
+  projects: PostDto[];
+
+  @Expose()
   website?: string;
 
   @Expose()
@@ -76,4 +81,10 @@ export class UserDto {
 
   @Expose()
   pinterest?: string;
+
+  @Expose()
+  github?: string;
+
+  @Expose()
+  stackoverflow?: string;
 }

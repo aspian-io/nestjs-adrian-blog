@@ -5,6 +5,9 @@ import { MinimalUserDto } from "src/users/dto";
 
 export class PostDto {
   @Expose()
+  id: string;
+
+  @Expose()
   title: string;
 
   @Expose()
@@ -55,19 +58,34 @@ export class PostDto {
   @Type( () => FileDto )
   attachments: FileDto[];
 
-  @Transform( ( { obj } ) => obj?.commentsNum )
   @Expose()
-  comments: number;
+  commentsNum: number;
 
-  @Transform( ( { obj } ) => obj?.likesNum )
   @Expose()
-  likes: number;
+  likes: string[];
 
-  @Transform( ( { obj } ) => obj?.bookmarksNum )
   @Expose()
-  bookmarks: number;
+  likesNum: number;
+
+  @Expose()
+  bookmarks: string[];
+
+  @Expose()
+  bookmarksNum: number;
 
   @Expose()
   @Type( () => MinimalUserDto )
   createdBy: MinimalUserDto;
+
+  @Expose()
+  @Type( () => MinimalUserDto )
+  projectOwner?: MinimalUserDto;
+
+  @Expose()
+  @Type( () => Date )
+  createdAt: Date;
+
+  @Expose()
+  @Type( () => Date )
+  updatedAt: Date;
 }

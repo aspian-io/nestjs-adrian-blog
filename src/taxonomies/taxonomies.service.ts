@@ -8,6 +8,8 @@ import { NotFoundLocalizedException } from 'src/common/exceptions/not-found-loca
 import { FilterPaginationUtil, IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
 import { TaxonomiesErrorsLocale } from 'src/i18n/locale-keys/taxonomies/errors.locale';
 import { TaxonomiesInfoLocale } from 'src/i18n/locale-keys/taxonomies/info.locale';
+import { SettingsService } from 'src/settings/settings.service';
+import { SettingsKeyEnum } from 'src/settings/types/settings-key.enum';
 import { FindOptionsWhere, In, IsNull, Not, Repository } from 'typeorm';
 import { CreateTaxonomyDto } from './dto/create-taxonomy.dto';
 import { TaxonomiesListQueryDto } from './dto/taxonomy-list-query.dto';
@@ -26,6 +28,7 @@ export class TaxonomiesService {
     @InjectRepository( Taxonomy ) private readonly taxonomyRepository: Repository<Taxonomy>,
     @InjectRepository( TaxonomySlugsHistory ) private readonly taxonomySlugsHistoryRepository: Repository<TaxonomySlugsHistory>,
     @Inject( CACHE_MANAGER ) private cacheManager: Cache,
+    private readonly settingsService: SettingsService
   ) { }
 
   // Create a new taxonomy
@@ -94,6 +97,7 @@ export class TaxonomiesService {
       },
       where,
       order: {
+        order: query[ 'orderBy.order' ],
         term: query[ 'orderBy.term' ],
         description: query[ 'orderBy.description' ],
         createdAt: query[ 'orderBy.createdAt' ],
@@ -138,6 +142,20 @@ export class TaxonomiesService {
         }
       },
     } );
+  }
+
+  // Get primary menu items
+  async getPrimaryMenuItems (): Promise<Taxonomy[]> {
+    const primaryMenu = await this.settingsService.findOneOrNull( SettingsKeyEnum.MENU_PRIMARY );
+    if ( !primaryMenu ) return [];
+    return this.findAllMenuItems( primaryMenu.value );
+  }
+
+  // Get secondary menu items
+  async getSecondaryMenuItems (): Promise<Taxonomy[]> {
+    const secondaryMenu = await this.settingsService.findOneOrNull( SettingsKeyEnum.MENU_SECONDARY );
+    if ( !secondaryMenu ) return [];
+    return this.findAllMenuItems( secondaryMenu.value );
   }
 
   // Find a taxonomy

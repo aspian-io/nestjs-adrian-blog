@@ -25,6 +25,10 @@ export class FileDto {
   originalImage?: FileDto;
 
   @Expose()
+  @Type( () => FileDto )
+  generatedImageChildren: File[];
+
+  @Expose()
   thumbnail?: string;
 
   @Expose()

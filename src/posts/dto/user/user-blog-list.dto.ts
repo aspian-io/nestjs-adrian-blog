@@ -17,6 +17,10 @@ export class UserBlogsListDto {
   @IsOptional()
   "filterBy.tag"?: string;
 
+  @Transform( ( { value } ) => QueryStringUtil.extractCommaSeparatedStrings( value ) )
+  @IsOptional()
+  "filterBy.tagTerms"?: string[];
+
   @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
   @IsOptional()
   "orderBy.viewCount"?: OrderType;

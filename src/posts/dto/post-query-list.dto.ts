@@ -32,7 +32,11 @@ export class PostsQueryListDto {
 
   @Transform( ( { value } ) => QueryStringUtil.trim( value ) )
   @IsOptional()
-  "searchBy.category"?: string;
+  "filterBy.category"?: string;
+
+  @Transform( ( { value } ) => QueryStringUtil.trim( value ) )
+  @IsOptional()
+  "filterBy.projectCategory"?: string;
 
   @Transform( ( { value } ) => QueryStringUtil.trim( value ) )
   @IsOptional()

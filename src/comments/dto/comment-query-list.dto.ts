@@ -28,6 +28,10 @@ export class CommentQueryListDto {
 
   @Transform( ( { value } ) => QueryStringUtil.toBoolean( value ) )
   @IsOptional()
+  "filterBy.onlyAncestors"?: boolean;
+
+  @Transform( ( { value } ) => QueryStringUtil.toBoolean( value ) )
+  @IsOptional()
   "filterBy.isApproved"?: boolean;
 
   @Transform( ( { value } ) => QueryStringUtil.toBoolean( value ) )
@@ -69,6 +73,10 @@ export class CommentQueryListDto {
   @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
   @IsOptional()
   "orderBy.seen"?: OrderType;
+
+  @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
+  @IsOptional()
+  "orderBy.repliesNum"?: OrderType;
 
   @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
   @IsOptional()

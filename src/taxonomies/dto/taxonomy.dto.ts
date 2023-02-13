@@ -1,6 +1,10 @@
 import { Expose, Type } from "class-transformer";
+import { TaxonomyTypeEnum } from "../entities/taxonomy.entity";
 
 export class TaxonomyDto {
+  @Expose()
+  id: string;
+
   @Expose()
   href?: string;
 
@@ -26,6 +30,9 @@ export class TaxonomyDto {
 
   @Expose()
   slug: string;
+
+  @Expose()
+  type: TaxonomyTypeEnum;
 
   @Expose()
   featuredImage?: string;

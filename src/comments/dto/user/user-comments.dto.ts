@@ -1,4 +1,5 @@
 import { Expose, Transform, Type } from "class-transformer";
+import { PostDto } from "src/posts/dto/user/post.dto";
 import { AvatarSourceEnum } from "src/users/entities/user.entity";
 
 export class UserCommentsDto {
@@ -22,13 +23,23 @@ export class UserCommentsDto {
   avatarSource: AvatarSourceEnum;
 
   @Expose()
+  @Transform( ( { obj } ) => obj.createdBy.role )
+  role?: string;
+
+  @Expose()
   title: string;
 
   @Expose()
   content: string;
 
   @Expose()
+  likes: number;
+
+  @Expose()
   likesNum: number;
+
+  @Expose()
+  dislikes: number;
 
   @Expose()
   dislikesNum: number;
@@ -46,10 +57,14 @@ export class UserCommentsDto {
   updatedAt: Date;
 
   @Expose()
-  @Transform( ( { obj } ) => obj.post )
-  postId: string;
+  post: PostDto;
 
   @Expose()
-  @Transform( ( { obj } ) => obj.parent )
-  parentId: UserCommentsDto;
+  ancestor?: string;
+
+  @Expose()
+  parent?: string;
+
+  @Expose()
+  ancestorChildrenNum: number;
 }

@@ -19,7 +19,7 @@ import { I18n, I18nContext } from 'nestjs-i18n';
 import { Claim } from './entities/claim.entity';
 import { EnvEnum } from 'src/env.enum';
 import { IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
-import { AdminUpdateUserDto, CreateUserDto, UpdateUserDto, UserLoginDto, UsersListQueryDto, UsersVerificationTokenDto } from './dto';
+import { AdminUpdateUserDto, CreateUserDto, MinimalUserDto, UpdateUserDto, UserLoginDto, UsersListQueryDto, UsersVerificationTokenDto } from './dto';
 import { LoginRegisterDto, UserDto } from './dto';
 import { UpdateUserClaimsDto } from './dto/update-claims.dto';
 import { PostsService } from 'src/posts/posts.service';
@@ -62,7 +62,7 @@ export class UsersController {
   }
 
   // Login by Email
-  @Recaptcha()
+  @Recaptcha({action: 'login'})
   @Post( 'users/login-by-email' )
   @HttpCode( HttpStatus.OK )
   @Serialize( LoginRegisterDto )
@@ -456,6 +456,13 @@ export class UsersController {
   @Serialize( UserDto )
   resetPasswordByMobilePhone ( @Body() body: UserResetPasswordByMobileDto, @I18n() i18n: I18nContext ) {
     return this.usersService.resetPasswordByMobilePhone( body, i18n );
+  }
+
+  // Org Members
+  @Get( 'users/members' )
+  @Serialize( MinimalUserDto )
+  findAllMembers (): Promise<User[]> {
+    return this.usersService.findAllMembers();
   }
 
   /************************ */

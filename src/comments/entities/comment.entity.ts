@@ -1,7 +1,7 @@
 import { BaseMinimalEntity } from "src/common/entities/base-minimal.entity";
 import { Post } from "src/posts/entities/post.entity";
 import { User } from "src/users/entities/user.entity";
-import { Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany } from "typeorm";
+import { AfterLoad, Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany } from "typeorm";
 
 @Entity()
 export class Comment extends BaseMinimalEntity {
@@ -40,11 +40,15 @@ export class Comment extends BaseMinimalEntity {
   @OneToMany( () => Comment, ( comment ) => comment.ancestor )
   ancestorChildren?: Comment[];
 
-  @ManyToOne( () => Comment, ( comment ) => comment.children, { onDelete: 'CASCADE' } )
-  parent?: Comment;
+  ancestorChildrenNum: number;
 
-  @OneToMany( () => Comment, ( comment ) => comment.parent )
-  children?: Comment[];
+  @AfterLoad()
+  private getAncestorChildrenNum () {
+    this.ancestorChildrenNum = this.ancestorChildren?.length;
+  }
+
+  @ManyToOne( () => Comment )
+  parent?: Comment;
 
   @ManyToOne( () => Post, { onDelete: 'CASCADE' } )
   post: Post;

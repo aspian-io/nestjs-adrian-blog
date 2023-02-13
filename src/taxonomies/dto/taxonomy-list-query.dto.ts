@@ -49,6 +49,10 @@ export class TaxonomiesListQueryDto {
   @IsOptional()
   "orderBy.userAgent"?: OrderType;
 
+  @Transform( ( { value } ) => QueryStringUtil.extractOrder( value ) )
+  @IsOptional()
+  "orderBy.order"?: OrderType;
+
   @Transform( ( { value } ) => QueryStringUtil.extractPage( value ) )
   @IsOptional()
   page?: number = 1;
