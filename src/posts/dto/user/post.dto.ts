@@ -1,11 +1,15 @@
 import { Expose, Transform, Type } from "class-transformer";
 import { FileDto } from "src/files/dto/file.dto";
+import { PostTypeEnum } from "src/posts/entities/post.entity";
 import { TaxonomyDto } from "src/taxonomies/dto/taxonomy.dto";
 import { MinimalUserDto } from "src/users/dto";
 
 export class PostDto {
   @Expose()
   id: string;
+
+  @Expose()
+  type: PostTypeEnum;
 
   @Expose()
   title: string;

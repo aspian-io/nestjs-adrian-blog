@@ -18,6 +18,7 @@ import { PostListDto } from './dto/user/post-list.dto';
 import { Response } from 'express';
 import { PostsJobsQueryDto } from './dto/posts-jobs-query.dto';
 import { PostStatisticsDto } from './dto/user/post-statistics.dto';
+import { SearchDto } from './dto/user/search.dto';
 
 @Controller()
 export class PostsController {
@@ -26,6 +27,12 @@ export class PostsController {
   ) { }
 
   /********************** User Region ***************************/
+
+  @Get( '/posts/search' )
+  @Serialize( PostListDto )
+  search ( @Query() query: SearchDto ): Promise<IListResultGenerator<PostEntity>> {
+    return this.postsService.search( query );
+  }
 
   @Get( '/posts/widgets' )
   @Serialize( PostDto )

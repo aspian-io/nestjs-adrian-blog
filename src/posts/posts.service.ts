@@ -19,6 +19,7 @@ import { PostsQueryListDto } from './dto/post-query-list.dto';
 import { PostsJobsQueryDto } from './dto/posts-jobs-query.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { BookmarksListQueryDto } from './dto/user/bookmarks-list-query.dto';
+import { SearchDto } from './dto/user/search.dto';
 import { UserBlogsListDto } from './dto/user/user-blog-list.dto';
 import { PostSlugsHistory } from './entities/post-slug.entity';
 import { Post, PostStatusEnum, PostTypeEnum, PostVisibilityEnum, WidgetTypeEnum } from './entities/post.entity';
@@ -344,6 +345,68 @@ export class PostsService {
     const reversedItems = items.reverse();
 
     return FilterPaginationUtil.resultGenerator( reversedItems, totalItems, limit, page );
+  }
+
+  async search ( query: SearchDto ): Promise<IListResultGenerator<Post>> {
+    const { page, limit } = query;
+    const { skip, take } = FilterPaginationUtil.takeSkipGenerator( limit, page );
+
+    // Get the result from database
+    const [ items, totalItems ] = await this.postRepository.findAndCount( {
+      relations: {
+        ancestor: true,
+        attachments: true,
+        createdBy: true,
+        updatedBy: true,
+        featuredImage: true,
+        parent: true,
+        child: true,
+        taxonomies: true,
+        projectOwner: true
+      },
+      where: [
+        {
+          title: query.keyword,
+          type: PostTypeEnum.BLOG,
+          status: PostStatusEnum.PUBLISH,
+          visibility: PostVisibilityEnum.PUBLIC
+        },
+        {
+          subtitle: query.keyword,
+          type: PostTypeEnum.BLOG,
+          status: PostStatusEnum.PUBLISH,
+          visibility: PostVisibilityEnum.PUBLIC
+        },
+        {
+          title: query.keyword,
+          type: PostTypeEnum.NEWS,
+          status: PostStatusEnum.PUBLISH,
+          visibility: PostVisibilityEnum.PUBLIC
+        },
+        {
+          subtitle: query.keyword,
+          type: PostTypeEnum.NEWS,
+          status: PostStatusEnum.PUBLISH,
+          visibility: PostVisibilityEnum.PUBLIC
+        },
+        {
+          title: query.keyword,
+          type: PostTypeEnum.PROJECT,
+          status: PostStatusEnum.PUBLISH,
+          visibility: PostVisibilityEnum.PUBLIC
+        },
+        {
+          subtitle: query.keyword,
+          type: PostTypeEnum.PROJECT,
+          status: PostStatusEnum.PUBLISH,
+          visibility: PostVisibilityEnum.PUBLIC
+        },
+      ],
+      take,
+      skip
+    } );
+
+    return FilterPaginationUtil.resultGenerator( items, totalItems, limit, page );
   }
 
   // Find a post

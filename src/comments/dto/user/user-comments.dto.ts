@@ -57,6 +57,7 @@ export class UserCommentsDto {
   updatedAt: Date;
 
   @Expose()
+  @Type( () => PostDto )
   post: PostDto;
 
   @Expose()

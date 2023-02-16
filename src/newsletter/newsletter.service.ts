@@ -197,6 +197,18 @@ export class NewsletterService {
     return subscriber;
   }
 
+  // Get verification email token remaining time in seconds
+  async getSubscriberTokenRemainingTimeInSec ( email: string, i18n: I18nContext ) {
+    const subscriber = await this.findOneSubscriberByEmail( email, i18n );
+    let remainingTimeInSec = 0;
+
+    if ( subscriber.tokenExpiresAt.getTime() > Date.now() ) {
+      remainingTimeInSec = Math.floor( ( subscriber.tokenExpiresAt.getTime() - Date.now() ) / 1000 );
+    }
+
+    return { remainingTimeInSec };
+  }
+
   async findAllSubscribers ( query: SubscribersListQueryDto ): Promise<IListResultGenerator<NewsletterSubscriber>> {
     const { page, limit } = query;
     const { skip, take } = FilterPaginationUtil.takeSkipGenerator( limit, page );

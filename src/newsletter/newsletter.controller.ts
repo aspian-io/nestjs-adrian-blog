@@ -25,6 +25,7 @@ import { AdminCreateSubscriberDto } from './dto/subscription/admin-create-subscr
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { File } from 'src/files/entities/file.entity';
+import { SubscriberEmailDto } from './dto/subscription/user/subscriber-email.dto';
 
 @Controller()
 export class NewsletterController {
@@ -57,6 +58,13 @@ export class NewsletterController {
   @Serialize( SubscriberDto )
   unsubscribe ( @Body() unsubscribeDto: UnsubscribeDto, @I18n() i18n: I18nContext ) {
     return this.newsletterService.unsubscribe( unsubscribeDto, i18n );
+  }
+
+  @Post( 'newsletter/subscribers/email-token-remaining-time' )
+  async getSubscriberTokenRemainingTimeInSec (
+    @I18n() i18n: I18nContext,
+    @Body() body: SubscriberEmailDto ) {
+    return this.newsletterService.getSubscriberTokenRemainingTimeInSec( body.email, i18n );
   }
 
   @Post( 'admin/newsletter/subscribers/subscribe' )

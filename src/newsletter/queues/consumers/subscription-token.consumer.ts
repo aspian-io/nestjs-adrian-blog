@@ -62,7 +62,7 @@ export class SubscriptionTokenJobsConsumer {
     const subject = ( await this.settingsService.findOne( SettingsKeyEnum.NEWSLETTER_SUBSCRIPTION_EMAIL_SUBJECT ) ).value;
     const siteSupportEmail = ( await this.settingsService.findOne( SettingsKeyEnum.SITE_SUPPORT_EMAIL ) ).value;
     if ( customTemplate ) {
-      const compiledTemplate = Handlebars.compile( customTemplate );
+      const compiledTemplate = Handlebars.compile( customTemplate.content );
       const html = compiledTemplate( {
         websiteName,
         token,
