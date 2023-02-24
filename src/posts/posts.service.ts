@@ -409,6 +409,55 @@ export class PostsService {
     return FilterPaginationUtil.resultGenerator( items, totalItems, limit, page );
   }
 
+  // Find and filter and paginate posts
+  async findRecentPosts ( query: PaginationDto ): Promise<IListResultGenerator<Post>> {
+    const { page, limit } = query;
+    const { skip, take } = FilterPaginationUtil.takeSkipGenerator( limit, page );
+
+    // Get the result from database
+    const [ items, totalItems ] = await this.postRepository.findAndCount( {
+      relations: {
+        ancestor: true,
+        attachments: true,
+        createdBy: true,
+        updatedBy: true,
+        featuredImage: true,
+        parent: true,
+        child: true,
+        taxonomies: true,
+        projectOwner: true
+      },
+      where: {
+        type: In( [ PostTypeEnum.BLOG, PostTypeEnum.NEWS, PostTypeEnum.PAGE, PostTypeEnum.PROJECT ] )
+      },
+      order: {
+        createdAt: {
+          direction: 'DESC'
+        }
+      },
+      take,
+      skip
+    } );
+
+    return FilterPaginationUtil.resultGenerator( items, totalItems, limit, page );
+  }
+
+  // Find all sitemap info
+  async sitemap (): Promise<Post[]> {
+    return this.postRepository.find( {
+      where: {
+        status: PostStatusEnum.PUBLISH,
+        type: In( [ PostTypeEnum.BLOG, PostTypeEnum.NEWS, PostTypeEnum.PAGE, PostTypeEnum.PROJECT ] ),
+        visibility: PostVisibilityEnum.PUBLIC
+      },
+      select: {
+        type: true,
+        slug: true,
+        updatedAt: true
+      }
+    } );
+  }
+
   // Find a post
   async findOne ( id: string, i18n?: I18nContext, withDeleted: boolean = false ): Promise<Post> {
     const post = await this.postRepository.findOne( {
@@ -550,6 +599,21 @@ export class PostsService {
       post.viewCount++;
       await this.postRepository.save( post );
     }
+  }
+
+  async allBlogsNumber () {
+    const [ items, totalItems ] = await this.postRepository.findAndCount( { where: { type: PostTypeEnum.BLOG } } );
+    return totalItems;
+  }
+
+  async allNewsNumber () {
+    const [ items, totalItems ] = await this.postRepository.findAndCount( { where: { type: PostTypeEnum.NEWS } } );
+    return totalItems;
+  }
+
+  async allProjectsNumber () {
+    const [ items, totalItems ] = await this.postRepository.findAndCount( { where: { type: PostTypeEnum.PROJECT } } );
+    return totalItems;
   }
 
   // Update a post and its related meta

@@ -30,7 +30,7 @@ export class SendEmailDto {
   @IsOptional()
   replyTo?: string;
 
-  @IsIn( Object.values( EmailPriorityEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN ) } )
+  @IsIn( Object.values( EmailPriorityEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN as any ) } )
   @IsOptional()
   priority?: EmailPriorityEnum = EmailPriorityEnum.NORMAL;
 

@@ -10,7 +10,7 @@ export class SMSAddContactDto {
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   name: string;
 
-  @IsMobilePhone( null, { message: CommonErrorsLocale.VALIDATOR_IS_MOBILE_PHONE }, { each: true } )
+  @IsMobilePhone( null, {strictMode: false}, { message: CommonErrorsLocale.VALIDATOR_IS_MOBILE_PHONE, each: true } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   lineNumber: string;
 }

@@ -1,10 +1,9 @@
-import { BadRequestException, CACHE_MANAGER, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { CACHE_MANAGER, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cache } from 'cache-manager';
 import { I18nContext } from 'nestjs-i18n';
 import { IMetadataDecorator } from 'src/common/decorators/metadata.decorator';
 import { NotFoundLocalizedException } from 'src/common/exceptions/not-found-localized.exception';
-import { SettingsErrorsLocal } from 'src/i18n/locale-keys/settings/errors.locale';
 import { SettingsInfoLocale } from 'src/i18n/locale-keys/settings/info.locale';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';

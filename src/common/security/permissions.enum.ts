@@ -5,6 +5,9 @@ export enum PermissionsEnum {
   // ADMIN
   ADMIN = "rw_a",
 
+  // DASHBOARD
+  DASHBOARD_READ = "dash_r",
+
   // USERS
   USER_READ = "usr_r",
   USER_CREATE = "usr_w",

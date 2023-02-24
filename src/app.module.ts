@@ -7,10 +7,10 @@ import { UsersModule } from './users/users.module';
 import { SettingsModule } from './settings/settings.module';
 import { FilesModule } from './files/files.module';
 import { AppSeederService } from './app-seeder.service';
-import { I18nModule } from 'nestjs-i18n';
+import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
 import * as redisStore from 'cache-manager-redis-store';
-import type { ClientOpts } from 'redis';
+import type { RedisClientOptions } from 'redis';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { BullModule } from '@nestjs/bull';
 import { EnvEnum } from './env.enum';
@@ -72,12 +72,10 @@ import { IncomingMessage } from 'http';
       imports: [ ConfigModule ],
       inject: [ ConfigService ],
       isGlobal: true,
-      useFactory: ( configService: ConfigService ): CacheModuleOptions<ClientOpts> => ( {
-        db: RedisDbEnum.CACHE,
-        store: redisStore,
-        host: configService.getOrThrow( EnvEnum.REDIS_HOST ),
-        port: +configService.getOrThrow( EnvEnum.REDIS_PORT ),
-        password: configService.getOrThrow( EnvEnum.REDIS_PASSWORD ),
+      useFactory: ( configService: ConfigService ): CacheModuleOptions<RedisClientOptions> => ( {
+        database: RedisDbEnum.CACHE,
+        store: redisStore as any,
+        url: configService.getOrThrow( EnvEnum.REDIS_URL ),
         ttl: 1, // seconds
         max: 200, // maximum number of items in cache
       } ),
@@ -97,6 +95,10 @@ import { IncomingMessage } from 'http';
     I18nModule.forRootAsync( {
       imports: [ ConfigModule ],
       inject: [ ConfigService ],
+      resolvers: [
+        { use: QueryResolver, options: [ 'lang' ] },
+        AcceptLanguageResolver,
+      ],
       useFactory: ( configService: ConfigService ) => ( {
         fallbackLanguage: configService.getOrThrow( EnvEnum.I18N_DEFAULT_LANG ),
         loaderOptions: {

@@ -4,6 +4,6 @@ import { CommonErrorsLocale } from "src/i18n/locale-keys/common/errors.locale";
 
 export class BulkDeleteRecoverDto {
   @IsArray( { message: CommonErrorsLocale.VALIDATOR_IS_ARRAY } )
-  @ArrayMinSize( 1, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_ARRAY_MIN_LENGTH ) } )
+  @ArrayMinSize( 1, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_ARRAY_MIN_LENGTH as any ) } )
   ids: string[];
 }

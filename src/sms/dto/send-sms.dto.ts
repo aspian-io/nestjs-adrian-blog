@@ -8,7 +8,7 @@ export class SendSMSDto {
   originator: string;
 
   @IsArray( { message: CommonErrorsLocale.VALIDATOR_IS_ARRAY } )
-  @ArrayMinSize( 1, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_ARRAY_MIN_LENGTH ) } )
+  @ArrayMinSize( 1, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_ARRAY_MIN_LENGTH as any ) } )
   @IsMobilePhone( 'fa-IR', null, { message: CommonErrorsLocale.VALIDATOR_IS_MOBILE_PHONE, each: true } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   recipients: string[];

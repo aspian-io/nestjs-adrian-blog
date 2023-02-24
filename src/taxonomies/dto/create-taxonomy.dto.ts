@@ -4,7 +4,7 @@ import { CommonErrorsLocale } from "src/i18n/locale-keys/common/errors.locale";
 import { TaxonomyTypeEnum } from "../entities/taxonomy.entity";
 
 export class CreateTaxonomyDto {
-  @IsIn( Object.values( TaxonomyTypeEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN ) } )
+  @IsIn( Object.values( TaxonomyTypeEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN as any ) } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   type: TaxonomyTypeEnum;
 

@@ -6,11 +6,11 @@ import { PostSlugsHistory } from '../entities/post-slug.entity';
 import { PostStatusEnum, PostVisibilityEnum } from '../entities/post.entity';
 
 export class UpdatePostDto {
-  @IsIn( Object.values( PostVisibilityEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN ) } )
+  @IsIn( Object.values( PostVisibilityEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN as any ) } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   visibility: PostVisibilityEnum;
 
-  @IsIn( Object.values( PostStatusEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN ) } )
+  @IsIn( Object.values( PostStatusEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN as any ) } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   status: PostStatusEnum;
 
@@ -61,7 +61,7 @@ export class UpdatePostDto {
   subtitle?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 400, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 400, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsOptional()
   excerpt?: string;
 

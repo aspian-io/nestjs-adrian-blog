@@ -10,6 +10,9 @@ import { Taxonomy } from "src/taxonomies/entities/taxonomy.entity";
 export interface ILayout {
   primaryMenuItems: Taxonomy[];
   secondaryMenuItems: Taxonomy[];
+  siteName: string;
+  siteDescription: string;
+  siteURL: string;
   siteLogos: {
     type: SettingsKeyEnum;
     file: File;
@@ -29,6 +32,15 @@ export class LayoutDto {
   @Expose()
   @Type( () => TaxonomyDto )
   secondaryMenuItems: TaxonomyDto[];
+
+  @Expose()
+  siteName: string;
+
+  @Expose()
+  siteDescription: string;
+
+  @Expose()
+  siteURL: string;
 
   @Expose()
   @Type( () => LogoFileDto )

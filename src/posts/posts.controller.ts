@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Res, HttpCode, HttpStatus } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -19,6 +19,9 @@ import { Response } from 'express';
 import { PostsJobsQueryDto } from './dto/posts-jobs-query.dto';
 import { PostStatisticsDto } from './dto/user/post-statistics.dto';
 import { SearchDto } from './dto/user/search.dto';
+import { PostSitemapDto } from './dto/user/post-sitemap.dto';
+import { AdminPostListDto } from './dto/post-list.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Controller()
 export class PostsController {
@@ -161,6 +164,12 @@ export class PostsController {
     return this.postsService.bookmark( postId, metadata, i18n );
   }
 
+  @Get( 'posts/sitemap' )
+  @Serialize( PostSitemapDto )
+  sitemap (): Promise<PostEntity[]> {
+    return this.postsService.sitemap();
+  }
+
 
   /********************** Admin Region ***************************/
 
@@ -174,6 +183,14 @@ export class PostsController {
     return this.postsService.create( createPostDto, i18n, metadata );
   }
 
+  @Get( 'admin/posts/recent' )
+  @UseGuards( JwtAuthGuard, PermissionsGuard )
+  @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
+  @Serialize( AdminPostListDto )
+  adminFindRecentPosts ( @Query() query: PaginationDto ): Promise<IListResultGenerator<PostEntity>> {
+    return this.postsService.findRecentPosts( query );
+  }
+
   @Get( 'admin/posts/widgets' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
@@ -184,6 +201,7 @@ export class PostsController {
   @Get( 'admin/posts/blogs' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
+  @Serialize( AdminPostListDto )
   adminFindAllBlogs ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
     return this.postsService.findAll( query, PostTypeEnum.BLOG );
   }
@@ -191,6 +209,7 @@ export class PostsController {
   @Get( 'admin/posts/banners' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
+  @Serialize( AdminPostListDto )
   adminFindAllBanners ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
     return this.postsService.findAll( query, PostTypeEnum.BANNER );
   }
@@ -198,6 +217,7 @@ export class PostsController {
   @Get( 'admin/posts/email-templates' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
+  @Serialize( AdminPostListDto )
   adminFindAllEmailTemplates ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
     return this.postsService.findAll( query, PostTypeEnum.EMAIL_TEMPLATE );
   }
@@ -205,6 +225,7 @@ export class PostsController {
   @Get( 'admin/posts/newsletter-templates' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
+  @Serialize( AdminPostListDto )
   adminFindAllNewsletterTemplates ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
     return this.postsService.findAll( query, PostTypeEnum.NEWSLETTER_TEMPLATE );
   }
@@ -212,6 +233,7 @@ export class PostsController {
   @Get( 'admin/posts/news' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
+  @Serialize( AdminPostListDto )
   adminFindAllNews ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
     return this.postsService.findAll( query, PostTypeEnum.NEWS );
   }
@@ -219,6 +241,7 @@ export class PostsController {
   @Get( 'admin/posts/pages' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
+  @Serialize( AdminPostListDto )
   adminFindAllPages ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
     return this.postsService.findAll( query, PostTypeEnum.PAGE );
   }
@@ -226,6 +249,7 @@ export class PostsController {
   @Get( 'admin/posts/projects' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
+  @Serialize( AdminPostListDto )
   adminFindAllProjects ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
     return this.postsService.findAll( query, PostTypeEnum.PROJECT );
   }
@@ -273,6 +297,7 @@ export class PostsController {
   @Get( 'admin/posts/soft-deleted/blogs-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  @Serialize( AdminPostListDto )
   softRemovedFindAllBlogsTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
     return this.postsService.softRemovedFindAll( query, PostTypeEnum.BLOG );
   }
@@ -280,6 +305,7 @@ export class PostsController {
   @Get( 'admin/posts/soft-deleted/banners-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  @Serialize( AdminPostListDto )
   softRemovedFindAllBannersTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
     return this.postsService.softRemovedFindAll( query, PostTypeEnum.BANNER );
   }
@@ -287,6 +313,7 @@ export class PostsController {
   @Get( 'admin/posts/soft-deleted/email-templates-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  @Serialize( AdminPostListDto )
   softRemovedFindAllEmailTemplatesTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
     return this.postsService.softRemovedFindAll( query, PostTypeEnum.EMAIL_TEMPLATE );
   }
@@ -294,6 +321,7 @@ export class PostsController {
   @Get( 'admin/posts/soft-deleted/newsletter-templates-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  @Serialize( AdminPostListDto )
   softRemovedFindAllNewsletterTemplatesTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
     return this.postsService.softRemovedFindAll( query, PostTypeEnum.NEWSLETTER_TEMPLATE );
   }
@@ -301,6 +329,7 @@ export class PostsController {
   @Get( 'admin/posts/soft-deleted/news-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  @Serialize( AdminPostListDto )
   softRemovedFindAllNewsTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
     return this.postsService.softRemovedFindAll( query, PostTypeEnum.NEWS );
   }
@@ -308,6 +337,7 @@ export class PostsController {
   @Get( 'admin/posts/soft-deleted/pages-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  @Serialize( AdminPostListDto )
   softRemovedFindAllPagesTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
     return this.postsService.softRemovedFindAll( query, PostTypeEnum.PAGE );
   }
@@ -315,6 +345,7 @@ export class PostsController {
   @Get( 'admin/posts/soft-deleted/projects-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
+  @Serialize( AdminPostListDto )
   softRemovedFindAllProjectsTrash ( @Query() query: PostsQueryListDto ): Promise<IListResultGenerator<PostEntity>> {
     return this.postsService.softRemovedFindAll( query, PostTypeEnum.PROJECT );
   }

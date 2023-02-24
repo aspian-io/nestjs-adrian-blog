@@ -8,7 +8,7 @@ export class CreateCommentDto {
   title?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 800, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 800, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   content: string;
 

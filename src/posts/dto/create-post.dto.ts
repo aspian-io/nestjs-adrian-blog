@@ -14,7 +14,7 @@ export class CreatePostDto {
   subtitle?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 400, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 400, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsOptional()
   excerpt?: string;
 
@@ -35,11 +35,11 @@ export class CreatePostDto {
   @IsOptional()
   featuredImageId?: string;
 
-  @IsIn( Object.values( PostVisibilityEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN ) } )
+  @IsIn( Object.values( PostVisibilityEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN as any ) } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   visibility: PostVisibilityEnum;
 
-  @IsIn( Object.values( PostStatusEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN ) } )
+  @IsIn( Object.values( PostStatusEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN as any ) } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   status: PostStatusEnum;
 
@@ -57,7 +57,7 @@ export class CreatePostDto {
   @IsOptional()
   commentAllowed?: Boolean;
 
-  @IsIn( {...Object.values( PostTypeEnum ), ...Object.values( WidgetTypeEnum )}, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN ) } )
+  @IsIn( {...Object.values( PostTypeEnum ), ...Object.values( WidgetTypeEnum )}, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN as any ) } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   type: PostTypeEnum | WidgetTypeEnum;
 

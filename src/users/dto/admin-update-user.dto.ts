@@ -7,7 +7,7 @@ import { CreateUserDto } from "./create-user.dto";
 
 export class AdminUpdateUserDto extends PartialType( CreateUserDto ) {
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 30, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 30, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsOptional()
   role?: string;
 

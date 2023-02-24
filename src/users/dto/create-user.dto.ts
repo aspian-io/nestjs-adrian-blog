@@ -6,13 +6,13 @@ import { GenderEnum } from "src/users/entities/user.entity";
 
 export class CreateUserDto {
   @IsEmail( {}, { message: CommonErrorsLocale.VALIDATOR_IS_EMAIL } )
-  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   email: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MinLength( 6, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH ) } )
-  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MinLength( 6, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MIN_LENGTH as any ) } )
+  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @Matches( /((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, { message: CommonErrorsLocale.VALIDATOR_WEAK_PASSWORD } )
   password: string;
 
@@ -21,27 +21,27 @@ export class CreateUserDto {
   @IsOptional()
   birthDate?: Date;
 
-  @IsIn( Object.values( GenderEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN ) } )
+  @IsIn( Object.values( GenderEnum ), { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_IS_IN as any ) } )
   @IsOptional()
   gender?: GenderEnum;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 30, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 30, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any) } )
   @IsOptional()
   country?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 30, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 30, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsOptional()
   state?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 30, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 30, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsOptional()
   city?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 100, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 100, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsOptional()
   address?: string;
 
@@ -61,57 +61,57 @@ export class CreateUserDto {
   postalCode?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 30, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 30, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   firstName: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 30, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 30, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsNotEmpty( { message: CommonErrorsLocale.VALIDATOR_IS_NOT_EMPTY } )
   lastName: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 400, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 400, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsOptional()
   bio?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsOptional()
   website?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsOptional()
   facebook?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsOptional()
   twitter?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsOptional()
   instagram?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsOptional()
   linkedIn?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsOptional()
   pinterest?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsOptional()
   github?: string;
 
   @IsString( { message: CommonErrorsLocale.VALIDATOR_IS_STRING } )
-  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH ) } )
+  @MaxLength( 50, { message: i18nValidationMessage( CommonErrorsLocale.VALIDATOR_MAX_LENGTH as any ) } )
   @IsOptional()
   stackoverflow?: string;
 }
