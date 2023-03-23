@@ -22,6 +22,7 @@ import { SearchDto } from './dto/user/search.dto';
 import { PostSitemapDto } from './dto/user/post-sitemap.dto';
 import { AdminPostListDto } from './dto/post-list.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { BannerListDto } from './dto/user/banner-list.dto';
 
 @Controller()
 export class PostsController {
@@ -41,6 +42,12 @@ export class PostsController {
   @Serialize( PostDto )
   widgetsList ( @Query( 'type' ) type: WidgetTypeEnum ) {
     return this.postsService.findAllWidgetsByType( type );
+  }
+
+  @Get( '/posts/banners' )
+  @Serialize( BannerListDto )
+  bannersList ( @Query() query: UserBlogsListDto ) {
+    return this.postsService.findAll( query, PostTypeEnum.BANNER, false );
   }
 
   @Get( '/posts/blogs' )
