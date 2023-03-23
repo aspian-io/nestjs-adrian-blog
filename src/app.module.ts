@@ -39,7 +39,7 @@ import { IncomingMessage } from 'http';
         secretKey: configService.getOrThrow( EnvEnum.GOOGLE_RECAPTCHA_SECRET_KEY ),
         response: ( req: IncomingMessage ) => ( req.headers.recaptcha || '' ).toString(),
         skipIf: process.env.NODE_ENV !== 'production',
-        actions: [ 'register', 'login', 'subscribe', 'contact' ],
+        actions: [ 'register', 'login', 'contact' ],
         score: 0.6,
       } ),
       inject: [ ConfigService ],
@@ -76,7 +76,7 @@ import { IncomingMessage } from 'http';
         database: RedisDbEnum.CACHE,
         store: redisStore as any,
         url: configService.getOrThrow( EnvEnum.REDIS_URL ),
-        ttl: 1, // seconds
+        ttl: 180, // seconds
         max: 200, // maximum number of items in cache
       } ),
     } ),
