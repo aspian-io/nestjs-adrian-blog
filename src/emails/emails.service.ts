@@ -116,15 +116,11 @@ export class EmailsService {
 
   // Contact us
   async contactUs ( dto: EmailContactUsDto, i18n: I18nContext ) {
-    let contactEmail = ( await this.settingsService.findOneOrNull( SettingsKeyEnum.SITE_CONTACT_EMAIL ) )?.value;
-    if ( !contactEmail ) {
-      contactEmail = ( await this.settingsService.findOneOrNull( SettingsKeyEnum.SITE_ADMIN_EMAIL ) )?.value;
-      if ( !contactEmail ) {
-        throw new BadRequestException( i18n.t( CommonErrorsLocale.Bad_Request ) );
-      }
-    }
+    const siteSupportEmail = ( await this.settingsService.findOne( SettingsKeyEnum.SITE_SUPPORT_EMAIL ) ).value;
+    const contactEmail = ( await this.settingsService.findOneOrNull( SettingsKeyEnum.SITE_CONTACT_EMAIL ) )?.value;
+
     await this.mailerService.sendMail( {
-      from: dto.from,
+      from: siteSupportEmail,
       to: contactEmail,
       subject: dto.subject,
       priority: dto.priority,
@@ -138,7 +134,6 @@ export class EmailsService {
     const websiteName = ( await this.settingsService.findOne( SettingsKeyEnum.SITE_NAME ) ).value;
     const websiteUrl = ( await this.settingsService.findOne( SettingsKeyEnum.SITE_URL ) ).value;
     const subject = ( await this.settingsService.findOne( SettingsKeyEnum.SITE_CONTACT_AUTO_RESPONSE_EMAIL_SUBJECT ) ).value;
-    const siteSupportEmail = ( await this.settingsService.findOne( SettingsKeyEnum.SITE_SUPPORT_EMAIL ) ).value;
 
     if ( customTemplate ) {
       const compiledTemplate = Handlebars.compile( customTemplate.content );
