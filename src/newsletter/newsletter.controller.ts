@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Req } from '@nestjs/common';
 import { I18n, I18nContext } from 'nestjs-i18n';
 import { PermissionsEnum } from 'src/common/security/permissions.enum';
 import { IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
@@ -26,6 +26,8 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { File } from 'src/files/entities/file.entity';
 import { SubscriberEmailDto } from './dto/subscription/user/subscriber-email.dto';
+import { PlainBody } from 'src/common/decorators/plainbody.decorator';
+import { Request } from 'express';
 
 @Controller()
 export class NewsletterController {
@@ -146,6 +148,22 @@ export class NewsletterController {
   }
 
   /*********************************** Campaigns Region *************************************/
+
+  @Post( 'newsletter/sns-bounce' )
+  awsSNSEmailBounce ( @PlainBody() body: string, @Req() req: Request ) {
+    if ( req.header( 'x-amz-sns-message-type' ) === 'SubscriptionConfirmation' ) {
+      return this.newsletterService.awsSNSConfirmSubscription( JSON.parse( body ) );
+    }
+    return this.newsletterService.awsSNSEmailBounce( JSON.parse( body ) );
+  }
+
+  @Post( 'newsletter/sns-complaint' )
+  awsSNSEmailComplaint ( @PlainBody() body: string, @Req() req: Request ) {
+    if ( req.header( 'x-amz-sns-message-type' ) === 'SubscriptionConfirmation' ) {
+      return this.newsletterService.awsSNSConfirmSubscription( JSON.parse( body ) );
+    }
+    return this.newsletterService.awsSNSEmailComplaint( JSON.parse( body ) );
+  }
 
   @Post( 'admin/newsletter/campaigns' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )

@@ -26,7 +26,7 @@ import { IMetadataDecorator } from 'src/common/decorators/metadata.decorator';
 import { NewsletterCampaignListQueryDto } from './dto/campaigns/campaign-list-query.dto';
 import { NewsletterUpdateCampaignDto } from './dto/campaigns/update-campaign.dto';
 import { ICampaignPayload } from './queues/consumers/campaign.consumer';
-import { NewsletterDelayedCampaignsJobs } from './types/service.type';
+import { AwsSesBounceSubTypeEnum, AwsSesBounceTypeEnum, NewsletterAwsSesBounceNotification, NewsletterAwsSesComplaintNotification, NewsletterAwsSnsSubscription, NewsletterDelayedCampaignsJobs } from './types/service.type';
 import { NewsletterCampaignJobsPaginationDto } from './dto/campaigns/campaign-jobs-pagination.dto';
 import { AdminCreateSubscriberDto } from './dto/subscription/admin-create-subscriber.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
@@ -37,6 +37,7 @@ import { sanitize } from 'string-sanitizer';
 import { ConfigService } from '@nestjs/config';
 import { InjectS3, S3 } from 'nestjs-s3';
 import { EnvEnum } from 'src/env.enum';
+import { HttpService } from '@nestjs/axios';
 
 @Injectable()
 export class NewsletterService {
@@ -49,7 +50,8 @@ export class NewsletterService {
     private readonly settingsService: SettingsService,
     private readonly configService: ConfigService,
     @InjectS3() private readonly s3: S3,
-    @Inject( CACHE_MANAGER ) private readonly cacheManager: Cache
+    @Inject( CACHE_MANAGER ) private readonly cacheManager: Cache,
+    private readonly httpService: HttpService
   ) { }
 
   //*********************************** Subscribers Region *************************************//
@@ -623,6 +625,53 @@ export class NewsletterService {
     return file;
   }
 
+  awsSNSConfirmSubscription ( payload: NewsletterAwsSnsSubscription ) {
+    const url = payload?.SubscribeURL;
+    if ( url ) {
+      this.callSubscribeURL( url );
+    }
+  }
+
+  async awsSNSEmailBounce ( payload: NewsletterAwsSesBounceNotification ) {
+    if ( payload.bounce.bounceType === AwsSesBounceTypeEnum.Permanent ) {
+      if ( payload.bounce.bounceSubType === AwsSesBounceSubTypeEnum.General || payload.bounce.bounceSubType === AwsSesBounceSubTypeEnum.NoEmail ) {
+        const subscribersToRemovePromises = payload.bounce.bouncedRecipients.map( async r => {
+          const subscriber = await this.subscriberRepo.findOne( {
+            where: {
+              email: r.emailAddress
+            }
+          } );
+
+          if ( subscriber ) {
+            await this.subscriberRepo.remove( subscriber );
+            await this.cacheManager.reset();
+          }
+        } );
+
+        await Promise.all( subscribersToRemovePromises );
+      }
+    }
+  }
+
+  async awsSNSEmailComplaint ( payload: NewsletterAwsSesComplaintNotification ) {
+    if ( payload.complaint.complainedRecipients.length > 0 ) {
+      const subscribersToRemovePromises = payload.complaint.complainedRecipients.map( async r => {
+        const subscriber = await this.subscriberRepo.findOne( {
+          where: {
+            email: r.emailAddress
+          }
+        } );
+
+        if ( subscriber ) {
+          await this.subscriberRepo.remove( subscriber );
+          await this.cacheManager.reset();
+        }
+      } );
+
+      await Promise.all( subscribersToRemovePromises );
+    }
+  }
+
   /********************************************************************************************/
   /********************************** Helper Methods ******************************************/
   /*********************************** Start Region *******************************************/
@@ -683,6 +732,20 @@ export class NewsletterService {
       },
       items: data
     };
+  }
+
+  /**
+   * To confirm AWS SNS subscription with the subscription URL
+   * 
+   * @param url AWS SNS confirmation URL
+   */
+  async callSubscribeURL ( url: string ): Promise<void> {
+    console.log( `Invoking SubscribeURL=[${ url }]` );
+
+    const subscribeResponse = await this.httpService.axiosRef.get( url );
+
+    JSON.stringify( subscribeResponse.data );
+    console.log( 'Successfully Subscribed to topic' );
   }
 
   /********************************************************************************************/

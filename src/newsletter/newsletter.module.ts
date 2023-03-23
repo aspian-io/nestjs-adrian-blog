@@ -11,6 +11,7 @@ import { PostsModule } from 'src/posts/posts.module';
 import { CampaignJobsConsumer } from './queues/consumers/campaign.consumer';
 import { UsersModule } from 'src/users/users.module';
 import { FilesModule } from 'src/files/files.module';
+import { HttpModule } from '@nestjs/axios';
 
 @Module( {
   imports: [
@@ -24,7 +25,8 @@ import { FilesModule } from 'src/files/files.module';
     ),
     PostsModule,
     FilesModule,
-    UsersModule
+    UsersModule,
+    HttpModule
   ],
   controllers: [ NewsletterController ],
   providers: [ NewsletterService, SubscriptionTokenJobsConsumer, CampaignJobsConsumer ]
