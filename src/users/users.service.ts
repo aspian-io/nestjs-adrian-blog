@@ -842,6 +842,7 @@ export class UsersService {
       ACL: "public-read",
     } ).promise();
     user.avatar = avatarS3Key;
+    user.avatarSource = AvatarSourceEnum.STORAGE;
     user.ipAddress = metadata.ipAddress;
     user.userAgent = metadata.userAgent;
     const updatedUser = await this.userRepository.save( user );
