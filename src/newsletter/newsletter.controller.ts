@@ -28,6 +28,7 @@ import { File } from 'src/files/entities/file.entity';
 import { SubscriberEmailDto } from './dto/subscription/user/subscriber-email.dto';
 import { PlainBody } from 'src/common/decorators/plainbody.decorator';
 import { Request } from 'express';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 
 @Controller()
 export class NewsletterController {
@@ -35,12 +36,14 @@ export class NewsletterController {
 
   /*********************************** Subscribers Region *************************************/
 
+  @Throttle( 6, 60 )
   @Post( 'newsletter/subscribers/subscribe' )
   @Serialize( SubscriberDto )
   subscribe ( @Body() createSubscriberDto: CreateSubscriberDto, @I18n() i18n: I18nContext ) {
     return this.newsletterService.subscribe( createSubscriberDto, i18n );
   }
 
+  @Throttle( 6, 60 )
   @Post( 'newsletter/subscribers/approve-subscription' )
   @Serialize( SubscriberDto )
   approveSubscription (
@@ -50,12 +53,14 @@ export class NewsletterController {
     return this.newsletterService.approveSubscription( subscriptionTokenDto, i18n );
   }
 
+  @Throttle( 6, 60 )
   @Post( 'newsletter/subscribers/unsubscribe-request' )
   @Serialize( SubscriberDto )
   unsubscribeReq ( @Body() unsubscribeReqDto: UnsubscribeReqDto, @I18n() i18n: I18nContext ) {
     return this.newsletterService.unsubscribeReq( unsubscribeReqDto, i18n );
   }
 
+  @Throttle( 6, 60 )
   @Post( 'newsletter/subscribers/unsubscribe' )
   @Serialize( SubscriberDto )
   unsubscribe ( @Body() unsubscribeDto: UnsubscribeDto, @I18n() i18n: I18nContext ) {
@@ -69,11 +74,13 @@ export class NewsletterController {
     return this.newsletterService.getSubscriberTokenRemainingTimeInSec( body.email, i18n );
   }
 
+  @SkipThrottle()
   @Post( 'admin/newsletter/subscribers/subscribe' )
   adminSubscribe ( @Body() adminCreateSubscriberDto: AdminCreateSubscriberDto, @I18n() i18n: I18nContext ) {
     return this.newsletterService.subscribe( adminCreateSubscriberDto, i18n );
   }
 
+  @SkipThrottle()
   @Patch( 'admin/newsletter/subscribers/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_EDIT )
@@ -84,6 +91,7 @@ export class NewsletterController {
     return this.newsletterService.updateSubscriber( id, adminUpdateSubscriberDto, i18n );
   }
 
+  @SkipThrottle()
   @Get( 'admin/newsletter/subscribers' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_READ )
@@ -91,6 +99,7 @@ export class NewsletterController {
     return this.newsletterService.findAllSubscribers( query );
   }
 
+  @SkipThrottle()
   @Get( 'admin/newsletter/subscribers/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_READ )
@@ -98,6 +107,7 @@ export class NewsletterController {
     return this.newsletterService.findOneSubscriberById( id, i18n );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/newsletter/subscribers/soft-delete/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_DELETE )
@@ -105,6 +115,7 @@ export class NewsletterController {
     return this.newsletterService.softRemoveSubscriber( id, i18n );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/newsletter/subscribers/soft-delete-all' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_DELETE )
@@ -112,6 +123,7 @@ export class NewsletterController {
     return this.newsletterService.softRemoveAllSubscribers( ids );
   }
 
+  @SkipThrottle()
   @Get( 'admin/newsletter/subscribers/soft-deleted/subscribers-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_DELETE )
@@ -119,6 +131,7 @@ export class NewsletterController {
     return this.newsletterService.softRemovedSubscribersFindAll( query );
   }
 
+  @SkipThrottle()
   @Patch( 'admin/newsletter/subscribers/recover/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_DELETE )
@@ -126,6 +139,7 @@ export class NewsletterController {
     return this.newsletterService.recoverSubscriber( id, i18n );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/newsletter/subscribers/permanent-delete/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_DELETE )
@@ -133,6 +147,7 @@ export class NewsletterController {
     return this.newsletterService.removeSubscriber( id, i18n );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/newsletter/subscribers/permanent-delete-all' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_DELETE )
@@ -140,6 +155,7 @@ export class NewsletterController {
     return this.newsletterService.removeSubscribersAll( ids );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/newsletter/subscribers/empty-subscribers-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_DELETE )
@@ -165,6 +181,7 @@ export class NewsletterController {
     return this.newsletterService.awsSNSEmailComplaint( JSON.parse( body ) );
   }
 
+  @SkipThrottle()
   @Post( 'admin/newsletter/campaigns' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_CREATE )
@@ -175,6 +192,7 @@ export class NewsletterController {
     return this.newsletterService.createCampaign( createCampaignDto, i18n, metadata );
   }
 
+  @SkipThrottle()
   @Get( 'admin/newsletter/campaigns' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_READ )
@@ -182,6 +200,7 @@ export class NewsletterController {
     return this.newsletterService.findAllCampaigns( query );
   }
 
+  @SkipThrottle()
   @Get( 'admin/newsletter/campaigns/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_READ )
@@ -189,6 +208,7 @@ export class NewsletterController {
     return this.newsletterService.findOneCampaign( id, i18n );
   }
 
+  @SkipThrottle()
   @Patch( 'admin/newsletter/campaigns/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_EDIT )
@@ -199,6 +219,7 @@ export class NewsletterController {
     return this.newsletterService.updateCampaign( id, updateCampaignDto, i18n, metadata );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/newsletter/campaigns/soft-delete/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_DELETE )
@@ -206,6 +227,7 @@ export class NewsletterController {
     return this.newsletterService.softRemoveCampaign( id, i18n );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/newsletter/campaigns/soft-delete-all' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_DELETE )
@@ -213,6 +235,7 @@ export class NewsletterController {
     return this.newsletterService.softRemoveAllCampaigns( ids );
   }
 
+  @SkipThrottle()
   @Get( 'admin/newsletter/campaigns/soft-deleted/campaigns-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_DELETE )
@@ -220,6 +243,7 @@ export class NewsletterController {
     return this.newsletterService.softRemovedCampaignsFindAll( query );
   }
 
+  @SkipThrottle()
   @Patch( 'admin/newsletter/campaigns/recover/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_DELETE )
@@ -227,6 +251,7 @@ export class NewsletterController {
     return this.newsletterService.recoverCampaign( id, i18n );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/newsletter/campaigns/permanent-delete/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_DELETE )
@@ -234,6 +259,7 @@ export class NewsletterController {
     return this.newsletterService.removeCampaign( id, i18n );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/newsletter/campaigns/permanent-delete-all' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_DELETE )
@@ -241,6 +267,7 @@ export class NewsletterController {
     return this.newsletterService.removeCampaignsAll( ids );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/newsletter/campaigns/empty-campaigns-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_DELETE )
@@ -248,6 +275,7 @@ export class NewsletterController {
     return this.newsletterService.emptyCampaignsTrash();
   }
 
+  @SkipThrottle()
   @Get( 'admin/newsletter/campaigns-jobs/delayed' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_READ )
@@ -255,6 +283,7 @@ export class NewsletterController {
     return this.newsletterService.findAllCampaignDelayedJobs( campaignJobsPaginationDto );
   }
 
+  @SkipThrottle()
   @Get( 'admin/newsletter/campaigns-jobs/completed' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_READ )
@@ -262,6 +291,7 @@ export class NewsletterController {
     return this.newsletterService.findAllCampaignCompletedJobs( campaignJobsPaginationDto );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/newsletter/campaigns-jobs/delete/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.NEWSLETTER_DELETE )
@@ -269,6 +299,7 @@ export class NewsletterController {
     return this.newsletterService.removeCampaignJob( id, i18n );
   }
 
+  @SkipThrottle()
   @Post( 'admin/newsletter/templates/upload-img' )
   @UseGuards( JwtAuthGuard )
   @UseInterceptors( FileInterceptor( 'img' ) )

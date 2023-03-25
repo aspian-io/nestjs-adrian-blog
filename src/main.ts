@@ -15,7 +15,7 @@ async function bootstrap () {
   const config = app.get( ConfigService );
   // In case of using reverse proxy
   if ( config.getOrThrow( EnvEnum.TRUST_PROXY_ENABLE ) === "true" ) {
-    app.set( 'trust proxy', config.get( EnvEnum.TRUST_PROXY_IP ) );
+    app.set( 'trust proxy', 'loopback' );
   }
   // CORS Config
   app.enableCors( {

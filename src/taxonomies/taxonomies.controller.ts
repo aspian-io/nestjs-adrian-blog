@@ -19,6 +19,7 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { SettingsService } from 'src/settings/settings.service';
 import { SettingsKeyEnum } from 'src/settings/types/settings-key.enum';
 import { TaxonomyListDto } from './dto/taxonomy-list.dto';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @Controller()
 export class TaxonomiesController {
@@ -99,6 +100,7 @@ export class TaxonomiesController {
 
   /********************** Admin Region ***************************/
 
+  @SkipThrottle()
   @Post( 'admin/taxonomies' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_CREATE )
@@ -109,6 +111,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.create( createTaxonomyDto, i18n, metadata );
   }
 
+  @SkipThrottle()
   @Get( 'admin/taxonomies/categories' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_READ )
@@ -116,6 +119,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.findAll( query, TaxonomyTypeEnum.CATEGORY );
   }
 
+  @SkipThrottle()
   @Get( 'admin/taxonomies/project-categories' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_READ )
@@ -123,6 +127,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.findAll( query, TaxonomyTypeEnum.PROJECT_CATEGORY );
   }
 
+  @SkipThrottle()
   @Get( 'admin/taxonomies/tags' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_READ )
@@ -130,6 +135,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.findAll( query, TaxonomyTypeEnum.TAG );
   }
 
+  @SkipThrottle()
   @Get( 'admin/taxonomies/menus' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_READ )
@@ -137,6 +143,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.findAll( query, TaxonomyTypeEnum.MENU );
   }
 
+  @SkipThrottle()
   @Get( 'admin/taxonomies/menu-items/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_READ )
@@ -144,6 +151,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.findAllMenuItems( id );
   }
 
+  @SkipThrottle()
   @Get( 'admin/taxonomies/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_READ )
@@ -151,6 +159,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.findOne( id, i18n );
   }
 
+  @SkipThrottle()
   @Patch( 'admin/taxonomies/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_EDIT )
@@ -162,6 +171,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.update( id, updateTaxonomyDto, i18n, metadata );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/taxonomies/soft-delete/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
@@ -169,6 +179,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.softRemove( id, i18n );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/taxonomies/soft-delete-all' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
@@ -176,6 +187,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.softRemoveAll( ids );
   }
 
+  @SkipThrottle()
   @Patch( 'admin/taxonomies/recover/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
@@ -183,6 +195,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.recover( id, i18n );
   }
 
+  @SkipThrottle()
   @Patch( 'admin/taxonomies/recover-all' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
@@ -190,6 +203,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.recoverAll( ids );
   }
 
+  @SkipThrottle()
   @Get( 'admin/taxonomies/soft-deleted/categories-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
@@ -197,6 +211,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.softRemovedFindAll( query, TaxonomyTypeEnum.CATEGORY );
   }
 
+  @SkipThrottle()
   @Get( 'admin/taxonomies/soft-deleted/project-categories-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
@@ -204,6 +219,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.softRemovedFindAll( query, TaxonomyTypeEnum.PROJECT_CATEGORY );
   }
 
+  @SkipThrottle()
   @Get( 'admin/taxonomies/soft-deleted/tags-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
@@ -211,6 +227,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.softRemovedFindAll( query, TaxonomyTypeEnum.TAG );
   }
 
+  @SkipThrottle()
   @Get( 'admin/taxonomies/soft-deleted/menus-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
@@ -218,6 +235,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.softRemovedFindAll( query, TaxonomyTypeEnum.MENU );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/taxonomies/permanent-delete/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
@@ -225,6 +243,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.remove( id, i18n );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/taxonomies/permanent-delete-all' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
@@ -232,6 +251,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.removeAll( ids );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/taxonomies/empty-categories-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
@@ -239,6 +259,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.emptyTrash( TaxonomyTypeEnum.CATEGORY );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/taxonomies/empty-project-categories-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
@@ -246,6 +267,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.emptyTrash( TaxonomyTypeEnum.PROJECT_CATEGORY );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/taxonomies/empty-tags-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
@@ -253,6 +275,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.emptyTrash( TaxonomyTypeEnum.TAG );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/taxonomies/empty-menus-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )
@@ -260,6 +283,7 @@ export class TaxonomiesController {
     return this.taxonomiesService.emptyTrash( TaxonomyTypeEnum.MENU );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/taxonomies/slug-history/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.TAXONOMY_DELETE )

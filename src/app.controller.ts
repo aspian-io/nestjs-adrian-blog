@@ -15,6 +15,7 @@ import { PermissionsGuard } from './users/guards/require-permissions.guard';
 import { RequirePermission } from './users/decorators/require-permission.decorator';
 import { PermissionsEnum } from './common/security/permissions.enum';
 import { DashboardPostsStatsDto, DashboardSystemStatsDto } from './common/dto/dashboard-system-stats.dto';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @Controller()
 export class AppController {
@@ -57,6 +58,7 @@ export class AppController {
     };
   }
 
+  @SkipThrottle()
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.DASHBOARD_READ )
   @Get( 'admin/dashboard/system-stats' )
@@ -71,6 +73,7 @@ export class AppController {
     };
   }
 
+  @SkipThrottle()
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.DASHBOARD_READ )
   @Get( 'admin/dashboard/posts-stats' )

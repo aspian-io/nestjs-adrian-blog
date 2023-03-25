@@ -14,6 +14,7 @@ import { IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
 import { File } from './entities/file.entity';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { LogoFileDto } from './dto/logo-file.dto';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @Controller()
 export class FilesController {
@@ -25,6 +26,7 @@ export class FilesController {
     return this.filesService.getSiteLogos();
   }
 
+  @SkipThrottle()
   @Post( 'admin/files' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.FILE_CREATE )
@@ -32,6 +34,7 @@ export class FilesController {
     return this.filesService.create( createFileDto, i18n, metadata );
   }
 
+  @SkipThrottle()
   @Get( 'admin/files' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.FILE_READ )
@@ -39,6 +42,7 @@ export class FilesController {
     return this.filesService.findAll( query );
   }
 
+  @SkipThrottle()
   @Get( 'admin/files/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.FILE_READ )
@@ -46,6 +50,7 @@ export class FilesController {
     return this.filesService.findOneById( id, i18n );
   }
 
+  @SkipThrottle()
   @Patch( 'admin/files/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.FILE_EDIT )
@@ -53,6 +58,7 @@ export class FilesController {
     return this.filesService.update( id, updateFileDto, i18n );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/files/soft-remove/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.FILE_DELETE )
@@ -60,6 +66,7 @@ export class FilesController {
     return this.filesService.softRemove( i18n, id );
   }
 
+  @SkipThrottle()
   @Patch( 'admin/files/recover/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.FILE_DELETE )
@@ -67,6 +74,7 @@ export class FilesController {
     return this.filesService.recover( i18n, id );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/files/permanent-remove/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.FILE_DELETE )
@@ -74,6 +82,7 @@ export class FilesController {
     return this.filesService.remove( i18n, id );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/files/bulk-soft-remove' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.FILE_DELETE )
@@ -81,6 +90,7 @@ export class FilesController {
     return this.filesService.bulkSoftRemove( i18n, bulkDeleteRecoverDto.ids );
   }
 
+  @SkipThrottle()
   @Post( 'admin/files/bulk-recover' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.FILE_DELETE )
@@ -88,6 +98,7 @@ export class FilesController {
     return this.filesService.bulkRecover( i18n, bulkDeleteRecoverDto.ids );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/files/bulk-permanent-remove' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.FILE_DELETE )
@@ -95,6 +106,7 @@ export class FilesController {
     return this.filesService.bulkRemove( i18n, bulkDeleteRecoverDto.ids );
   }
 
+  @SkipThrottle()
   @Post( 'admin/files/config-cors' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN )

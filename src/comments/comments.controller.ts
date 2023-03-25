@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, BadRequestException, Query } from '@nestjs/common';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { I18n, I18nContext } from 'nestjs-i18n';
 import { IMetadataDecorator, Metadata } from 'src/common/decorators/metadata.decorator';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
@@ -29,6 +30,7 @@ export class CommentsController {
 
   /**************************** USER REGION ***********************************/
 
+  @Throttle( 6, 60 )
   @UseGuards( JwtAuthGuard )
   @Post( 'comments' )
   @Serialize( UserCommentsDto )
@@ -82,6 +84,7 @@ export class CommentsController {
 
   /**************************** ADMIN REGION ***********************************/
 
+  @SkipThrottle()
   @UseGuards( JwtAuthGuard )
   @Post( 'admin/comments' )
   async adminCreate (
@@ -91,11 +94,13 @@ export class CommentsController {
     return this.commentsService.create( createCommentDto, i18n, metadata );
   }
 
+  @SkipThrottle()
   @Get( 'admin/comments' )
   adminFindAll ( @Query() query: CommentQueryListDto ): Promise<IListResultGenerator<Comment>> {
     return this.commentsService.findAll( query );
   }
 
+  @SkipThrottle()
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_READ )
   @Get( 'admin/comments/user-replies/:parentId' )
@@ -103,6 +108,7 @@ export class CommentsController {
     return this.commentsService.findAllCommentRepliesByParentId( parentId, metadata );
   }
 
+  @SkipThrottle()
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_READ )
   @Get( 'admin/comments/unseen' )
@@ -110,6 +116,7 @@ export class CommentsController {
     return this.commentsService.countUnseen();
   }
 
+  @SkipThrottle()
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_READ )
   @Get( 'admin/comments/:id' )
@@ -117,6 +124,7 @@ export class CommentsController {
     return this.commentsService.findOne( id, i18n );
   }
 
+  @SkipThrottle()
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_EDIT )
   @Patch( 'admin/comments/:id' )
@@ -128,6 +136,7 @@ export class CommentsController {
     return this.commentsService.update( id, updateCommentDto, i18n, metadata );
   }
 
+  @SkipThrottle()
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_EDIT )
   @Patch( 'admin/comments/approve/:id' )
@@ -137,6 +146,7 @@ export class CommentsController {
     return this.commentsService.approve( id, i18n );
   }
 
+  @SkipThrottle()
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_EDIT )
   @Patch( 'admin/comments/set-unset-special/:id' )
@@ -146,6 +156,7 @@ export class CommentsController {
     return this.commentsService.setUnsetSpecial( id, i18n );
   }
 
+  @SkipThrottle()
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_EDIT )
   @Patch( 'admin/comments/reject/:id' )
@@ -155,6 +166,7 @@ export class CommentsController {
     return this.commentsService.reject( id, i18n );
   }
 
+  @SkipThrottle()
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )
   @Delete( 'admin/comments/soft-delete/:id' )
@@ -162,6 +174,7 @@ export class CommentsController {
     return this.commentsService.softRemove( id, i18n );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/comments/soft-delete-all' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )
@@ -169,6 +182,7 @@ export class CommentsController {
     return this.commentsService.softRemoveAll( ids, i18n );
   }
 
+  @SkipThrottle()
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )
   @Patch( 'admin/comments/recover/:id' )
@@ -176,6 +190,7 @@ export class CommentsController {
     return this.commentsService.recover( id, i18n );
   }
 
+  @SkipThrottle()
   @Patch( 'admin/comments/recover-all' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )
@@ -183,6 +198,7 @@ export class CommentsController {
     return this.commentsService.recoverAll( ids, i18n );
   }
 
+  @SkipThrottle()
   @Get( 'admin/comments/soft-deleted/trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )
@@ -190,6 +206,7 @@ export class CommentsController {
     return this.commentsService.softRemovedFindAll( query );
   }
 
+  @SkipThrottle()
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )
   @Delete( 'admin/comments/permanent-delete/:id' )
@@ -197,6 +214,7 @@ export class CommentsController {
     return this.commentsService.remove( id, i18n );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/comments/permanent-delete-all' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )
@@ -204,6 +222,7 @@ export class CommentsController {
     return this.commentsService.removeAll( ids, i18n );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/comments/empty-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.COMMENT_DELETE )

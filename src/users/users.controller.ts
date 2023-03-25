@@ -41,6 +41,7 @@ import { LoginMethodsDto } from './dto/login-methods.dto';
 import { AvatarEmptyValidator } from './validators/avatar-empty.validator';
 import { OAuth2LoginRegisterDto } from './dto/oauth2-login-register.dto';
 import { Recaptcha } from '@nestlab/google-recaptcha';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 
 @Controller()
 export class UsersController {
@@ -62,7 +63,8 @@ export class UsersController {
   }
 
   // Login by Email
-  @Recaptcha({action: 'login'})
+  @Throttle( 10, 60 )
+  @Recaptcha( { action: 'login' } )
   @Post( 'users/login-by-email' )
   @HttpCode( HttpStatus.OK )
   @Serialize( LoginRegisterDto )
@@ -114,6 +116,7 @@ export class UsersController {
   }
 
   // Login by Mobile Phone Request
+  @Throttle( 10, 60 )
   @Post( 'users/login-by-mobile-phone/request' )
   @HttpCode( HttpStatus.OK )
   @Serialize( LoginRegisterDto )
@@ -470,6 +473,7 @@ export class UsersController {
   /************************ */
 
   // Users List
+  @SkipThrottle()
   @Get( 'admin/users' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_READ )
@@ -478,6 +482,7 @@ export class UsersController {
   }
 
   // User Details
+  @SkipThrottle()
   @Get( 'admin/users/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_READ )
@@ -486,6 +491,7 @@ export class UsersController {
   }
 
   // Edit User
+  @SkipThrottle()
   @Patch( 'admin/users/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_EDIT )
@@ -499,6 +505,7 @@ export class UsersController {
   }
 
   // Edit Profile Avatar
+  @SkipThrottle()
   @Patch( 'admin/users/edit-avatar/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_EDIT )
@@ -519,6 +526,7 @@ export class UsersController {
   }
 
   // Delete Profile Avatar
+  @SkipThrottle()
   @Delete( 'admin/users/delete-avatar/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_DELETE )
@@ -531,6 +539,7 @@ export class UsersController {
   }
 
   // Edit User Claims
+  @SkipThrottle()
   @Patch( 'admin/users/update-claims/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN )
@@ -544,6 +553,7 @@ export class UsersController {
   }
 
   // Soft Remove User
+  @SkipThrottle()
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_DELETE )
   @Delete( 'admin/users/soft-delete/:id' )
@@ -552,6 +562,7 @@ export class UsersController {
   }
 
   // Users Trash Soft Removed Items
+  @SkipThrottle()
   @Get( 'admin/users/soft-deleted/trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_DELETE )
@@ -560,6 +571,7 @@ export class UsersController {
   }
 
   // Recover User
+  @SkipThrottle()
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_DELETE )
   @HttpCode( HttpStatus.OK )
@@ -569,6 +581,7 @@ export class UsersController {
   }
 
   // Delete User
+  @SkipThrottle()
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_DELETE )
   @Delete( 'admin/users/permanent-delete/:id' )
@@ -576,6 +589,7 @@ export class UsersController {
     return this.usersService.remove( i18n, id, user );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/users/empty-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.USER_DELETE )
@@ -584,6 +598,7 @@ export class UsersController {
   }
 
   // Claims List
+  @SkipThrottle()
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN )
   @Get( 'admin/claims' )

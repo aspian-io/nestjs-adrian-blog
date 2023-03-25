@@ -9,7 +9,9 @@ import { PermissionsEnum } from 'src/common/security/permissions.enum';
 import { SettingListQueryDto } from './dto/list-query.dto';
 import { SettingsKeyEnum } from './types/settings-key.enum';
 import { UpsertSettingDto } from './dto/upsert-setting.dto';
+import { SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle()
 @Controller( 'admin/settings' )
 @UseGuards( JwtAuthGuard, PermissionsGuard )
 export class SettingsController {

@@ -1,5 +1,6 @@
 import { IFarazSendSMSResult } from '@aspianet/faraz-sms';
 import { Controller, Get, Post, Body, UseGuards, Query } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { I18n, I18nContext } from 'nestjs-i18n';
 import { PermissionsEnum } from 'src/common/security/permissions.enum';
 import { RequirePermission } from 'src/users/decorators/require-permission.decorator';
@@ -19,6 +20,7 @@ export class SmsController {
     return this.smsService.isSMSEquipped();
   }
 
+  @SkipThrottle()
   @Get( 'admin/sms/get-originators' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.SMS_READ )
@@ -26,6 +28,7 @@ export class SmsController {
     return this.smsService.getOriginators();
   }
 
+  @SkipThrottle()
   @Get( 'admin/sms/get-credit' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.SMS_READ )
@@ -33,6 +36,7 @@ export class SmsController {
     return this.smsService.getCredit( i18n );
   }
 
+  @SkipThrottle()
   @Get( 'admin/sms/phone-books' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.SMS_READ )
@@ -40,6 +44,7 @@ export class SmsController {
     return this.smsService.getPhoneBooks( i18n );
   }
 
+  @SkipThrottle()
   @Post( 'admin/sms/add-contact' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.SMS_CREATE )
@@ -47,6 +52,7 @@ export class SmsController {
     return this.smsService.addContact( smsAddContactDto, i18n );
   }
 
+  @SkipThrottle()
   @Post( 'admin/sms/send' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.SMS_CREATE )

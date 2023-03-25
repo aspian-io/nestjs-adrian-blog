@@ -14,11 +14,13 @@ import { IListResultGenerator } from 'src/common/utils/filter-pagination.utils';
 import { Email } from './entities/email.entity';
 import { EmailListQueryDto } from './dto/email-list-query.dto';
 import { Recaptcha } from '@nestlab/google-recaptcha';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 
 @Controller()
 export class EmailsController {
   constructor ( private readonly emailsService: EmailsService ) { }
 
+  @SkipThrottle()
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.EMAIL_SEND )
   @Post( 'admin/emails/send' )
@@ -27,6 +29,7 @@ export class EmailsController {
     return this.emailsService.sendMail( sendEmailDto );
   }
 
+  @SkipThrottle()
   @Post( 'admin/emails/templates/upload-img' )
   @UseGuards( JwtAuthGuard )
   @UseInterceptors( FileInterceptor( 'img' ) )
@@ -43,6 +46,7 @@ export class EmailsController {
     return this.emailsService.uploadImg( img, i18n, metadata );
   }
 
+  @SkipThrottle()
   @Get( 'admin/emails/all-sent-emails' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.EMAIL_READ )
@@ -50,6 +54,7 @@ export class EmailsController {
     return this.emailsService.findAllSentEmails( query );
   }
 
+  @SkipThrottle()
   @Get( 'admin/emails/sent/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.EMAIL_READ )
@@ -57,6 +62,7 @@ export class EmailsController {
     return this.emailsService.findOneEmail( id, i18n );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/emails/sent/permanent-delete/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.EMAIL_DELETE )
@@ -64,6 +70,7 @@ export class EmailsController {
     return this.emailsService.removeSentEmail( id, i18n );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/emails/sent/permanent-delete-all' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.EMAIL_DELETE )
@@ -71,6 +78,7 @@ export class EmailsController {
     return this.emailsService.removeSentEmailsAll( ids );
   }
 
+  @Throttle( 6, 60 )
   @Post( 'contact-us' )
   @HttpCode( HttpStatus.OK )
   @Recaptcha( { action: 'contact' } )

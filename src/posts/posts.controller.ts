@@ -23,6 +23,7 @@ import { PostSitemapDto } from './dto/user/post-sitemap.dto';
 import { AdminPostListDto } from './dto/post-list.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { BannerListDto } from './dto/user/banner-list.dto';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 
 @Controller()
 export class PostsController {
@@ -32,6 +33,7 @@ export class PostsController {
 
   /********************** User Region ***************************/
 
+  @Throttle( 20, 60 )
   @Get( '/posts/search' )
   @Serialize( PostListDto )
   search ( @Query() query: SearchDto ): Promise<IListResultGenerator<PostEntity>> {
@@ -180,6 +182,7 @@ export class PostsController {
 
   /********************** Admin Region ***************************/
 
+  @SkipThrottle()
   @Post( 'admin/posts' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_CREATE )
@@ -190,6 +193,7 @@ export class PostsController {
     return this.postsService.create( createPostDto, i18n, metadata );
   }
 
+  @SkipThrottle()
   @Get( 'admin/posts/recent' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
@@ -198,6 +202,7 @@ export class PostsController {
     return this.postsService.findRecentPosts( query );
   }
 
+  @SkipThrottle()
   @Get( 'admin/posts/widgets' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
@@ -205,6 +210,7 @@ export class PostsController {
     return this.postsService.findAllWidgetsByType( type );
   }
 
+  @SkipThrottle()
   @Get( 'admin/posts/blogs' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
@@ -213,6 +219,7 @@ export class PostsController {
     return this.postsService.findAll( query, PostTypeEnum.BLOG );
   }
 
+  @SkipThrottle()
   @Get( 'admin/posts/banners' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
@@ -221,6 +228,7 @@ export class PostsController {
     return this.postsService.findAll( query, PostTypeEnum.BANNER );
   }
 
+  @SkipThrottle()
   @Get( 'admin/posts/email-templates' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
@@ -229,6 +237,7 @@ export class PostsController {
     return this.postsService.findAll( query, PostTypeEnum.EMAIL_TEMPLATE );
   }
 
+  @SkipThrottle()
   @Get( 'admin/posts/newsletter-templates' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
@@ -237,6 +246,7 @@ export class PostsController {
     return this.postsService.findAll( query, PostTypeEnum.NEWSLETTER_TEMPLATE );
   }
 
+  @SkipThrottle()
   @Get( 'admin/posts/news' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
@@ -245,6 +255,7 @@ export class PostsController {
     return this.postsService.findAll( query, PostTypeEnum.NEWS );
   }
 
+  @SkipThrottle()
   @Get( 'admin/posts/pages' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
@@ -253,6 +264,7 @@ export class PostsController {
     return this.postsService.findAll( query, PostTypeEnum.PAGE );
   }
 
+  @SkipThrottle()
   @Get( 'admin/posts/projects' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
@@ -261,6 +273,7 @@ export class PostsController {
     return this.postsService.findAll( query, PostTypeEnum.PROJECT );
   }
 
+  @SkipThrottle()
   @Get( 'admin/posts/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
@@ -268,6 +281,7 @@ export class PostsController {
     return this.postsService.findOne( id, i18n );
   }
 
+  @SkipThrottle()
   @Patch( 'admin/posts/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_EDIT )
@@ -280,6 +294,7 @@ export class PostsController {
     return this.postsService.update( id, updatePostDto, i18n, metadata );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/posts/delete-old-slug/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -287,6 +302,7 @@ export class PostsController {
     return this.postsService.removeOldSlug( id, i18n );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/posts/soft-delete/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -294,13 +310,14 @@ export class PostsController {
     return this.postsService.softRemove( id, i18n );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/posts/soft-delete-all' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
   adminSoftRemoveAll ( @Body( 'ids' ) ids: string[] ): Promise<PostEntity[]> {
     return this.postsService.softRemoveAll( ids );
   }
-
+  @SkipThrottle()
   @Get( 'admin/posts/soft-deleted/blogs-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -309,6 +326,7 @@ export class PostsController {
     return this.postsService.softRemovedFindAll( query, PostTypeEnum.BLOG );
   }
 
+  @SkipThrottle()
   @Get( 'admin/posts/soft-deleted/banners-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -317,6 +335,7 @@ export class PostsController {
     return this.postsService.softRemovedFindAll( query, PostTypeEnum.BANNER );
   }
 
+  @SkipThrottle()
   @Get( 'admin/posts/soft-deleted/email-templates-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -325,6 +344,7 @@ export class PostsController {
     return this.postsService.softRemovedFindAll( query, PostTypeEnum.EMAIL_TEMPLATE );
   }
 
+  @SkipThrottle()
   @Get( 'admin/posts/soft-deleted/newsletter-templates-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -333,6 +353,7 @@ export class PostsController {
     return this.postsService.softRemovedFindAll( query, PostTypeEnum.NEWSLETTER_TEMPLATE );
   }
 
+  @SkipThrottle()
   @Get( 'admin/posts/soft-deleted/news-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -341,6 +362,7 @@ export class PostsController {
     return this.postsService.softRemovedFindAll( query, PostTypeEnum.NEWS );
   }
 
+  @SkipThrottle()
   @Get( 'admin/posts/soft-deleted/pages-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -349,6 +371,7 @@ export class PostsController {
     return this.postsService.softRemovedFindAll( query, PostTypeEnum.PAGE );
   }
 
+  @SkipThrottle()
   @Get( 'admin/posts/soft-deleted/projects-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -357,6 +380,7 @@ export class PostsController {
     return this.postsService.softRemovedFindAll( query, PostTypeEnum.PROJECT );
   }
 
+  @SkipThrottle()
   @Patch( 'admin/posts/recover/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -364,6 +388,7 @@ export class PostsController {
     return this.postsService.recover( id, i18n );
   }
 
+  @SkipThrottle()
   @Patch( 'admin/posts/recover-all' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -371,6 +396,7 @@ export class PostsController {
     return this.postsService.recoverAll( ids );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/posts/permanent-delete/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -378,6 +404,7 @@ export class PostsController {
     return this.postsService.remove( id, i18n );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/posts/permanent-delete-all' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -385,6 +412,7 @@ export class PostsController {
     return this.postsService.removeAll( ids );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/posts/empty-blogs-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -392,6 +420,7 @@ export class PostsController {
     return this.postsService.emptyTrash( PostTypeEnum.BLOG );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/posts/empty-banners-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -399,6 +428,7 @@ export class PostsController {
     return this.postsService.emptyTrash( PostTypeEnum.BANNER );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/posts/empty-email-templates-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -406,6 +436,7 @@ export class PostsController {
     return this.postsService.emptyTrash( PostTypeEnum.EMAIL_TEMPLATE );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/posts/empty-newsletter-templates-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -413,7 +444,7 @@ export class PostsController {
     return this.postsService.emptyTrash( PostTypeEnum.NEWSLETTER_TEMPLATE );
   }
 
-
+  @SkipThrottle()
   @Delete( 'admin/posts/empty-news-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -421,6 +452,7 @@ export class PostsController {
     return this.postsService.emptyTrash( PostTypeEnum.NEWS );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/posts/empty-pages-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -428,6 +460,7 @@ export class PostsController {
     return this.postsService.emptyTrash( PostTypeEnum.PAGE );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/posts/empty-projects-trash' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
@@ -435,6 +468,7 @@ export class PostsController {
     return this.postsService.emptyTrash( PostTypeEnum.PROJECT );
   }
 
+  @SkipThrottle()
   @Get( 'admin/posts/posts-jobs/delayed' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
@@ -442,6 +476,7 @@ export class PostsController {
     return this.postsService.findAllDelayedJobs( jobsPaginationDto );
   }
 
+  @SkipThrottle()
   @Get( 'admin/posts/posts-jobs/completed' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_READ )
@@ -449,6 +484,7 @@ export class PostsController {
     return this.postsService.findAllCompletedJobs( jobsPaginationDto );
   }
 
+  @SkipThrottle()
   @Delete( 'admin/posts/posts-jobs/delete/:id' )
   @UseGuards( JwtAuthGuard, PermissionsGuard )
   @RequirePermission( PermissionsEnum.ADMIN, PermissionsEnum.POST_DELETE )
