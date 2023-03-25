@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, BadRequestException, Query } from '@nestjs/common';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
+import { Recaptcha } from '@nestlab/google-recaptcha';
 import { I18n, I18nContext } from 'nestjs-i18n';
 import { IMetadataDecorator, Metadata } from 'src/common/decorators/metadata.decorator';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
@@ -31,6 +32,7 @@ export class CommentsController {
   /**************************** USER REGION ***********************************/
 
   @Throttle( 6, 60 )
+  @Recaptcha( { action: 'comment' } )
   @UseGuards( JwtAuthGuard )
   @Post( 'comments' )
   @Serialize( UserCommentsDto )

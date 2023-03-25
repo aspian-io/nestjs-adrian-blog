@@ -29,6 +29,7 @@ import { SubscriberEmailDto } from './dto/subscription/user/subscriber-email.dto
 import { PlainBody } from 'src/common/decorators/plainbody.decorator';
 import { Request } from 'express';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
+import { Recaptcha } from '@nestlab/google-recaptcha';
 
 @Controller()
 export class NewsletterController {
@@ -37,6 +38,7 @@ export class NewsletterController {
   /*********************************** Subscribers Region *************************************/
 
   @Throttle( 6, 60 )
+  @Recaptcha( { action: 'subscribe' } )
   @Post( 'newsletter/subscribers/subscribe' )
   @Serialize( SubscriberDto )
   subscribe ( @Body() createSubscriberDto: CreateSubscriberDto, @I18n() i18n: I18nContext ) {
@@ -54,6 +56,7 @@ export class NewsletterController {
   }
 
   @Throttle( 6, 60 )
+  @Recaptcha( { action: 'unsubscribe' } )
   @Post( 'newsletter/subscribers/unsubscribe-request' )
   @Serialize( SubscriberDto )
   unsubscribeReq ( @Body() unsubscribeReqDto: UnsubscribeReqDto, @I18n() i18n: I18nContext ) {

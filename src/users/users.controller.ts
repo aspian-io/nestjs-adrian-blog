@@ -117,6 +117,7 @@ export class UsersController {
 
   // Login by Mobile Phone Request
   @Throttle( 10, 60 )
+  @Recaptcha( { action: 'login' } )
   @Post( 'users/login-by-mobile-phone/request' )
   @HttpCode( HttpStatus.OK )
   @Serialize( LoginRegisterDto )
@@ -151,6 +152,7 @@ export class UsersController {
   }
 
   // Register by email
+  @Recaptcha( { action: 'register' } )
   @Post( 'users/register-by-email' )
   @Serialize( LoginRegisterDto )
   async registerByEmail (
@@ -201,6 +203,7 @@ export class UsersController {
   }
 
   // Register by mobile
+  @Recaptcha( { action: 'register' } )
   @Post( 'users/register-by-mobile' )
   @Serialize( LoginRegisterDto )
   async registerByMobile (
@@ -426,6 +429,7 @@ export class UsersController {
   }
 
   // Reset Password by Email Request
+  @Recaptcha( { action: 'reset-password' } )
   @Post( 'users/reset-password/by-email/request' )
   @Serialize( UserDto )
   resetPasswordByEmailReq ( @Body() body: UserEmailDto, @I18n() i18n: I18nContext ) {
@@ -448,6 +452,7 @@ export class UsersController {
   }
 
   // Reset Password by Mobile Phone Request
+  @Recaptcha( { action: 'reset-password' } )
   @Post( 'users/reset-password/by-mobile-phone/request' )
   @Serialize( UserDto )
   resetPasswordByMobilePhoneReq ( @Body() body: UserMobilePhoneDto, @I18n() i18n: I18nContext ) {
