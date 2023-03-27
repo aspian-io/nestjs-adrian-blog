@@ -62,7 +62,8 @@ export class NewsletterService {
     const tokenExpiresAt = new Date( Date.now() + ( expTimeInMins * 60_000 ) );
 
     const duplicate = await this.subscriberRepo.findOne( {
-      where: { email: createSubscriberDto.email }
+      where: { email: createSubscriberDto.email },
+      withDeleted: true
     } );
 
     if ( duplicate ) {
